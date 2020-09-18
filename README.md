@@ -1,4 +1,4 @@
-# CS2102 Group Project Team 24
+# CS2102 Group Project - Team 24
 
 Pet Caring Service
 
