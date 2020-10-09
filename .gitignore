@@ -5,3 +5,8 @@
 ER+Diagram.pptx
 GitItRight.pptx
 project.pdf
+
+# library dependencies
+node_modules/
+
+.vscode/
