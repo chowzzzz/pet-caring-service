@@ -19,7 +19,7 @@ CREATE TABLE Administrator (
 
 CREATE TABLE AppUser (
 	username VARCHAR(20),
-name VARCHAR(100) NOT NULL,
+	name VARCHAR(100) NOT NULL,
 	email VARCHAR(100) NOT NULL UNIQUE,
 	password VARCHAR(20) NOT NULL,
 	joindate DATE NOT NULL,
@@ -127,3 +127,5 @@ CREATE TABLE Job (
 	FOREIGN KEY(ctusername) REFERENCES CareTaker(username),
 	FOREIGN KEY(petname) REFERENCES Pet(name)
 );
+
+/*----------------------------------------------------*/

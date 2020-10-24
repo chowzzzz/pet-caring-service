@@ -1,0 +1,11 @@
+INSERT INTO Administrator VALUES ('admin', 'admin', 'admin@pcs.com', 'admin', '2020-08-24', 'true');
+INSERT INTO Administrator VALUES ('Iorgo', 'Matty', 'mhanton0@cnet.com', 'cxQTSfK6TLa', '2009-01-04', 'true');
+INSERT INTO Administrator VALUES ('Carver', 'Farlay', 'fharold1@soup.io', 'FcNsgj', '2005-03-10', 'false');
+INSERT INTO Administrator VALUES ('Annalee', 'Yelena', 'ylesly2@cam.ac.uk', 'XfzLZqRQWEPv', '2004-01-07', 'true');
+INSERT INTO Administrator VALUES ('Mayne', 'Lorri', 'lstockford3@exblog.jp', 'uTOwhPo0', '2010-02-10', 'true');
+INSERT INTO Administrator VALUES ('Daffy', 'Sib', 'showis4@google.com', 'c9XBAOzZu', '2017-02-15', 'true');
+INSERT INTO Administrator VALUES ('Kelsi', 'Kelwin', 'kvye5@woothemes.com', 'ArFjIvb5C', '2019-02-01', 'true');
+INSERT INTO Administrator VALUES ('Lucie', 'Danie', 'dbrough6@gravatar.com', 'qp1qgK8FgH9', '2020-01-14', 'true');
+INSERT INTO Administrator VALUES ('Joice', 'Alecia', 'ablacket7@theatlantic.com', 'EoqICLbqOig', '2001-07-10', 'false');
+INSERT INTO Administrator VALUES ('Laughton', 'Nanine', 'nnewbery8@hao123.com', 's1AIBuf1NJ', '2005-04-26', 'false');
+INSERT INTO Administrator VALUES ('Filippa', 'Thomasine', 'tsandars9@live.com', 'c4URT3OD1MVC', '2015-04-19', 'true');
