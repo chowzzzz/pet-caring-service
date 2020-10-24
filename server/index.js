@@ -12,7 +12,11 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 // routes
 app.post("/", function(req, res) {
-    res.send(req.body);
+    try {
+        res.send(req.body);
+    } catch (err) {
+        console.error(err.message);
+    }
 });
 
 require("./routes/petowner")(app);
