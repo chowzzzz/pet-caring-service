@@ -7,29 +7,27 @@ CREATE DATABASE PetCaringService;
 
 /*----------------------------------------------------*/
 
-CREATE TABLE Person (
+CREATE TABLE Administrator (
 	username VARCHAR(20),
-	password VARCHAR(20) NOT NULL UNIQUE,
-	name VARCHAR(100) NOT NULL UNIQUE,
+	name VARCHAR(100) NOT NULL,
 	email VARCHAR(100) NOT NULL UNIQUE,
+	password VARCHAR(20) NOT NULL,
 	joindate DATE NOT NULL,
 	isactive BOOLEAN NOT NULL,
 	PRIMARY KEY(username)
 );
 
-CREATE TABLE Administrator (
+CREATE TABLE AppUser (
 	username VARCHAR(20),
-	PRIMARY KEY(username),
-	FOREIGN KEY(username) REFERENCES Person(username)
-);
-
-CREATE TABLE "User" (
-	username VARCHAR(20),
+	name VARCHAR(100) NOT NULL,
+	email VARCHAR(100) NOT NULL UNIQUE,
+	password VARCHAR(20) NOT NULL,
+	joindate DATE NOT NULL,
+	isactive BOOLEAN NOT NULL,
 	gender VARCHAR(1) NOT NULL,
 	address VARCHAR(100) NOT NULL,
-	dateofbirth DATE NOT NULL, 
-	PRIMARY KEY(username),
-	FOREIGN KEY(username) REFERENCES Person(username)	
+	dateofbirth DATE NOT NULL,
+	PRIMARY KEY(username)
 );
 
 /*----------------------------------------------------*/
@@ -37,7 +35,7 @@ CREATE TABLE "User" (
 CREATE TABLE CareTaker (
 	username VARCHAR(20),
 	PRIMARY KEY(username),
-	FOREIGN KEY(username) REFERENCES "User"(username)	
+	FOREIGN KEY(username) REFERENCES AppUser(username)
 );
 
 CREATE TABLE CareTakerEarnsSalary (
@@ -58,8 +56,8 @@ CREATE TABLE FullTime (
 
 CREATE TABLE FullTimeAppliesLeaves (
 	username VARCHAR(20),
-	"date" DATE,
-	PRIMARY KEY(username, "date"),
+	leavedate DATE,
+	PRIMARY KEY(username, leavedate),
 	FOREIGN KEY(username) REFERENCES FullTime(username)		
 );
 
@@ -79,20 +77,14 @@ CREATE TABLE PartTimeIndicatesAvailability (
 
 /*----------------------------------------------------*/
 
-CREATE TABLE PetOwner (
-	username VARCHAR(20),
-	PRIMARY KEY(username),
-	FOREIGN KEY(username) REFERENCES "User"(username)	
-);
-
 CREATE TABLE PetOwnerRegistersCreditCard (
 	username VARCHAR(20),
-	"number" VARCHAR(20) UNIQUE,
+cardnumber VARCHAR(20) UNIQUE,
+nameoncard VARCHAR(100) NOT NULL,
 	cvv VARCHAR(20) NOT NULL,
-	fullname VARCHAR(100) NOT NULL,
 	expirydate DATE NOT NULL,
-	PRIMARY KEY(username, "number"),
-	FOREIGN KEY(username) REFERENCES PetOwner(username)	
+	PRIMARY KEY(username, cardnumber),
+	FOREIGN KEY(username) REFERENCES AppUser(username)	
 );
 
 /*----------------------------------------------------*/
@@ -106,31 +98,34 @@ CREATE TABLE PetCategory (
 CREATE TABLE Pet (
 	username VARCHAR(20),
 	name VARCHAR(50) UNIQUE,
-	age INTEGER NOT NULL,
+	dateofbirth DATE NOT NULL,
 	gender VARCHAR(1) NOT NULL,
 	description VARCHAR(100) NOT NULL,
 	specialreqs VARCHAR(100),
 	personality VARCHAR(100) NOT NULL,
 	PRIMARY KEY(username, name),
-	FOREIGN KEY(username) REFERENCES PetOwner(username)	
+	FOREIGN KEY(username) REFERENCES AppUser(username)	
 );
 
 /*----------------------------------------------------*/
 
 CREATE TABLE Job (
-	usernamePetOwner VARCHAR(20),
-	usernameCareTaker VARCHAR(20),
-	namePet VARCHAR(20),
+	pousername VARCHAR(20),
+	ctusername VARCHAR(20),
+	petname VARCHAR(20),
 	startdate DATE,
 	enddate DATE NOT NULL,
-	"timestamp" TIMESTAMP NOT NULL,
+	requestdate TIMESTAMP NOT NULL,
+	status VARCHAR(10),
 	rating NUMERIC(1,1),
 	paymenttype VARCHAR(20) NOT NULL,
 	deliverytype VARCHAR(20) NOT NULL,
 	amountpaid NUMERIC(31,2) NOT NULL,
 	review VARCHAR(1000),
-	PRIMARY KEY(usernamePetOwner, usernameCareTaker, namePet, startDate),
-	FOREIGN KEY(usernamePetOwner) REFERENCES PetOwner(username),
-	FOREIGN KEY(usernameCareTaker) REFERENCES CareTaker(username),
-	FOREIGN KEY(namePet) REFERENCES Pet(name)
+	PRIMARY KEY(pousername, ctusername, petname, startdate),
+	FOREIGN KEY(pousername) REFERENCES AppUser(username),
+	FOREIGN KEY(ctusername) REFERENCES CareTaker(username),
+	FOREIGN KEY(petname) REFERENCES Pet(name)
 );
+
+/*----------------------------------------------------*/
