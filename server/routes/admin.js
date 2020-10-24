@@ -44,7 +44,7 @@ module.exports = (app) => {
             const { username } = req.params;
             const { newUsername, password, name, email, joindate, isactive } = req.body;
 
-            const updatePetowner = await pool.query("UPDATE PetOwner SET username = $1, password = $2, name = $3, email = $4, joindate = $5, isactive = $6 WHERE username = $7", 
+            const updateAdmin = await pool.query("UPDATE PetOwner SET username = $1, password = $2, name = $3, email = $4, joindate = $5, isactive = $6 WHERE username = $7", 
                 [newUsername, password, name, email, joindate, isactive, username]);
 
             res.json("Admin was updated!");
@@ -58,7 +58,7 @@ module.exports = (app) => {
         try {
             const { username } = req.params;
 
-            await pool.query("UPDATE PetOwner SET isactive = $1 WHERE username = $2", 
+            await pool.query("UPDATE Admin SET isactive = $1 WHERE username = $2", 
                 [false, username]);
 
             res.json("Admin was deleted!");
