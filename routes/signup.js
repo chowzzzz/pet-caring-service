@@ -17,12 +17,12 @@ router.get('/', function(req, res, next) {
 // POST
 router.post('/', function(req, res, next) {
 	// Retrieve Information
-	var username  = req.body.username.replace("'", "''");
-	var name = req.body.name.replace("'", "''");
-	var email = req.body.email.replace("'", "''");
-	var password = req.body.password.replace("'", "''");
+	var username  = req.body.username.replace("'", "''").trim();
+	var name = req.body.name.replace("'", "''").trim();
+	var email = req.body.email.replace("'", "''").trim();
+	var password = req.body.password.replace("'", "''").trim();
 	var gender = req.body.gender;
-	var address = req.body.address.replace("'", "''");
+	var address = req.body.address.replace("'", "''").trim();
 	var dob = req.body.dob;
 	
 	var today = new Date();
@@ -35,7 +35,7 @@ router.post('/', function(req, res, next) {
 			+ joindate + "','true','" 
 			+ gender + "','" + address + "','" 
 			+ dob + "')";
-	console.log(insert_query);
+
 	pool.query(insert_query, (err, data) => {
 		res.redirect('/select')
 	});
