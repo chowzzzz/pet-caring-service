@@ -11,6 +11,7 @@ var usersRouter = require('./routes/users');
 var aboutRouter = require('./routes/about');
 var selectRouter = require('./routes/select');
 var signupRouter = require('./routes/signup');
+var petOwnerSummaryRouter = require('./routes/petownersummary');
 
 var app = express();
 
@@ -29,6 +30,7 @@ app.use('/users', usersRouter);
 app.use('/about', aboutRouter);
 app.use('/select', selectRouter);
 app.use('/signup', signupRouter);
+app.use('/petownersummary', petOwnerSummaryRouter);
 
 var bodyParser = require('body-parser');
 app.use(bodyParser.json());
@@ -51,3 +53,4 @@ app.use(function(err, req, res, next) {
 });
 
 module.exports = app;
+

@@ -117,7 +117,7 @@ CREATE TABLE Job (
 	enddate DATE NOT NULL,
 	requestdate TIMESTAMP NOT NULL,
 	status VARCHAR(10),
-	rating NUMERIC(1,1),
+	rating NUMERIC(2,1),
 	paymenttype VARCHAR(20) NOT NULL,
 	deliverytype VARCHAR(20) NOT NULL,
 	amountpaid NUMERIC(31,2) NOT NULL,
