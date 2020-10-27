@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<%- include('./partials/head'); %>
+</head>
+<body>
+	<header>
+		<%- include('./partials/header'); %>
+	</header>
+	<main>
+		<div class="container rounded bg-white pl-5 pr-5 pt-3 pb-3">
+			<h1 class="mb-2">Sign In</h1> <br />
+			<div class="d-flex flex-row justify-content-between">
+				<div style="min-width: 50%">
+					<form id="html_form" action="signin" role="form" method="post">
+						<div class="form-group w-75 mb-2">
+							<label for="username">Username</label>
+							<input type="text" class="form-control" id="username" name="username"
+								placeholder="Enter your username" required>
+						</div>
+						<div class="form-group w-75 mb-2">
+							<label for="password">Password</label>
+							<input type="password" class="form-control" id="password" name="password"
+								placeholder="Enter your password" required>
+						</div>
+						<button type="submit" class="btn btn-primary">Submit</button>
+					</form>
+				</div>
+				<div class="d-flex align-items-center">
+					<img style="width: 100%" src="../images/puppy2.png" alt="puppy1">
+				</div>
+			</div>
+	</main>
+</body>
+
+</html>
