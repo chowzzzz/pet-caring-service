@@ -1,6 +1,6 @@
 var express = require('express');
-var router = express.Router();
 var passport = require('passport');
+var router = express.Router();
 
 const { Pool } = require('pg')
 const pool = new Pool({
@@ -8,14 +8,14 @@ const pool = new Pool({
 });
 
 // GET
-router.get('/', function(req, res, next) {
-	res.render('signin', { title: 'Sign In' });
+router.get('/', passport.antiMiddleware(), function(req, res, next) {
+	res.render('signin', { title: 'Sign In', isSignedIn: req.isAuthenticated() });
 });
 
 // POST
 router.post('/', passport.authenticate('local', {
     successRedirect: '/select',
-    failureRedirect: '/about'
+    failureRedirect: '/'
 }));
 
 module.exports = router;

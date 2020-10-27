@@ -21,8 +21,8 @@ var sql_query = 'SELECT * FROM appuser';
 
 router.get('/', function(req, res, next) {
 	pool.query(sql_query, (err, data) => {
-		res.render('select', { title: 'Data', data: data.rows });
-	});
+		res.render('select', { title: 'Data', data: data.rows, isSignedIn: req.isAuthenticated() });
+    });
 });
 
 module.exports = router;

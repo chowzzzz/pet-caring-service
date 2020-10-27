@@ -9,13 +9,6 @@ var passport = require('passport');
 
 require('dotenv').config();
 
-var indexRouter = require('./routes/index');
-var usersRouter = require('./routes/users');
-var aboutRouter = require('./routes/about');
-var selectRouter = require('./routes/select');
-var signupRouter = require('./routes/signup');
-var signinRouter = require('./routes/signin');
-
 var app = express();
 
 // Authentication Setup
@@ -27,6 +20,15 @@ app.use(session({
 }))
 app.use(passport.initialize())
 app.use(passport.session())
+
+var indexRouter = require('./routes/index');
+var usersRouter = require('./routes/users');
+var aboutRouter = require('./routes/about');
+var selectRouter = require('./routes/select');
+var signupRouter = require('./routes/signup');
+var signinRouter = require('./routes/signin');
+var signoutRouter = require('./routes/signout');
+var profileRouter = require('./routes/profile');
 
 // View engine setup
 app.set('views', path.join(__dirname, 'views'));
@@ -44,6 +46,8 @@ app.use('/about', aboutRouter);
 app.use('/select', selectRouter);
 app.use('/signup', signupRouter);
 app.use('/signin', signinRouter);
+app.use('/signout', signoutRouter);
+app.use('/profile', profileRouter);
 
 var bodyParser = require('body-parser');
 app.use(bodyParser.json());
