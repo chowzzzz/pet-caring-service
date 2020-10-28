@@ -1,4 +1,5 @@
 var express = require('express');
+var passport = require('passport');
 var router = express.Router();
 
 const { Pool } = require('pg')
@@ -10,8 +11,8 @@ const pool = new Pool({
 var sql_query = 'INSERT INTO appuser VALUES';
 
 // GET
-router.get('/', function(req, res, next) {
-	res.render('signup', { title: 'Sign Up' });
+router.get('/', passport.antiMiddleware(), function(req, res, next) {
+	res.render('signup', { title: 'Sign Up', isSignedIn: req.isAuthenticated() });
 });
 
 // POST
