@@ -1,6 +1,8 @@
 const passport = require('passport');
 const LocalStrategy = require('passport-local').Strategy;
 
+const sql_query = require('../sql');
+
 var authMiddleware = require('./middleware');
 var antiMiddleware = require('./antimiddle');
 
@@ -9,10 +11,8 @@ const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
 });
 
-var userpass_query = 'SELECT * FROM appuser WHERE username = $1';
-
 function findUser(username, callback) {
-	pool.query(userpass_query, [username], (err, data) => {
+	pool.query(sql_query.query.signin_query, [username], (err, data) => {
 		if(err) {
 			return callback(null);
 		}
