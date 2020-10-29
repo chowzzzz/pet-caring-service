@@ -51,7 +51,8 @@ router.get("/", function (req, res, next) {
 					username: username,
 					totalAmount: totalAmount,
 					month: month,
-					amountpaid: amountpaid
+					amountpaid: amountpaid,
+					isSignedIn: req.isAuthenticated()
 				});
 			});
 		});
