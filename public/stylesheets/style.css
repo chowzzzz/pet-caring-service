@@ -1,8 +1,66 @@
 body {
-  padding: 50px;
-  font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
+	padding: 50px;
+	font-family: "Open Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+		"Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji",
+		"Segoe UI Symbol", "Noto Color Emoji" !important;
+	font-size: 1rem;
+	font-weight: 400;
+	background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url("../images/dogbg.png");
+	background-size: cover;
+	background-blend-mode: darken;
 }
 
-a {
-  color: #00B7FF;
+.text-white-800 {
+	color: #ffffff !important;
+}
+
+.text-xs {
+	font-size: 0.8rem;
+}
+
+.text-lg {
+	font-size: 1.2rem;
+}
+
+.scroll-to-top {
+	position: fixed;
+	right: 1rem;
+	bottom: 1rem;
+	display: none;
+	width: 2.75rem;
+	height: 2.75rem;
+	text-align: center;
+	color: #fff;
+	background: rgba(90, 92, 105, 0.5);
+	line-height: 46px;
+}
+
+.scroll-to-top:focus,
+.scroll-to-top:hover {
+	color: white;
+}
+
+.scroll-to-top:hover {
+	background: #5a5c69;
+}
+
+.scroll-to-top i {
+	font-weight: 800;
+}
+
+.chart-area {
+	position: relative;
+	margin: auto;
+	height: 45vh;
+	width: 55vw;
+}
+
+.fa-dog {
+	font-size: 6vw;
+	color: #8f919e;
+}
+
+a:hover {
+	text-decoration: none !important;
+	transition-duration: 0.4s !important;
 }
