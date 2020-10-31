@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <%- include('./partials/head'); %>
+</head>
+
+<body>
+  <header>
+    <%- include('./partials/header'); %>
+  </header>
+  <main>
+    <div class="jumbotron">
+      <h1 class="display-4">Pet Owner Summary</h1>
+      <div class="container">
+        <table class="responsive-table">
+          <tr>
+            <th scope="col">Username</th>
+            <th scope="col">Name</th>
+            <th scope="col">Date of Birth</th>
+            <th scope="col">Gender</th>
+            <th scope="col">Description</th>
+            <th scope="col">Special Requirements</th>
+            <th scope="col">Personality</th>
+          </tr>
+          <% for (var i = 0; i < pets.length; i++) { %>
+          <tr>
+            <td scope="row"><%= pets[i].username %></td>
+            <td data-title="Name"><%= pets[i].name %></td>
+            <td data-title="Date of Birth" date-type="date">
+              <%= pets[i].dateofbirth.getDate() %>-<%= pets[i].dateofbirth.getMonth() %>-<%= pets[i].dateofbirth.getFullYear() %>
+            </td>
+            <td data-title="Gender"><%= pets[i].gender %></td>
+            <td data-title="Description"><%= pets[i].description %></td>
+            <td data-title="Special Requirements"><%= pets[i].specialreqs %></td>
+            <td data-title="Personality"><%= pets[i].personality %></td>
+          </tr>
+          <% } %>
+        </table>
+      </div>
+    </div>
+  </main>
+</body>
+
+</html>
