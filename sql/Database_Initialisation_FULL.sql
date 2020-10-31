@@ -125,9 +125,9 @@ CREATE TABLE Job (
 	amountpaid NUMERIC(31,2) NOT NULL,
 	review VARCHAR(1000),
 	PRIMARY KEY(pousername, ctusername, petname, startdate),
-	FOREIGN KEY(pousername) REFERENCES AppUser(username),
+	FOREIGN KEY(pousername, petname) REFERENCES Pet(username, name),
 	FOREIGN KEY(ctusername) REFERENCES CareTaker(username),
-	FOREIGN KEY(petname) REFERENCES Pet(name)
+	CHECK(pousername != ctusername)
 );
 
 /* END OF DATABASE CREATION */
@@ -2375,105 +2375,55 @@ INSERT INTO Pet VALUES ('Steven', 'Genna', '2008-06-13', 'M', 'Quality-focused c
 INSERT INTO Pet VALUES ('Burton', 'Diena', '2012-10-25', 'F', 'Operative radical encryption', 'eco-centric', 'Inverse');
 
 /*----------------------------------------------------*/
-/* Job 100*/
-INSERT INTO Job VALUES ('Dannel', 'Theda', 'Ketty', '2020-10-20', '2020-10-22', '2020-01-04 00:00:00', 'DONE', '1.4', 'CREDITCARD', 'POD', '256.74', 'Vacc arboviral dis NEC');
-INSERT INTO Job VALUES ('Marlene', 'Jocelyn', 'Kettie', '2020-09-30', '2020-10-09', '2020-01-25 00:00:00', 'PENDING', '3.6', 'CREDITCARD', 'CTP', '429.50', 'Late eff complic trauma');
-INSERT INTO Job VALUES ('Grant', 'Dalston', 'Fayth', '2020-09-18', '2020-10-24', '2020-01-28 00:00:00', 'CONFIRMED', '0.3', 'CASH', 'CTP', '388.77', 'Cholesteatoma middle ear');
-INSERT INTO Job VALUES ('Trish', 'Von', 'Sunshine', '2020-10-03', '2020-10-19', '2020-01-24 00:00:00', 'CONFIRMED', '4.1', 'CREDITCARD', 'CTP', '275.39', 'Viral exanthemata NEC');
-INSERT INTO Job VALUES ('Cristiano', 'Harlen', 'Mariam', '2020-09-26', '2020-10-19', '2020-01-05 00:00:00', 'DONE', '3.8', 'CASH', 'PTB', '396.90', 'Spec anom of eyelid NEC');
-INSERT INTO Job VALUES ('Ernesta', 'Amalita', 'Oneida', '2020-10-19', '2020-11-06', '2020-01-15 00:00:00', 'DONE', '1.7', 'CREDITCARD', 'CTP', '410.64', 'Acc poisn-solvents NEC');
-INSERT INTO Job VALUES ('Giuditta', 'Clea', 'Juana', '2020-10-21', '2020-11-11', '2020-01-08 00:00:00', 'CANCELLED', '1.1', 'CREDITCARD', 'POD', '218.90', 'Ca in situ bowel NEC/NOS');
-INSERT INTO Job VALUES ('Maxi', 'Jordanna', 'Diena', '2020-10-18', '2020-10-22', '2020-01-09 00:00:00', 'CONFIRMED', '0.6', 'CASH', 'CTP', '229.83', 'Candidal endocarditis');
-INSERT INTO Job VALUES ('Courtenay', 'Car', 'Caren', '2020-10-15', '2020-10-28', '2020-01-09 00:00:00', 'DONE', '0.4', 'CREDITCARD', 'CTP', '263.24', 'Herpes simplex eye NOS');
-INSERT INTO Job VALUES ('Louella', 'Hulda', 'Ruthann', '2020-10-02', '2020-10-19', '2020-01-17 00:00:00', 'CONFIRMED', '3.2', 'CASH', 'CTP', '274.76', 'Hx-hypospadias');
-INSERT INTO Job VALUES ('Eamon', 'Lexie', 'Cassey', '2020-10-27', '2020-11-19', '2020-01-12 00:00:00', 'DONE', '2.7', 'CREDITCARD', 'PTB', '447.68', 'Dis external ear NOS');
-INSERT INTO Job VALUES ('Dynah', 'Fern', 'Oneida', '2020-10-02', '2020-10-04', '2020-01-27 00:00:00', 'CONFIRMED', '4.3', 'CREDITCARD', 'PTB', '405.95', 'Rheumatic heart failure');
-INSERT INTO Job VALUES ('Florina', 'Morten', 'Lauretta', '2020-10-26', '2020-11-05', '2020-01-04 00:00:00', 'CANCELLED', '4.5', 'CASH', 'POD', '214.28', 'Primary hyperparathyroid');
-INSERT INTO Job VALUES ('Emmi', 'Kitti', 'Dulcie', '2020-10-28', '2020-11-20', '2020-01-16 00:00:00', 'CANCELLED', '4.3', 'CASH', 'POD', '287.81', 'Alcohol mental disor NEC');
-INSERT INTO Job VALUES ('Pauly', 'Ram', 'Letisha', '2020-10-11', '2020-11-03', '2020-01-29 00:00:00', 'DONE', '4.8', 'CASH', 'POD', '317.78', 'Neuritis of preg-antepar');
-INSERT INTO Job VALUES ('Lorry', 'Etienne', 'Sharai', '2020-10-21', '2020-11-04', '2020-01-17 00:00:00', 'DONE', '3.6', 'CASH', 'POD', '497.25', 'Open wound of scapula');
-INSERT INTO Job VALUES ('Clementius', 'Vaughan', 'Sunshine', '2020-10-12', '2020-11-09', '2020-01-15 00:00:00', 'DONE', '0.2', 'CASH', 'CTP', '340.94', 'Urinary hesitancy');
-INSERT INTO Job VALUES ('Essa', 'Karoly', 'Ailyn', '2020-10-06', '2020-11-05', '2020-01-18 00:00:00', 'CONFIRMED', '1.8', 'CASH', 'PTB', '241.50', 'Edema in preg-delivered');
-INSERT INTO Job VALUES ('Zelma', 'Reina', 'Kettie', '2020-10-24', '2020-10-24', '2020-01-02 00:00:00', 'CANCELLED', '3.5', 'CASH', 'CTP', '396.06', 'Fx lower forearm NOS-opn');
-INSERT INTO Job VALUES ('Blake', 'Ephrayim', 'Ketty', '2020-10-20', '2020-10-21', '2020-01-19 00:00:00', 'DONE', '5.0', 'CREDITCARD', 'POD', '453.20', 'Myotonic cataract');
-INSERT INTO Job VALUES ('Rozelle', 'Dierdre', 'Joyann', '2020-10-29', '2020-11-09', '2020-01-08 00:00:00', 'PENDING', '3.2', 'CREDITCARD', 'POD', '332.40', 'Inflamm polyarthrop NEC');
-INSERT INTO Job VALUES ('Timmie', 'Lyda', 'Alicia', '2020-10-25', '2020-11-04', '2020-01-27 00:00:00', 'CANCELLED', '2.6', 'CREDITCARD', 'PTB', '442.08', 'Family hx-anemia');
-INSERT INTO Job VALUES ('Malcolm', 'Albertine', 'Brittney', '2020-03-10', '2020-06-10', '2020-01-22 00:00:00', 'PENDING', '4.6', 'CREDITCARD', 'PTB', '389.41', 'Choledochlith/gb inf NEC');
-INSERT INTO Job VALUES ('Dorthy', 'Florentia', 'Diena', '2020-04-01', '2020-05-15', '2020-01-22 00:00:00', 'CANCELLED', '3.5', 'CREDITCARD', 'PTB', '453.06', '1st deg burn wrist');
-INSERT INTO Job VALUES ('Albertine', 'Anallise', 'Dorie', '2020-03-16', '2020-05-23', '2020-01-14 00:00:00', 'PENDING', '3.2', 'CASH', 'POD', '462.78', 'Sprain sacroiliac');
-INSERT INTO Job VALUES ('Carlynne', 'Fernande', 'Tabatha', '2020-04-14', '2020-06-19', '2020-01-17 00:00:00', 'CONFIRMED', '1.7', 'CASH', 'POD', '456.42', 'Adjustment reaction NOS');
-INSERT INTO Job VALUES ('Erinn', 'Lucky', 'Edeline', '2020-03-29', '2020-05-19', '2020-01-04 00:00:00', 'CANCELLED', '3.9', 'CREDITCARD', 'POD', '442.24', 'Fx c6 vertebra-open');
-INSERT INTO Job VALUES ('Lowell', 'Grant', 'Marj', '2020-04-10', '2020-06-01', '2020-01-10 00:00:00', 'DONE', '1.6', 'CREDITCARD', 'POD', '434.84', 'Confusional arousals');
-INSERT INTO Job VALUES ('Sasha', 'Janos', 'Alla', '2020-03-07', '2020-06-22', '2020-01-19 00:00:00', 'PENDING', '2.7', 'CREDITCARD', 'POD', '476.02', 'Ankylosis-forearm');
-INSERT INTO Job VALUES ('Hedvig', 'Dukie', 'Alicia', '2020-04-04', '2020-06-03', '2020-01-10 00:00:00', 'DONE', '4.6', 'CREDITCARD', 'POD', '258.88', 'Contusion of finger');
-INSERT INTO Job VALUES ('Brody', 'Oswell', 'Ainsley', '2020-04-14', '2020-06-29', '2020-01-16 00:00:00', 'CANCELLED', '4.2', 'CREDITCARD', 'CTP', '223.28', 'Exfol d/t eryth <10% bdy');
-INSERT INTO Job VALUES ('Debbi', 'Torr', 'Carmon', '2020-03-29', '2020-05-29', '2020-01-28 00:00:00', 'CONFIRMED', '1.3', 'CREDITCARD', 'CTP', '413.94', 'Adv eff vitamins NEC');
-INSERT INTO Job VALUES ('Chiarra', 'Jocelyn', 'Jacquelynn', '2020-04-27', '2020-05-27', '2020-01-02 00:00:00', 'PENDING', '4.5', 'CASH', 'POD', '319.26', 'Acq total absnc pancreas');
-INSERT INTO Job VALUES ('Morten', 'Homer', 'Alicia', '2020-04-16', '2020-06-03', '2020-01-05 00:00:00', 'PENDING', '4.7', 'CASH', 'PTB', '313.45', 'Glaucoma w vascular dis');
-INSERT INTO Job VALUES ('Hart', 'Dalston', 'Othelia', '2020-04-23', '2020-05-20', '2020-01-27 00:00:00', 'PENDING', '0.2', 'CREDITCARD', 'POD', '257.73', 'Status amput great toe');
-INSERT INTO Job VALUES ('Merill', 'Hilarius', 'Yalonda', '2020-03-25', '2020-06-06', '2020-01-09 00:00:00', 'PENDING', '3.7', 'CREDITCARD', 'POD', '281.86', 'Senile ectropion');
-INSERT INTO Job VALUES ('Cristiano', 'Gregorius', 'Mariam', '2020-04-24', '2020-05-04', '2020-01-11 00:00:00', 'PENDING', '4.7', 'CREDITCARD', 'CTP', '428.25', 'Trigger finger');
-INSERT INTO Job VALUES ('Steven', 'Wells', 'Enid', '2020-03-16', '2020-05-17', '2020-01-22 00:00:00', 'DONE', '2.9', 'CASH', 'PTB', '473.03', 'DMII ophth nt st uncntrl');
-INSERT INTO Job VALUES ('Debbi', 'Kylie', 'Kylila', '2020-03-11', '2020-05-17', '2020-01-11 00:00:00', 'DONE', '4.5', 'CREDITCARD', 'CTP', '413.36', 'Inlet contract-antepart');
-INSERT INTO Job VALUES ('Brendon', 'Hart', 'Clarine', '2020-04-28', '2020-06-17', '2020-01-02 00:00:00', 'DONE', '4.0', 'CASH', 'PTB', '499.42', 'Fx low radius w ulna-opn');
-INSERT INTO Job VALUES ('Bell', 'Jami', 'Brittney', '2020-04-12', '2020-06-24', '2020-01-07 00:00:00', 'DONE', '1.5', 'CASH', 'POD', '397.22', 'Resp sys/chest symp NEC');
-INSERT INTO Job VALUES ('Cobbie', 'Oralie', 'Henrieta', '2020-04-26', '2020-05-19', '2020-01-25 00:00:00', 'CONFIRMED', '0.9', 'CREDITCARD', 'PTB', '209.66', 'Fall from train-ped cycl');
-INSERT INTO Job VALUES ('Sheila', 'Berenice', 'Zia', '2020-03-20', '2020-06-27', '2020-01-24 00:00:00', 'CANCELLED', '0.9', 'CASH', 'CTP', '477.31', 'Drug dependen-del w p/p');
-INSERT INTO Job VALUES ('Irma', 'Dorisa', 'Brittan', '2020-03-30', '2020-06-18', '2020-01-24 00:00:00', 'CONFIRMED', '2.0', 'CASH', 'POD', '277.26', 'Mv-train coll-st car');
-INSERT INTO Job VALUES ('Jeannie', 'Waverley', 'Fayth', '2020-03-15', '2020-05-05', '2020-01-04 00:00:00', 'CANCELLED', '4.3', 'CASH', 'POD', '347.65', 'Expulsive choroid hemorr');
-INSERT INTO Job VALUES ('Cordelia', 'Lulita', 'Claudelle', '2020-04-29', '2020-05-07', '2020-01-05 00:00:00', 'CONFIRMED', '2.9', 'CREDITCARD', 'PTB', '401.09', 'TB encephalit-exam unkn');
-INSERT INTO Job VALUES ('Felicio', 'Homer', 'Faina', '2020-03-04', '2020-05-28', '2020-01-20 00:00:00', 'PENDING', '1.4', 'CASH', 'PTB', '250.71', 'Poisoning-measles vaccin');
-INSERT INTO Job VALUES ('Eberhard', 'Judah', 'Lelah', '2020-03-19', '2020-05-12', '2020-01-20 00:00:00', 'CANCELLED', '3.7', 'CASH', 'POD', '337.89', 'Use aromatase inhibitors');
-INSERT INTO Job VALUES ('Alejandrina', 'Monika', 'Adelheid', '2020-03-31', '2020-05-31', '2020-01-08 00:00:00', 'CONFIRMED', '0.1', 'CREDITCARD', 'POD', '470.29', 'TB of hip-exam unkn');
-INSERT INTO Job VALUES ('Worden', 'Loise', 'Velma', '2020-04-18', '2020-06-07', '2020-01-28 00:00:00', 'CONFIRMED', '0.2', 'CREDITCARD', 'POD', '497.52', 'Grand multiparity-antepa');
-INSERT INTO Job VALUES ('Adrienne', 'Richard', 'Sharai', '2020-03-05', '2020-05-14', '2020-01-18 00:00:00', 'CONFIRMED', '1.2', 'CASH', 'PTB', '407.12', 'Healthy person w sick');
-INSERT INTO Job VALUES ('Cass', 'Reinwald', 'Ainsley', '2020-03-27', '2020-05-17', '2020-01-27 00:00:00', 'CANCELLED', '2.5', 'CASH', 'CTP', '449.37', 'Subclavian steal syndrom');
-INSERT INTO Job VALUES ('Worden', 'Reinwald', 'Alina', '2020-03-25', '2020-05-19', '2020-01-02 00:00:00', 'PENDING', '2.1', 'CASH', 'POD', '432.17', 'Metabolic encephalopathy');
-INSERT INTO Job VALUES ('Rhys', 'Ursola', 'Brittney', '2020-03-03', '2020-06-10', '2020-01-24 00:00:00', 'CONFIRMED', '2.8', 'CREDITCARD', 'CTP', '344.61', 'Opn cerebe lac-deep coma');
-INSERT INTO Job VALUES ('Arturo', 'Gran', 'Yalonda', '2020-04-18', '2020-05-16', '2020-01-25 00:00:00', 'PENDING', '1.6', 'CASH', 'CTP', '482.06', 'Chr T & A dis NEC');
-INSERT INTO Job VALUES ('Sigfrid', 'Gwenni', 'Diena', '2020-03-14', '2020-06-25', '2020-01-17 00:00:00', 'PENDING', '4.1', 'CREDITCARD', 'CTP', '439.67', 'Malig neo ascend colon');
-INSERT INTO Job VALUES ('Morly', 'Peyton', 'Lelah', '2020-03-15', '2020-06-05', '2020-01-29 00:00:00', 'PENDING', '4.1', 'CASH', 'PTB', '442.44', 'Congenital hypothyroidsm');
-INSERT INTO Job VALUES ('Crystie', 'Dacie', 'Harmonie', '2020-04-25', '2020-06-08', '2020-01-19 00:00:00', 'PENDING', '4.0', 'CREDITCARD', 'CTP', '315.75', 'Chr pept ulc w hem/perf');
-INSERT INTO Job VALUES ('Burke', 'Von', 'Diena', '2020-03-13', '2020-05-31', '2020-01-14 00:00:00', 'DONE', '4.1', 'CASH', 'POD', '395.05', 'TB of knee-micro dx');
-INSERT INTO Job VALUES ('Saxon', 'Evita', 'Kirsten', '2020-04-07', '2020-06-15', '2020-01-22 00:00:00', 'DONE', '1.1', 'CASH', 'PTB', '380.13', 'Pneumococcal meningitis');
-INSERT INTO Job VALUES ('Eilis', 'Amery', 'Genna', '2020-04-28', '2020-05-17', '2020-01-09 00:00:00', 'CONFIRMED', '4.2', 'CASH', 'PTB', '345.98', 'Subdural hem w opn wound');
-INSERT INTO Job VALUES ('Uta', 'Nickie', 'Vivyanne', '2020-04-02', '2020-05-28', '2020-01-17 00:00:00', 'DONE', '4.2', 'CASH', 'CTP', '314.86', 'Diastasis of muscle');
-INSERT INTO Job VALUES ('Elroy', 'Horace', 'Lelah', '2020-03-05', '2020-06-12', '2020-01-01 00:00:00', 'DONE', '3.1', 'CREDITCARD', 'POD', '238.36', 'Abn retina correspond');
-INSERT INTO Job VALUES ('Zacharia', 'Doralynne', 'Joye', '2020-03-17', '2020-06-15', '2020-01-20 00:00:00', 'CANCELLED', '3.1', 'CASH', 'CTP', '357.60', 'Infect dis NEC-antepart');
-INSERT INTO Job VALUES ('Karoly', 'Hillyer', 'Faina', '2020-03-03', '2020-05-19', '2020-01-27 00:00:00', 'CONFIRMED', '1.1', 'CREDITCARD', 'CTP', '424.85', 'Cerebell lacer-deep coma');
-INSERT INTO Job VALUES ('Rafaello', 'Dierdre', 'Randie', '2020-03-10', '2020-05-03', '2020-01-08 00:00:00', 'DONE', '2.9', 'CASH', 'CTP', '399.92', 'Spin bif w hydrceph-lumb');
-INSERT INTO Job VALUES ('Earlie', 'Byrom', 'Amandie', '2020-04-01', '2020-05-22', '2020-01-02 00:00:00', 'PENDING', '3.2', 'CASH', 'PTB', '421.10', 'Conduction disorder NOS');
-INSERT INTO Job VALUES ('Spike', 'Isidoro', 'Jacquelynn', '2020-03-06', '2020-05-20', '2020-01-11 00:00:00', 'CONFIRMED', '0.1', 'CASH', 'POD', '261.75', 'Echo virus meningitis');
-INSERT INTO Job VALUES ('Frankie', 'Uta', 'Janaye', '2020-03-29', '2020-05-11', '2020-01-27 00:00:00', 'CONFIRMED', '2.3', 'CASH', 'CTP', '391.87', 'Fx c1 vertebra-open');
-INSERT INTO Job VALUES ('Cleve', 'Dina', 'Ronni', '2020-04-13', '2020-06-09', '2020-01-19 00:00:00', 'PENDING', '4.1', 'CREDITCARD', 'POD', '479.97', 'Assault-pois w solid/liq');
-INSERT INTO Job VALUES ('Lettie', 'Janina', 'Deeanne', '2020-04-28', '2020-06-19', '2020-01-15 00:00:00', 'CANCELLED', '4.4', 'CREDITCARD', 'CTP', '420.59', 'Tox nod goiter no crisis');
-INSERT INTO Job VALUES ('Peg', 'Barr', 'Vivyanne', '2020-03-09', '2020-06-01', '2020-01-16 00:00:00', 'PENDING', '3.6', 'CREDITCARD', 'CTP', '437.10', 'Joint dis NOS-mult jts');
-INSERT INTO Job VALUES ('Donielle', 'Carolyn', 'Amandie', '2020-04-05', '2020-06-30', '2020-01-04 00:00:00', 'PENDING', '0.2', 'CREDITCARD', 'PTB', '428.23', 'Loc osteoarth NOS-up/arm');
-INSERT INTO Job VALUES ('Lilllie', 'Giacopo', 'Dara', '2020-03-14', '2020-06-15', '2020-01-19 00:00:00', 'PENDING', '1.1', 'CREDITCARD', 'CTP', '273.96', 'Osteomyelitis NOS-l/leg');
-INSERT INTO Job VALUES ('Beryle', 'Darnell', 'Ruthann', '2020-03-06', '2020-06-14', '2020-01-04 00:00:00', 'PENDING', '4.7', 'CREDITCARD', 'CTP', '424.18', 'Injury axillary nerve');
-INSERT INTO Job VALUES ('Rebe', 'Stafford', 'Deeanne', '2020-03-25', '2020-06-17', '2020-01-28 00:00:00', 'PENDING', '4.0', 'CASH', 'CTP', '488.32', 'Fet/plac prob NEC-antepa');
-INSERT INTO Job VALUES ('Gianna', 'Rozelle', 'Faina', '2020-03-09', '2020-06-24', '2020-01-18 00:00:00', 'CONFIRMED', '0.7', 'CREDITCARD', 'PTB', '296.02', 'Pulp/periapical dis NEC');
-INSERT INTO Job VALUES ('Paulie', 'Judah', 'Kettie', '2020-03-15', '2020-06-23', '2020-01-04 00:00:00', 'CONFIRMED', '3.5', 'CASH', 'PTB', '410.33', 'Fx radius w ulna NOS-opn');
-INSERT INTO Job VALUES ('Cammi', 'Bernardina', 'Cloris', '2020-03-10', '2020-06-08', '2020-01-19 00:00:00', 'PENDING', '0.7', 'CREDITCARD', 'CTP', '419.59', 'Echinococc granul lung');
-INSERT INTO Job VALUES ('Barney', 'Micaela', 'Retha', '2020-03-08', '2020-05-03', '2020-01-17 00:00:00', 'PENDING', '4.3', 'CREDITCARD', 'PTB', '367.86', 'Malig neo penis NOS');
-INSERT INTO Job VALUES ('Morly', 'Heall', 'Dulcie', '2020-03-06', '2020-06-23', '2020-01-03 00:00:00', 'PENDING', '3.8', 'CASH', 'POD', '303.87', 'Sprain sternoclavicular');
-INSERT INTO Job VALUES ('Georgetta', 'Lars', 'Meriel', '2020-03-17', '2020-05-04', '2020-01-16 00:00:00', 'DONE', '3.4', 'CASH', 'POD', '476.66', 'Fx capitate bone-open');
-INSERT INTO Job VALUES ('Albertine', 'Dion', 'Genna', '2020-04-02', '2020-05-07', '2020-01-17 00:00:00', 'DONE', '3.8', 'CREDITCARD', 'POD', '250.76', 'Narclpsy w/o cat oth dis');
-INSERT INTO Job VALUES ('Bob', 'Raleigh', 'Conni', '2020-03-15', '2020-06-15', '2020-01-25 00:00:00', 'CANCELLED', '0.4', 'CREDITCARD', 'POD', '342.98', 'Deficiencies of head');
-INSERT INTO Job VALUES ('Tonya', 'Eilis', 'Henrieta', '2020-04-26', '2020-06-09', '2020-01-30 00:00:00', 'DONE', '0.3', 'CREDITCARD', 'POD', '235.27', 'Oth deposit w metab dis');
-INSERT INTO Job VALUES ('Maurice', 'Frannie', 'Faina', '2020-04-11', '2020-05-07', '2020-01-14 00:00:00', 'PENDING', '2.6', 'CASH', 'PTB', '381.92', 'Hypoglossal nerve dis');
-INSERT INTO Job VALUES ('Ulberto', 'Steven', 'Gilbertine', '2020-03-28', '2020-05-22', '2020-01-26 00:00:00', 'CONFIRMED', '3.1', 'CREDITCARD', 'POD', '436.76', 'Mitral stenosis w insuff');
-INSERT INTO Job VALUES ('Wesley', 'Berty', 'Larisa', '2020-04-30', '2020-06-30', '2020-01-03 00:00:00', 'CONFIRMED', '1.4', 'CASH', 'PTB', '281.61', 'Intest infec e coli NOS');
-INSERT INTO Job VALUES ('Frederica', 'Sloan', 'Velma', '2020-03-08', '2020-06-04', '2020-01-05 00:00:00', 'PENDING', '3.2', 'CREDITCARD', 'CTP', '317.65', 'Opn skl/oth fx-deep coma');
-INSERT INTO Job VALUES ('Tyler', 'Pauly', 'Mickie', '2020-04-29', '2020-05-29', '2020-01-10 00:00:00', 'DONE', '1.7', 'CREDITCARD', 'PTB', '214.71', 'Acc poisn-petroleum fuel');
-INSERT INTO Job VALUES ('Beryle', 'Daren', 'Clarine', '2020-03-31', '2020-06-12', '2020-01-07 00:00:00', 'DONE', '2.9', 'CREDITCARD', 'CTP', '496.76', 'Cl skl w oth fx-mod coma');
-INSERT INTO Job VALUES ('Rossy', 'Fern', 'Angy', '2020-04-04', '2020-05-24', '2020-01-18 00:00:00', 'CANCELLED', '3.6', 'CREDITCARD', 'CTP', '300.35', 'Insect bite finger-infec');
-INSERT INTO Job VALUES ('Hedy', 'Joseito', 'Kettie', '2020-04-21', '2020-05-29', '2020-01-12 00:00:00', 'PENDING', '4.8', 'CASH', 'PTB', '293.92', 'Prolong 1st stage-antepa');
-INSERT INTO Job VALUES ('Adrienne', 'Shari', 'Vivyanne', '2020-03-18', '2020-06-25', '2020-01-01 00:00:00', 'CANCELLED', '1.5', 'CASH', 'PTB', '375.70', 'Cl skull fx NEC-coma NOS');
-INSERT INTO Job VALUES ('Dulsea', 'Jami', 'Retha', '2020-04-03', '2020-05-21', '2020-01-03 00:00:00', 'PENDING', '0.1', 'CREDITCARD', 'PTB', '339.69', 'Family hx-leukemia');
-INSERT INTO Job VALUES ('Florentia', 'Peyton', 'Carmon', '2020-04-04', '2020-05-31', '2020-01-08 00:00:00', 'CANCELLED', '4.8', 'CREDITCARD', 'PTB', '481.61', 'Chr eustachian salping');
-INSERT INTO Job VALUES ('Merrielle', 'Baron', 'Letisha', '2020-03-07', '2020-05-12', '2020-01-30 00:00:00', 'CANCELLED', '3.5', 'CASH', 'PTB', '418.07', 'Acc poison-cholinergics');
-INSERT INTO Job VALUES ('Morissa', 'Brit', 'Austin', '2020-03-13', '2020-06-09', '2020-01-27 00:00:00', 'CONFIRMED', '2.0', 'CREDITCARD', 'CTP', '440.16', 'Rflx sym dystrph oth st');
-INSERT INTO Job VALUES ('Bell', 'Janina', 'Genna', '2020-03-22', '2020-06-30', '2020-01-31 00:00:00', 'PENDING', '2.4', 'CREDITCARD', 'PTB', '339.09', 'Rheumatic heart dis NOS');
-INSERT INTO Job VALUES ('Amalita', 'Janek', 'Vivyanne', '2020-04-09', '2020-06-15', '2020-01-04 00:00:00', 'CANCELLED', '3.6', 'CREDITCARD', 'CTP', '407.44', 'Villonod synovit-unspec');
+/* Job 50*/
+INSERT INTO Job VALUES ('Filbert', 'Waylen', 'Meriel', '2020-10-07', '2021-01-23', '2020-08-31', 'CANCELLED', '3.2', 'CREDITCARD', 'POD', '691.19', 'Fluency Treatment using Speech Analysis Equipment');
+INSERT INTO Job VALUES ('Tanney', 'Edythe', 'Oneida', '2020-11-24', '2021-01-08', '2020-09-28', 'PENDING', '2.7', 'CREDITCARD', 'PTB', '445.77', 'HDR Brachytherapy of Parathyroid Glands w Californium 252');
+INSERT INTO Job VALUES ('Nataniel', 'Eulalie', 'Cloris', '2020-10-29', '2021-01-07', '2020-09-08', 'CONFIRMED', '2.5', 'CREDITCARD', 'PTB', '892.83', 'Beam Radiation of Cervix using Photons 1 - 10 MeV');
+INSERT INTO Job VALUES ('Evelin', 'Richart', 'Austin', '2020-10-13', '2020-12-02', '2020-09-09', 'DONE', '2.1', 'CREDITCARD', 'CTP', '907.44', 'LDR Brachytherapy of Diaphragm using Iridium 192');
+INSERT INTO Job VALUES ('Pascale', 'Zebulen', 'Melinde', '2020-10-24', '2021-01-20', '2020-09-10', 'PENDING', '0.9', 'CASH', 'PTB', '398.47', 'Wound Management Treatment of Integu Body using Prosthesis');
+INSERT INTO Job VALUES ('Janek', 'Alisander', 'Conni', '2020-11-05', '2020-12-24', '2020-09-15', 'PENDING', '0.1', 'CASH', 'POD', '643.52', 'Beam Radiation of Neck Lymphatics using Photons 1 - 10 MeV');
+INSERT INTO Job VALUES ('Brig', 'Janey', 'Zena', '2020-11-11', '2021-01-20', '2020-09-08', 'CANCELLED', '3.0', 'CREDITCARD', 'POD', '672.21', 'Auditory Processing Assessment using Other Equipment');
+INSERT INTO Job VALUES ('Ricki', 'Anabelle', 'Raphaela', '2020-11-03', '2021-01-19', '2020-09-05', 'CANCELLED', '0.0', 'CREDITCARD', 'CTP', '380.64', 'Therapeutic Massage');
+INSERT INTO Job VALUES ('Hurlee', 'Arel', 'Brandea', '2020-10-09', '2020-12-09', '2020-09-10', 'CANCELLED', '3.7', 'CREDITCARD', 'POD', '544.66', 'Fluoroscopy of Pharynx and Epiglottis');
+INSERT INTO Job VALUES ('Patrizius', 'Grant', 'Retha', '2020-10-25', '2021-01-17', '2020-09-09', 'DONE', '2.3', 'CASH', 'POD', '465.96', 'Computerized Tomography (CT Scan) of Bi Temporomand Jt');
+INSERT INTO Job VALUES ('Weidar', 'Garth', 'Maris', '2020-10-04', '2021-01-14', '2020-09-08', 'CONFIRMED', '3.2', 'CREDITCARD', 'PTB', '542.12', 'Muscle Perform Assess Neuro Up Back/UE w Assist Equip');
+INSERT INTO Job VALUES ('Rickard', 'Berenice', 'Harmonie', '2020-10-17', '2021-01-10', '2020-09-15', 'CONFIRMED', '1.7', 'CREDITCARD', 'CTP', '711.19', 'Plaque Radiation of Skull');
+INSERT INTO Job VALUES ('Pascale', 'Antoni', 'Zitella', '2020-10-22', '2021-01-05', '2020-09-06', 'DONE', '2.5', 'CASH', 'CTP', '901.34', 'Fluoroscopy of R Low Extrem Vein using Oth Contrast');
+INSERT INTO Job VALUES ('Allard', 'Giuditta', 'Ketty', '2020-10-14', '2021-01-08', '2020-09-08', 'DONE', '1.8', 'CASH', 'PTB', '667.91', 'HDR Brachytherapy of Pituitary Gland using Palladium 103');
+INSERT INTO Job VALUES ('Fairfax', 'Richard', 'Rea', '2020-11-11', '2021-01-05', '2020-09-03', 'CANCELLED', '0.2', 'CASH', 'CTP', '491.17', 'Planar Nuclear Medicine Imaging of Abd using Thallium 201');
+INSERT INTO Job VALUES ('Maurice', 'Mortie', 'Norina', '2020-11-19', '2020-12-26', '2020-09-11', 'CANCELLED', '0.9', 'CASH', 'POD', '905.17', 'Ultrasonography of Liver and Spleen');
+INSERT INTO Job VALUES ('Hunter', 'Karoly', 'Mariam', '2020-11-24', '2020-12-18', '2020-09-02', 'PENDING', '4.7', 'CASH', 'CTP', '839.3', 'Coord/Dexterity Trmt Integu Low Back/LE w Orthosis');
+INSERT INTO Job VALUES ('Ulberto', 'Tiffy', 'Dulcie', '2020-10-18', '2020-12-11', '2020-09-22', 'PENDING', '4.2', 'CREDITCARD', 'CTP', '924.75', 'Somatosens Evoked Potentials Assess w Somatosensory Equip');
+INSERT INTO Job VALUES ('Fran', 'Valencia', 'Ruthann', '2020-11-05', '2021-01-16', '2020-09-03', 'PENDING', '4.1', 'CASH', 'PTB', '616.04', 'Magnetic Resonance Imaging (MRI) of Right Kidney');
+INSERT INTO Job VALUES ('Brig', 'Hillard', 'Zena', '2020-11-14', '2021-01-09', '2020-09-12', 'DONE', '2.3', 'CASH', 'CTP', '608.5', 'MRI of Uterus using Oth Contrast');
+INSERT INTO Job VALUES ('Palm', 'Wade', 'Trixi', '2020-11-04', '2020-12-11', '2020-09-03', 'DONE', '4.4', 'CREDITCARD', 'POD', '519.11', 'Stereotactic Other Photon Radiosurgery of Chest');
+INSERT INTO Job VALUES ('Kevin', 'Carmel', 'Cassey', '2020-10-22', '2020-12-04', '2020-09-05', 'DONE', '1.6', 'CREDITCARD', 'POD', '914.72', 'Plaque Radiation of Nasopharynx');
+INSERT INTO Job VALUES ('Allard', 'Cathy', 'Ketty', '2020-10-04', '2020-12-24', '2020-09-01', 'DONE', '0.1', 'CASH', 'POD', '645.1', 'Magnetic Resonance Imaging (MRI) of Pelvic Region');
+INSERT INTO Job VALUES ('Bob', 'Fernande', 'Dara', '2020-10-08', '2020-12-09', '2020-09-11', 'CONFIRMED', '0.4', 'CASH', 'PTB', '864.58', 'CT Scan of R Elbow using Oth Contrast');
+INSERT INTO Job VALUES ('Reamonn', 'Palm', 'Sophi', '2020-11-08', '2021-01-18', '2020-09-10', 'DONE', '0.1', 'CASH', 'PTB', '848.7', 'HDR Brachytherapy of Pineal Body using Oth Isotope');
+INSERT INTO Job VALUES ('Lane', 'Pietra', 'Enid', '2020-10-21', '2020-12-09', '2020-09-12', 'CANCELLED', '4.7', 'CASH', 'CTP', '969.26', 'Immobilization of Left Lower Arm using Other Device');
+INSERT INTO Job VALUES ('Fairfax', 'Phillie', 'Rea', '2020-10-15', '2021-01-30', '2020-09-04', 'CONFIRMED', '0.8', 'CASH', 'CTP', '896.15', 'Plain Radiography of Right Epididymis using Other Contrast');
+INSERT INTO Job VALUES ('Maurice', 'Irma', 'Norina', '2020-11-05', '2021-01-01', '2020-09-28', 'CANCELLED', '3.6', 'CREDITCARD', 'CTP', '380.92', 'Beam Radiation of Chest Wall using Neutrons');
+INSERT INTO Job VALUES ('Pepito', 'Fernande', 'Larisa', '2020-11-12', '2021-01-12', '2020-09-05', 'PENDING', '4.1', 'CASH', 'CTP', '696.0', 'CT Scan of Lumbar Spine using L Osm Contrast');
+INSERT INTO Job VALUES ('Miltie', 'Pauly', 'Zenia', '2020-10-11', '2021-01-12', '2020-09-24', 'DONE', '1.0', 'CREDITCARD', 'CTP', '528.46', 'CT Scan of R Toe using H Osm Contrast');
+INSERT INTO Job VALUES ('Lorry', 'Cobbie', 'Juana', '2020-10-03', '2020-12-07', '2020-09-20', 'PENDING', '0.3', 'CREDITCARD', 'PTB', '369.16', 'Fluoroscopy of Left Pelvic (Iliac) Veins');
+INSERT INTO Job VALUES ('Galvan', 'Harlen', 'Vivyanne', '2020-10-28', '2020-12-15', '2020-09-10', 'DONE', '3.2', 'CASH', 'CTP', '382.44', 'Compression of R Inguinal Region using Intermit Pressure Dev');
+INSERT INTO Job VALUES ('Hurlee', 'Vaughan', 'Brandea', '2020-11-28', '2020-12-27', '2020-09-01', 'CANCELLED', '1.1', 'CASH', 'PTB', '876.82', 'Fluoroscopy of Left Ribs');
+INSERT INTO Job VALUES ('Adam', 'Kane', 'Ronni', '2020-10-29', '2021-01-10', '2020-09-04', 'CONFIRMED', '1.4', 'CREDITCARD', 'POD', '972.65', 'Articulation/Phonology Treatment');
+INSERT INTO Job VALUES ('Waldon', 'Suzi', 'Jolene', '2020-10-16', '2020-12-14', '2020-09-16', 'CANCELLED', '0.8', 'CASH', 'CTP', '405.28', 'CT Scan of R Ankle using L Osm Contrast');
+INSERT INTO Job VALUES ('Conan', 'Francklin', 'Sharai', '2020-11-02', '2020-12-23', '2020-09-23', 'PENDING', '1.2', 'CASH', 'CTP', '683.46', 'CT Scan of Bi Verteb Art using L Osm Contrast');
+INSERT INTO Job VALUES ('Pascale', 'Arline', 'Zitella', '2020-10-14', '2021-01-09', '2020-09-13', 'DONE', '1.3', 'CASH', 'PTB', '560.69', 'HDR Brachytherapy of Chest using Palladium 103');
+INSERT INTO Job VALUES ('Nero', 'Adoree', 'Alla', '2020-11-09', '2021-01-14', '2020-09-07', 'CANCELLED', '0.8', 'CASH', 'CTP', '725.89', 'HDR Brachytherapy of Nose using Californium 252');
+INSERT INTO Job VALUES ('Reamonn', 'Dalton', 'Sophi', '2020-10-26', '2020-12-13', '2020-09-15', 'DONE', '2.7', 'CREDITCARD', 'CTP', '412.71', 'CT Scan of Bi Pulm Vein using Intravasc Optic Cohere');
+INSERT INTO Job VALUES ('Lane', 'Burton', 'Enid', '2020-10-21', '2021-01-09', '2020-09-01', 'PENDING', '0.1', 'CASH', 'PTB', '770.2', 'MRI of L Testicle using Oth Contrast');
+INSERT INTO Job VALUES ('Conan', 'Pascal', 'Sharai', '2020-11-01', '2021-01-22', '2020-09-09', 'PENDING', '3.2', 'CREDITCARD', 'PTB', '373.31', 'Muscle Performance Assessment of Integu Body using Orthosis');
+INSERT INTO Job VALUES ('Joshia', 'Rasla', 'Anthiathia', '2020-10-12', '2020-12-21', '2020-09-15', 'DONE', '0.1', 'CREDITCARD', 'CTP', '591.49', 'Fluoroscopy of Head and Neck using Other Contrast');
+INSERT INTO Job VALUES ('Andras', 'Carmina', 'Rochell', '2020-10-14', '2021-01-25', '2020-09-09', 'CONFIRMED', '0.2', 'CREDITCARD', 'CTP', '927.59', 'Feeding/Eating Treatment using Other Equipment');
+INSERT INTO Job VALUES ('Bax', 'Elka', 'Claudelle', '2020-10-18', '2020-12-11', '2020-09-03', 'CANCELLED', '2.7', 'CREDITCARD', 'POD', '627.7', 'Removal of Pressure Dressing on Back');
+INSERT INTO Job VALUES ('Slade', 'Phillie', 'Fayth', '2020-11-15', '2021-01-22', '2020-09-13', 'PENDING', '3.3', 'CASH', 'CTP', '846.44', 'Ergonomics and Body Mechanics Assessment using Prosthesis');
+INSERT INTO Job VALUES ('Nichols', 'Lulita', 'Janaye', '2020-10-02', '2021-01-07', '2020-09-08', 'CONFIRMED', '2.8', 'CREDITCARD', 'POD', '320.66', 'Wound Mgmt Trmt Musculosk Low Back/LE w Prosthesis');
+INSERT INTO Job VALUES ('Decca', 'Napoleon', 'Lelah', '2020-10-17', '2021-01-07', '2020-09-19', 'CANCELLED', '4.7', 'CREDITCARD', 'PTB', '371.32', 'LDR Brachytherapy of Peripheral Nerve using Palladium 103');
+INSERT INTO Job VALUES ('Maddy', 'Hedwiga', 'Ailyn', '2020-11-28', '2020-12-27', '2020-09-08', 'PENDING', '1.8', 'CASH', 'POD', '573.56', 'Nonimag Nucl Med Prob of Chest using Technetium 99m');
+INSERT INTO Job VALUES ('Angie', 'Phineas', 'Joyann', '2020-10-11', '2021-01-08', '2020-09-12', 'DONE', '4.8', 'CASH', 'PTB', '691.41', 'Beam Radiation of Stomach using Heavy Particles');
+INSERT INTO Job VALUES ('Weidar', 'Dina', 'Paolina', '2020-11-21', '2020-12-25', '2020-09-01', 'PENDING', '4.3', 'CASH', 'CTP', '439.94', 'Fluoroscopy of Upper GI and Small Bowel');
 /* END OF DATA INITIALISATION */
