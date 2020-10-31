@@ -2272,7 +2272,7 @@ INSERT INTO PetCategory VALUES ('Pale white-eye', '656.74');
 INSERT INTO PetCategory VALUES ('African buffalo', '404.29');
 
 /*----------------------------------------------------*/
-/* Pet 100*/
+/* Pet 50*/
 INSERT INTO Pet VALUES ('Udall', 'Malinda', '2011-05-15', 'M', 'Operative 24 hour implementation', 'Total', 'software');
 INSERT INTO Pet VALUES ('Weidar', 'Maris', '2007-06-10', 'F', 'Fundamental uniform data-warehouse', 'analyzer', 'Enterprise-wide');
 INSERT INTO Pet VALUES ('Nils', 'Amandie', '2012-06-08', 'F', 'Enhanced reciprocal analyzer', 'access', 'customer loyalty');
