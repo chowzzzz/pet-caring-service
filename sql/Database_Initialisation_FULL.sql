@@ -2272,7 +2272,7 @@ INSERT INTO PetCategory VALUES ('Pale white-eye', '656.74');
 INSERT INTO PetCategory VALUES ('African buffalo', '404.29');
 
 /*----------------------------------------------------*/
-/* Pet 50*/
+/* Pet 100*/
 INSERT INTO Pet VALUES ('Udall', 'Malinda', '2011-05-15', 'M', 'Operative 24 hour implementation', 'Total', 'software');
 INSERT INTO Pet VALUES ('Weidar', 'Maris', '2007-06-10', 'F', 'Fundamental uniform data-warehouse', 'analyzer', 'Enterprise-wide');
 INSERT INTO Pet VALUES ('Nils', 'Amandie', '2012-06-08', 'F', 'Enhanced reciprocal analyzer', 'access', 'customer loyalty');
@@ -2375,7 +2375,7 @@ INSERT INTO Pet VALUES ('Steven', 'Genna', '2008-06-13', 'M', 'Quality-focused c
 INSERT INTO Pet VALUES ('Burton', 'Diena', '2012-10-25', 'F', 'Operative radical encryption', 'eco-centric', 'Inverse');
 
 /*----------------------------------------------------*/
-/* Job 100*/
+/* Job 50*/
 INSERT INTO Job VALUES ('Filbert', 'Waylen', 'Meriel', '2020-10-07', '2021-01-23', '2020-08-31', 'CANCELLED', '3.2', 'CREDITCARD', 'POD', '691.19', 'Fluency Treatment using Speech Analysis Equipment');
 INSERT INTO Job VALUES ('Tanney', 'Edythe', 'Oneida', '2020-11-24', '2021-01-08', '2020-09-28', 'PENDING', '2.7', 'CREDITCARD', 'PTB', '445.77', 'HDR Brachytherapy of Parathyroid Glands w Californium 252');
 INSERT INTO Job VALUES ('Nataniel', 'Eulalie', 'Cloris', '2020-10-29', '2021-01-07', '2020-09-08', 'CONFIRMED', '2.5', 'CREDITCARD', 'PTB', '892.83', 'Beam Radiation of Cervix using Photons 1 - 10 MeV');
