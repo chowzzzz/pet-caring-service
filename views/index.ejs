@@ -1,21 +1,18 @@
 <!DOCTYPE html>
 <html>
+	<head>
+		<%- include('./partials/head'); %>
+	</head>
 
-<head>
-  <%- include('./partials/head'); %>
-</head>
-
-<body>
-  <header>
-    <%- include('./partials/header'); %>
-  </header>
-  <main>
-    <div class="jumbotron">
-      <h1 class="display-4">Welcome!</h1>
-      <p class="lead">Find the perfect caretaker for your beloved pet!</p><br />
-      <a class="btn btn-primary btn-lg" href="#" role="button">Search now!</a>
-    </div>
-  </main>
-</body>
-
+	<body>
+		<%- include('./partials/navbar'); %>
+		<main>
+			<div class="jumbotron">
+				<h1 class="display-4">Welcome!</h1>
+				<p class="lead">Find the perfect caretaker for your beloved pet!</p>
+				<br />
+				<a class="btn btn-primary btn-lg" href="#" role="button">Search now!</a>
+			</div>
+		</main>
+	</body>
 </html>

@@ -1,8 +1,37 @@
-const sql = {}
+const sql = {};
 
 sql.query = {
-    //Sign In
-    signin_query: 'SELECT * FROM appuser WHERE username = $1',
+	// Users
+	all_users: "SELECT * FROM appuser",
+	get_user: "SELECT * FROM appuser WHERE username = $1",
+
+	// Pet
+	all_pets: "SELECT * FROM pet WHERE username = $1",
+
+	// Job
+	petowner_job: "SELECT * FROM job WHERE pousername = $1",
+
+	// Admin
+	monthly_job: `SELECT COUNT(*) FROM job 
+					WHERE date_part('month', startdate) = date_part('month', CURRENT_DATE) 
+						AND date_part('year', startdate) = date_part('year', CURRENT_DATE)`,
+	top_caretakers: `SELECT username, totalamount FROM caretakerearnssalary 
+						WHERE date_part('month', salarydate) = date_part('month', CURRENT_DATE) 
+							AND date_part('year', salarydate) = date_part('year', CURRENT_DATE)
+						ORDER BY totalamount DESC
+						LIMIT 10`,
+	job_performance: `SELECT TO_CHAR(TO_DATE(m.month::text, 'MM'), 'Mon') AS month, COALESCE(SUM(job.amountpaid), 0) AS amountpaid
+						FROM generate_series(1,12) AS m(month)
+						LEFT OUTER JOIN job ON date_part('year', job.startdate) = date_part('year', CURRENT_DATE)
+							AND date_part('month', job.startdate) = m.month
+						GROUP BY m.month
+						ORDER BY m.month`,
+	//Sign In
+	signin_query: "SELECT * FROM appuser WHERE username = $1",
+
+	// Register appuser
+	register_user:
+		"INSERT INTO appuser (username, name, email, password, gender, address, dateofbirth) VALUES($1,$2,$3,$4,$5,$6,$7)"
 
 	/*// Counting & Average
 	count_play: 'SELECT COUNT(winner) FROM game_plays WHERE user1=$1 OR user2=$1',
@@ -30,6 +59,6 @@ sql.query = {
 	
 	// Search
 	search_game: 'SELECT * FROM game_list WHERE lower(gamename) LIKE $1',*/
-}
+};
 
-module.exports = sql
+module.exports = sql;

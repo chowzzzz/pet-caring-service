@@ -14,8 +14,8 @@ CREATE TABLE Administrator (
 	name VARCHAR(100) NOT NULL,
 	email VARCHAR(100) NOT NULL UNIQUE,
 	password VARCHAR(20) NOT NULL,
-	joindate DATE NOT NULL,
-	isactive BOOLEAN NOT NULL,
+	joindate DATE NOT NULL DEFAULT CURRENT_DATE,
+	isactive BOOLEAN NOT NULL DEFAULT TRUE,
 	PRIMARY KEY(username)
 );
 
@@ -24,8 +24,8 @@ CREATE TABLE AppUser (
 	name VARCHAR(100) NOT NULL,
 	email VARCHAR(100) NOT NULL UNIQUE,
 	password VARCHAR(20) NOT NULL,
-	joindate DATE NOT NULL,
-	isactive BOOLEAN NOT NULL,
+	joindate DATE NOT NULL DEFAULT CURRENT_DATE,
+	isactive BOOLEAN NOT NULL DEFAULT TRUE,
 	gender VARCHAR(1) NOT NULL,
 	address VARCHAR(100) NOT NULL,
 	dateofbirth DATE NOT NULL,
@@ -81,8 +81,8 @@ CREATE TABLE PartTimeIndicatesAvailability (
 
 CREATE TABLE PetOwnerRegistersCreditCard (
 	username VARCHAR(20),
-cardnumber VARCHAR(20) UNIQUE,
-nameoncard VARCHAR(100) NOT NULL,
+	cardnumber VARCHAR(20) UNIQUE,
+	nameoncard VARCHAR(100) NOT NULL,
 	cvv VARCHAR(20) NOT NULL,
 	expirydate DATE NOT NULL,
 	PRIMARY KEY(username, cardnumber),
