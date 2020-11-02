@@ -32,7 +32,6 @@ var signinRouter = require("./routes/signin");
 var signoutRouter = require("./routes/signout");
 var profileRouter = require("./routes/profile");
 var adminRouter = require("./routes/admin");
-var petOwnerSummaryRouter = require("./routes/petownersummary");
 
 // View engine setup
 app.set("views", path.join(__dirname, "views"));
@@ -53,7 +52,6 @@ app.use("/signin", signinRouter);
 app.use("/signout", signoutRouter);
 app.use("/profile", profileRouter);
 app.use("/admin", adminRouter);
-app.use("/petownersummary", petOwnerSummaryRouter);
 
 var bodyParser = require("body-parser");
 app.use(bodyParser.json());

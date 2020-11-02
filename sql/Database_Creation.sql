@@ -1,3 +1,5 @@
+/* START OF DATABASE CREATION */
+
 \c postgres
 
 DROP DATABASE IF EXISTS PetCaringService;
@@ -123,9 +125,9 @@ CREATE TABLE Job (
 	amountpaid NUMERIC(31,2) NOT NULL,
 	review VARCHAR(1000),
 	PRIMARY KEY(pousername, ctusername, petname, startdate),
-	FOREIGN KEY(pousername) REFERENCES AppUser(username),
+	FOREIGN KEY(pousername, petname) REFERENCES Pet(username, name),
 	FOREIGN KEY(ctusername) REFERENCES CareTaker(username),
-	FOREIGN KEY(petname) REFERENCES Pet(name)
+	CHECK(pousername != ctusername)
 );
 
-/*----------------------------------------------------*/
+/* END OF DATABASE CREATION */
