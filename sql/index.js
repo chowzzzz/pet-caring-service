@@ -11,6 +11,18 @@ sql.query = {
 	// Job
 	petowner_job: "SELECT * FROM job WHERE pousername = $1",
 
+	// Caretaker profile Queries
+	caretaker_petType: "SELECT * FROM caretaker_petcategory WHERE username = $1",
+	caretaker_petLimit: "",
+	caretaker_review: "SELECT review FROM job WHERE ctusername = $1",
+	caretaker_jobview: "SELECT * FROM job WHERE ctusername = $1",
+
+	// Caretaker Availability Queries
+	// full time
+	fulltime_leavedays: "SELECT * FROM fulltimeappliesleaves WHERE username = $1",
+	// part time
+	parttime_availdays: "SELECT * FROM parttimeindicatesavailability WHERE username = $1",
+
 	// Admin
 	monthly_job: `SELECT COUNT(*) FROM job 
 					WHERE date_part('month', startdate) = date_part('month', CURRENT_DATE) 
