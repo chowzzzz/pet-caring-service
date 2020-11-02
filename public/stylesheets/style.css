@@ -55,6 +55,10 @@ body {
 	width: 55vw;
 }
 
+#performance {
+	height: 50vh;
+}
+
 .fa-dog {
 	font-size: 6vw;
 	color: #8f919e;
