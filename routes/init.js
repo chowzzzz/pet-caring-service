@@ -9,6 +9,7 @@ const pool = new Pool({
 	connectionString: process.env.DATABASE_URL
 });
 
+// Define routes here
 function initRouter(app) {
 	/* GET */
 	app.get("/", (req, res, next) => {
@@ -22,12 +23,23 @@ function initRouter(app) {
 	/* AUTHENTICATED GET */
 	app.get("/users", passport.authMiddleware(), users);
 	app.get("/profile", passport.authMiddleware(), petOwnerProfile);
-	app.get("/admin-dashboard", passport.authMiddleware(), adminDashboard);
+
+	app.get("/adminDashboard", passport.authMiddleware(), adminDashboard);
+	app.get("/adminUser", passport.authMiddleware(), adminUser);
+	app.get("/adminCaretaker", passport.authMiddleware(), adminCaretaker);
+	app.get("/adminPetowner", passport.authMiddleware(), adminPetowner);
+	app.get("/adminPet", passport.authMiddleware(), adminPet);
+	app.get("/adminJob", passport.authMiddleware(), adminJob);
+	app.get("/adminProfiles", passport.authMiddleware(), adminProfiles);
+	app.get("/adminProfile", passport.authMiddleware(), adminProfile);
 
 	/* AUTHENTICATED POST */
 
 	/* SIGNUP */
-	app.get("/signup", passport.antiMiddleware(), registerUser);
+	app.get("/signup", passport.antiMiddleware(), function (req, res, next) {
+		res.render("signup", { title: "Sign Up", isSignedIn: req.isAuthenticated() });
+	});
+	app.post("/signup", passport.antiMiddleware(), registerUser);
 
 	/* SIGNIN */
 	app.get("/signin", passport.antiMiddleware(), (req, res, next) => {
@@ -48,34 +60,9 @@ function initRouter(app) {
 		req.logout();
 		res.redirect("/");
 	});
-
-	/* GET */
-	// app.get("/", index);
-	// app.get("/search", search);
-	// /* PROTECTED GET */
-	// app.get("/dashboard", passport.authMiddleware(), dashboard);
-	// app.get("/games", passport.authMiddleware(), games);
-	// app.get("/plays", passport.authMiddleware(), plays);
-	// app.get("/register", passport.antiMiddleware(), register);
-	// app.get("/password", passport.antiMiddleware(), retrieve);
-	// /* PROTECTED POST */
-	// app.post("/update_info", passport.authMiddleware(), update_info);
-	// app.post("/update_pass", passport.authMiddleware(), update_pass);
-	// app.post("/add_game", passport.authMiddleware(), add_game);
-	// app.post("/add_play", passport.authMiddleware(), add_play);
-	// app.post("/reg_user", passport.antiMiddleware(), reg_user);
-	// /* LOGIN */
-	// app.post(
-	// 	"/signin",
-	// 	passport.authenticate("local", {
-	// 		successRedirect: "/dashboard",
-	// 		failureRedirect: "/"
-	// 	})
-	// );
-	// /* LOGOUT */
-	// app.get("/logout", passport.authMiddleware(), logout);
 }
 
+// Define functions to get your data + routes here if its too long in the intiRouter() function
 // GET
 function users(req, res, next) {
 	pool.query(sql_query.query.all_users, (err, data) => {
@@ -128,7 +115,7 @@ function adminDashboard(req, res, next) {
 				let month = jobPerformance.rows.map((a) => a.month);
 				let amountpaid = jobPerformance.rows.map((a) => a.amountpaid);
 				console.log(amountpaid);
-				res.render("admin-dashboard", {
+				res.render("adminDashboard", {
 					title: "Admin Dashboard",
 					monthly_job: monthlyJob.rows,
 					username: username,
@@ -139,6 +126,55 @@ function adminDashboard(req, res, next) {
 				});
 			});
 		});
+	});
+}
+
+function adminUser(req, res, next) {
+	res.render("adminUser", {
+		title: "Users",
+		isSignedIn: req.isAuthenticated()
+	});
+}
+
+function adminCaretaker(req, res, next) {
+	res.render("adminCaretaker", {
+		title: "Caretakers",
+		isSignedIn: req.isAuthenticated()
+	});
+}
+
+function adminPetowner(req, res, next) {
+	res.render("adminPetowner", {
+		title: "Pet owners",
+		isSignedIn: req.isAuthenticated()
+	});
+}
+
+function adminPet(req, res, next) {
+	res.render("adminPet", {
+		title: "Pets",
+		isSignedIn: req.isAuthenticated()
+	});
+}
+
+function adminJob(req, res, next) {
+	res.render("adminJob", {
+		title: "Jobs",
+		isSignedIn: req.isAuthenticated()
+	});
+}
+
+function adminProfiles(req, res, next) {
+	res.render("adminProfiles", {
+		title: "Admin profiles",
+		isSignedIn: req.isAuthenticated()
+	});
+}
+
+function adminProfile(req, res, next) {
+	res.render("adminProfile", {
+		title: "Admin Profile",
+		isSignedIn: req.isAuthenticated()
 	});
 }
 
