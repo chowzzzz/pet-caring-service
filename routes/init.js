@@ -23,9 +23,10 @@ function initRouter(app) {
   /* AUTHENTICATED GET */
   app.get("/users", passport.authMiddleware(), users);
   app.get("/profile", passport.authMiddleware(), passport.verifyNotAdmin(), petOwnerProfile);
-  app.get("/admin-profile", passport.authMiddleware(), passport.verifyAdmin(), adminProfile);
 
+  app.get("/admin-profile", passport.authMiddleware(), passport.verifyAdmin(), adminProfile);
   app.get("/admin-dashboard", passport.authMiddleware(), passport.verifyAdmin(), adminDashboard);
+
   app.get("/adminUser", passport.authMiddleware(), adminUser);
   app.get("/adminCaretaker", passport.authMiddleware(), adminCaretaker);
   app.get("/adminPetowner", passport.authMiddleware(), adminPetowner);
@@ -40,6 +41,7 @@ function initRouter(app) {
   app.get("/signup", passport.antiMiddleware(), function (req, res, next) {
     res.render("signup", { title: "Sign Up", isSignedIn: req.isAuthenticated(), isAdmin: (req.isAuthenticated() ? (req.user.userType == "Admin") : false) });
   });
+
   app.post("/signup", passport.antiMiddleware(), registerUser);
 
   /* SIGNIN */
@@ -75,6 +77,14 @@ function initRouter(app) {
       failureRedirect: "/admin-signin"
     })
   );
+
+  /* ADMINISTRATOR CREATE NEW */
+  app.get("/admin-createnew", passport.authMiddleware(), passport.verifyAdmin(), function (req, res, next) {
+    res.render("adminCreateNew", { title: "Create New Administrator", isSignedIn: req.isAuthenticated(), isAdmin: (req.isAuthenticated() ? (req.user.userType == "Admin") : false) });
+  });
+
+  app.post("/admin-createnew", passport.authMiddleware(), passport.verifyAdmin(), registerAdmin);
+
 }
 
 // Define functions to get your data + routes here if its too long in the intiRouter() function
@@ -250,6 +260,39 @@ function registerUser(req, res, next) {
         );
       } */
       res.redirect("/users");
+    }
+  );
+}
+
+function registerAdmin(req, res, next) {
+  const username = req.body.username;
+  const name = req.body.name;
+  const email = req.body.email;
+  const password = req.body.password;
+
+  pool.query(
+    sql_query.query.register_admin,
+    [username, name, email, password],
+    (err, data) => {
+      /* if (err) {
+        console.error("Error in adding user", err);
+        res.redirect("/signup?reg=fail");
+      } else {
+        req.login(
+          {
+            username: username,
+            password: password
+          },
+          function (err) {
+            if (err) {
+              return res.redirect("/signup?reg=fail");
+            } else {
+              return res.redirect("/users");
+            }
+          }
+        );
+      } */
+      res.redirect("/admin-dashboard");
     }
   );
 }
