@@ -2,8 +2,8 @@
 
 \c postgres
 
-DROP DATABASE IF EXISTS PetCaringService;
-CREATE DATABASE PetCaringService;
+DROP DATABASE IF EXISTS petcaringservice;
+CREATE DATABASE petcaringservice;
 
 \c petcaringservice
 
