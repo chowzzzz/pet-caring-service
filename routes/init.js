@@ -20,6 +20,8 @@ function initRouter(app) {
 		res.render("about", { title: "About", isSignedIn: req.isAuthenticated() });
 	});
 
+	app.get("/search", search);
+
 	/* AUTHENTICATED GET */
 	app.get("/users", passport.authMiddleware(), users);
 	app.get("/profile", passport.authMiddleware(), petOwnerProfile);
@@ -62,11 +64,17 @@ function initRouter(app) {
 	});
 }
 
-// Define functions to get your data + routes here if its too long in the intiRouter() function
+// Define functions to get your data + routes here if its too long in the initRouter() function
 // GET
 function users(req, res, next) {
 	pool.query(sql_query.query.all_users, (err, data) => {
 		res.render("users", { title: "Data", data: data.rows, isSignedIn: req.isAuthenticated() });
+	});
+}
+
+function search(req, res, next) {
+	pool.query(sql_query.query.all_users, (err, data) => {
+		res.render("search", { title: "Data", data: data.rows, isSignedIn: req.isAuthenticated() });
 	});
 }
 

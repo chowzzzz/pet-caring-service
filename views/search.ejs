@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<%- include('./partials/head'); %>
+</head>
+
+<body>
+	<%- include('./partials/navbar'); %>
+	<main>
+		<div class="container rounded bg-white pl-5 pr-5 pt-3 pb-3">
+			<h1>Care Taker Search</h1>
+			<br>
+			<% for(var i=0; i<data.length; i++) { %>
+			<div class="d-flex flex-row justify-content-between container rounded border p-3 mb-2">
+				<div>
+					<span> <b><%= data[i].name%></b></span> <br>
+					<span><%= data[i].username%></span>
+				</div>
+				<div>
+					<button class="btn btn-primary btn-lg">Choose</button>
+				</div>
+			</div>
+			<% } %>
+		</div>
+	</main>
+</body>
+
+</html>
