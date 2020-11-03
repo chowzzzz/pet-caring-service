@@ -8,6 +8,7 @@
 	<body>
 		<%- include('./partials/navbar'); %>
 		<main>
+      <% if (!isAdmin) { %>
 			<div class="jumbotron">
 				<h1 class="display-1">Pet Owner Summary</h1>
 				<div class="row">
@@ -133,7 +134,21 @@
 						<% } %>
 					</table>
 				</div>
-			</div>
+      </div>
+      <% } else { %>
+        <div class="jumbotron">
+          <h1 class="display-1">Administrator Summary</h1>
+          <div class="row">
+            <a href="#">
+              <img
+                class="media-object mw150"
+                src="https://bootdey.com/img/Content/avatar/avatar7.png"
+                alt="..."
+              />
+            </a>
+          </div>
+        </div>
+      <% } %>
 		</main>
 	</body>
 </html>

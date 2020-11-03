@@ -39,7 +39,8 @@ sql.query = {
 						GROUP BY m.month
 						ORDER BY m.month`,
 	//Sign In
-	signin_query: "SELECT * FROM appuser WHERE username = $1",
+  signin_query: "SELECT * FROM appuser WHERE username = $1",
+  adminsignin_query: "SELECT * FROM administrator WHERE username = $1",
 
 	// Register appuser
 	register_user:
