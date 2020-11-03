@@ -16,40 +16,94 @@ function initRouter(app) {
     res.render("index", {
       title: "Express",
       isSignedIn: req.isAuthenticated(),
+      isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false,
     });
   });
 
   app.get("/about", (req, res, next) => {
-    res.render("about", { title: "About", isSignedIn: req.isAuthenticated() });
+    res.render("about", {
+      title: "About",
+      isSignedIn: req.isAuthenticated(),
+      isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false,
+    });
   });
 
   app.get("/search", search);
 
   /* AUTHENTICATED GET */
   app.get("/users", passport.authMiddleware(), users);
-  app.get("/profile", passport.authMiddleware(), petOwnerProfile);
+  app.get(
+    "/profile",
+    passport.authMiddleware(),
+    passport.verifyNotAdmin(),
+    petOwnerProfile
+  );
 
-  app.get("/adminDashboard", passport.authMiddleware(), adminDashboard);
-  app.get("/adminUser", passport.authMiddleware(), adminUser);
-  app.get("/adminCaretaker", passport.authMiddleware(), adminCaretaker);
-  app.get("/adminPetowner", passport.authMiddleware(), adminPetowner);
-  app.get("/adminPet", passport.authMiddleware(), adminPet);
-  app.get("/adminJob", passport.authMiddleware(), adminJob);
-  app.get("/adminProfiles", passport.authMiddleware(), adminProfiles);
-  app.get("/adminProfile", passport.authMiddleware(), adminProfile);
+  app.get(
+    "/admin-profile",
+    passport.authMiddleware(),
+    passport.verifyAdmin(),
+    adminProfile
+  );
+  app.get(
+    "/admin-dashboard",
+    passport.authMiddleware(),
+    passport.verifyAdmin(),
+    adminDashboard
+  );
 
-  /* GET */
+  app.get(
+    "/admin-user",
+    passport.authMiddleware(),
+    passport.verifyAdmin(),
+    adminUser
+  );
+  app.get(
+    "/admin-caretaker",
+    passport.authMiddleware(),
+    passport.verifyAdmin(),
+    adminCaretaker
+  );
+  app.get(
+    "/admin-petowner",
+    passport.authMiddleware(),
+    passport.verifyAdmin(),
+    adminPetowner
+  );
+  app.get(
+    "/admin-pet",
+    passport.authMiddleware(),
+    passport.verifyAdmin(),
+    adminPet
+  );
+  app.get(
+    "/admin-job",
+    passport.authMiddleware(),
+    passport.verifyAdmin(),
+    adminJob
+  );
+  app.get(
+    "/admin-profiles",
+    passport.authMiddleware(),
+    passport.verifyAdmin(),
+    adminProfiles
+  );
+
+  /* POST */
   app.post("/search", passport.antiMiddleware(), searchCaretaker);
 
   /* AUTHENTICATED POST */
+  app.post("/editAdmin", passport.authMiddleware(), editAdmin);
 
   /* SIGNUP */
   app.get("/signup", passport.antiMiddleware(), function (req, res, next) {
     res.render("signup", {
       title: "Sign Up",
       isSignedIn: req.isAuthenticated(),
+      isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false,
     });
   });
+
   app.post("/signup", passport.antiMiddleware(), registerUser);
 
   /* SIGNIN */
@@ -57,13 +111,15 @@ function initRouter(app) {
     res.render("signin", {
       title: "Sign In",
       isSignedIn: req.isAuthenticated(),
+      isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false,
     });
   });
+
   app.post(
     "/signin",
-    passport.authenticate("local", {
+    passport.authenticate("user-local", {
       successRedirect: "/users",
-      failureRedirect: "/",
+      failureRedirect: "/signin",
     })
   );
 
@@ -74,9 +130,47 @@ function initRouter(app) {
     req.logout();
     res.redirect("/");
   });
+
+  /* ADMINISTRATOR SIGN-IN */
+  app.get("/admin-signin", passport.antiMiddleware(), (req, res, next) => {
+    res.render("admin-signin", {
+      title: "Administrator Sign In",
+      isSignedIn: req.isAuthenticated(),
+      isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false,
+    });
+  });
+
+  app.post(
+    "/admin-signin",
+    passport.authenticate("admin-local", {
+      successRedirect: "/admin-dashboard",
+      failureRedirect: "/admin-signin",
+    })
+  );
+
+  /* ADMINISTRATOR CREATE NEW */
+  app.get(
+    "/admin-createnew",
+    passport.authMiddleware(),
+    passport.verifyAdmin(),
+    function (req, res, next) {
+      res.render("adminCreateNew", {
+        title: "Create New Administrator",
+        isSignedIn: req.isAuthenticated(),
+        isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false,
+      });
+    }
+  );
+
+  app.post(
+    "/admin-createnew",
+    passport.authMiddleware(),
+    passport.verifyAdmin(),
+    registerAdmin
+  );
 }
 
-// Define functions to get your data + routes here if its too long in the initRouter() function
+// Define functions to get your data + routes here if its too long in the intiRouter() function
 // GET
 function users(req, res, next) {
   pool.query(sql_query.query.all_users, (err, data) => {
@@ -84,16 +178,7 @@ function users(req, res, next) {
       title: "Data",
       data: data.rows,
       isSignedIn: req.isAuthenticated(),
-    });
-  });
-}
-
-function search(req, res, next) {
-  pool.query(sql_query.query.all_users, (err, data) => {
-    res.render("search", {
-      title: "Data",
-      data: data.rows,
-      isSignedIn: req.isAuthenticated(),
+      isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false,
     });
   });
 }
@@ -121,6 +206,9 @@ function petOwnerProfile(req, res, next) {
             pets: pets.rows,
             reservations: reservations.rows,
             isSignedIn: req.isAuthenticated(),
+            isAdmin: req.isAuthenticated()
+              ? req.user.userType == "Admin"
+              : false,
           });
         }
       );
@@ -141,21 +229,33 @@ function adminDashboard(req, res, next) {
         if (err) {
           console.error(err);
         }
-        let username = topCaretakers.rows.map((a) => a.username);
-        let totalAmount = topCaretakers.rows.map((a) => a.totalamount);
+        pool.query(
+          sql_query.query.underperforming_ct,
+          (err, underperformingCt) => {
+            if (err) {
+              console.error(err);
+            }
+            let username = topCaretakers.rows.map((a) => a.username);
+            let totalAmount = topCaretakers.rows.map((a) => a.totalamount);
 
-        let month = jobPerformance.rows.map((a) => a.month);
-        let amountpaid = jobPerformance.rows.map((a) => a.amountpaid);
-        console.log(amountpaid);
-        res.render("adminDashboard", {
-          title: "Admin Dashboard",
-          monthly_job: monthlyJob.rows,
-          username: username,
-          totalAmount: totalAmount,
-          month: month,
-          amountpaid: amountpaid,
-          isSignedIn: req.isAuthenticated(),
-        });
+            let month = jobPerformance.rows.map((a) => a.month);
+            let amountpaid = jobPerformance.rows.map((a) => a.amountpaid);
+            console.log(amountpaid);
+            res.render("adminDashboard", {
+              title: "Admin Dashboard",
+              monthly_job: monthlyJob.rows,
+              username: username,
+              totalAmount: totalAmount,
+              month: month,
+              amountpaid: amountpaid,
+              underperformingCt: underperformingCt.rows,
+              isSignedIn: req.isAuthenticated(),
+              isAdmin: req.isAuthenticated()
+                ? req.user.userType == "Admin"
+                : false,
+            });
+          }
+        );
       });
     });
   });
@@ -165,6 +265,7 @@ function adminUser(req, res, next) {
   res.render("adminUser", {
     title: "Users",
     isSignedIn: req.isAuthenticated(),
+    isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false,
   });
 }
 
@@ -172,6 +273,7 @@ function adminCaretaker(req, res, next) {
   res.render("adminCaretaker", {
     title: "Caretakers",
     isSignedIn: req.isAuthenticated(),
+    isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false,
   });
 }
 
@@ -179,6 +281,7 @@ function adminPetowner(req, res, next) {
   res.render("adminPetowner", {
     title: "Pet owners",
     isSignedIn: req.isAuthenticated(),
+    isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false,
   });
 }
 
@@ -186,6 +289,7 @@ function adminPet(req, res, next) {
   res.render("adminPet", {
     title: "Pets",
     isSignedIn: req.isAuthenticated(),
+    isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false,
   });
 }
 
@@ -193,20 +297,30 @@ function adminJob(req, res, next) {
   res.render("adminJob", {
     title: "Jobs",
     isSignedIn: req.isAuthenticated(),
+    isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false,
   });
 }
 
 function adminProfiles(req, res, next) {
-  res.render("adminProfiles", {
-    title: "Admin profiles",
-    isSignedIn: req.isAuthenticated(),
+  pool.query(sql_query.query.get_admins, (err, data) => {
+    res.render("admin-profiles", {
+      title: "Admin Profiles",
+      data: data.rows,
+      isSignedIn: req.isAuthenticated(),
+      isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false,
+    });
   });
 }
 
 function adminProfile(req, res, next) {
-  res.render("adminProfile", {
-    title: "Admin Profile",
-    isSignedIn: req.isAuthenticated(),
+  const username = req.query.username ? req.query.username : req.user.username;
+  pool.query(sql_query.query.get_admin, [username], (err, data) => {
+    res.render("adminProfile", {
+      title: "Admin Profile",
+      data: data.rows,
+      isSignedIn: req.isAuthenticated(),
+      isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false,
+    });
   });
 }
 
@@ -225,26 +339,98 @@ function registerUser(req, res, next) {
     [username, name, email, password, gender, address, dob],
     (err, data) => {
       /* if (err) {
-				console.error("Error in adding user", err);
-				res.redirect("/signup?reg=fail");
-			} else {
-				req.login(
-					{
-						username: username,
-						password: password
-					},
-					function (err) {
-						if (err) {
-							return res.redirect("/signup?reg=fail");
-						} else {
-							return res.redirect("/users");
-						}
-					}
-				);
-			} */
+        console.error("Error in adding user", err);
+        res.redirect("/signup?reg=fail");
+      } else {
+        req.login(
+          {
+            username: username,
+            password: password
+          },
+          function (err) {
+            if (err) {
+              return res.redirect("/signup?reg=fail");
+            } else {
+              return res.redirect("/users");
+            }
+          }
+        );
+      } */
       res.redirect("/users");
     }
   );
+}
+
+function registerAdmin(req, res, next) {
+  const username = req.body.username;
+  const name = req.body.name;
+  const email = req.body.email;
+  const password = req.body.password;
+
+  pool.query(
+    sql_query.query.register_admin,
+    [username, name, email, password],
+    (err, data) => {
+      /* if (err) {
+        console.error("Error in adding user", err);
+        res.redirect("/signup?reg=fail");
+      } else {
+        req.login(
+          {
+            username: username,
+            password: password
+          },
+          function (err) {
+            if (err) {
+              return res.redirect("/signup?reg=fail");
+            } else {
+              return res.redirect("/users");
+            }
+          }
+        );
+      } */
+      res.redirect("/admin-dashboard");
+    }
+  );
+}
+
+function editAdmin(req, res, next) {
+  const name = req.body.name;
+  const email = req.body.email;
+  const password = req.body.password;
+  const username = req.body.username;
+  const action = req.body.action;
+  if (action == "Edit") {
+    pool.query(
+      sql_query.query.edit_admin,
+      [name, email, password, username],
+      (err, data) => {
+        if (err) {
+          console.error(err);
+        }
+        res.redirect("/admin-profiles");
+      }
+    );
+  } else if (action == "Delete") {
+    pool.query(sql_query.query.delete_admin, ["f", username], (err, data) => {
+      if (err) {
+        console.error(err);
+      }
+      res.redirect("/admin-profiles");
+    });
+  } else {
+    res.redirect("/admin-profiles");
+  }
+}
+
+function search(req, res, next) {
+  pool.query(sql_query.query.all_users, (err, data) => {
+    res.render("search", {
+      title: "Data",
+      data: data.rows,
+      isSignedIn: req.isAuthenticated(),
+    });
+  });
 }
 
 function searchCaretaker(req, res, next) {

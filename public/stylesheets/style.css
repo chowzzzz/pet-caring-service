@@ -55,10 +55,6 @@ body {
 	width: 55vw;
 }
 
-#performance {
-	height: 50vh;
-}
-
 .fa-dog {
 	font-size: 6vw;
 	color: #8f919e;
@@ -67,4 +63,8 @@ body {
 a:hover {
 	text-decoration: none !important;
 	transition-duration: 0.4s !important;
+}
+
+.pointer {
+	cursor: pointer;
 }
