@@ -23,7 +23,8 @@ sql.query = {
 	// part time
 	parttime_availdays: "SELECT * FROM parttimeindicatesavailability WHERE username = $1",
 
-	// Admin
+  // Admin
+  get_admin: "SELECT * FROM administrator WHERE username = $1",
 	monthly_job: `SELECT COUNT(*) FROM job 
 					WHERE date_part('month', startdate) = date_part('month', CURRENT_DATE) 
 						AND date_part('year', startdate) = date_part('year', CURRENT_DATE)`,
@@ -44,7 +45,11 @@ sql.query = {
 
 	// Register appuser
 	register_user:
-		"INSERT INTO appuser (username, name, email, password, gender, address, dateofbirth) VALUES($1,$2,$3,$4,$5,$6,$7)"
+		"INSERT INTO appuser (username, name, email, password, gender, address, dateofbirth) VALUES ($1,$2,$3,$4,$5,$6,$7)",
+
+  // Register admin
+  register_admin:
+    "INSERT INTO administrator VALUES ($1,$2,$3,$4,CURRENT_DATE,TRUE)",
 
 	/*// Counting & Average
 	count_play: 'SELECT COUNT(winner) FROM game_plays WHERE user1=$1 OR user2=$1',
