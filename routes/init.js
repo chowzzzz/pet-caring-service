@@ -22,7 +22,7 @@ function initRouter(app) {
 
   /* AUTHENTICATED GET */
   app.get("/users", passport.authMiddleware(), users);
-  app.get("/profile", passport.authMiddleware(), petOwnerProfile);
+  app.get("/profile", passport.authMiddleware(), passport.verifyNotAdmin(), petOwnerProfile);
   app.get("/admin-profile", passport.authMiddleware(), passport.verifyAdmin(), adminProfile);
 
   app.get("/admin-dashboard", passport.authMiddleware(), passport.verifyAdmin(), adminDashboard);
@@ -119,7 +119,7 @@ function adminProfile(req, res, next) {
       console.error(err);
     }
 
-    res.render("profile", {
+    res.render("adminProfile", {
       title: "Administrator Profile",
       isSignedIn: req.isAuthenticated(),
       isAdmin: (req.isAuthenticated() ? (req.user.userType == "Admin") : false)
