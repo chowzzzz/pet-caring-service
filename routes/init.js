@@ -35,13 +35,12 @@ function initRouter(app) {
 	app.get("/admin-profile", passport.authMiddleware(), passport.verifyAdmin(), adminProfile);
 	app.get("/admin-dashboard", passport.authMiddleware(), passport.verifyAdmin(), adminDashboard);
 
-	app.get("/adminUser", passport.authMiddleware(), adminUser);
-	app.get("/adminCaretaker", passport.authMiddleware(), adminCaretaker);
-	app.get("/adminPetowner", passport.authMiddleware(), adminPetowner);
-	app.get("/adminPet", passport.authMiddleware(), adminPet);
-	app.get("/adminJob", passport.authMiddleware(), adminJob);
-	app.get("/adminProfiles", passport.authMiddleware(), adminProfiles);
-	app.get("/adminProfile", passport.authMiddleware(), adminProfile);
+	app.get("/admin-user", passport.authMiddleware(), passport.verifyAdmin(), adminUser);
+	app.get("/admin-caretaker", passport.authMiddleware(), passport.verifyAdmin(), adminCaretaker);
+	app.get("/admin-petowner", passport.authMiddleware(), passport.verifyAdmin(), adminPetowner);
+	app.get("/admin-pet", passport.authMiddleware(), passport.verifyAdmin(), adminPet);
+	app.get("/admin-job", passport.authMiddleware(), passport.verifyAdmin(), adminJob);
+	app.get("/admin-profiles", passport.authMiddleware(), passport.verifyAdmin(), adminProfiles);
 
 	/* AUTHENTICATED POST */
 	app.post("/editAdmin", passport.authMiddleware(), editAdmin);
@@ -155,21 +154,6 @@ function petOwnerProfile(req, res, next) {
 	});
 }
 
-function adminProfile(req, res, next) {
-	const username = req.user.username;
-	pool.query(sql_query.query.get_admin, [username], (err, details) => {
-		if (err) {
-			console.error(err);
-		}
-
-		res.render("adminProfile", {
-			title: "Administrator Profile",
-			isSignedIn: req.isAuthenticated(),
-			isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false
-		});
-	});
-}
-
 function adminDashboard(req, res, next) {
 	pool.query(sql_query.query.monthly_job, (err, monthlyJob) => {
 		if (err) {
@@ -252,7 +236,7 @@ function adminJob(req, res, next) {
 
 function adminProfiles(req, res, next) {
 	pool.query(sql_query.query.get_admins, (err, data) => {
-		res.render("adminProfiles", {
+		res.render("admin-profiles", {
 			title: "Admin Profiles",
 			data: data.rows,
 			isSignedIn: req.isAuthenticated(),
@@ -262,7 +246,8 @@ function adminProfiles(req, res, next) {
 }
 
 function adminProfile(req, res, next) {
-	pool.query(sql_query.query.get_admin, [req.query.username], (err, data) => {
+	const username = req.query.username ? req.query.username : req.user.username;
+	pool.query(sql_query.query.get_admin, [username], (err, data) => {
 		res.render("adminProfile", {
 			title: "Admin Profile",
 			data: data.rows,
@@ -349,17 +334,17 @@ function editAdmin(req, res, next) {
 			if (err) {
 				console.error(err);
 			}
-			res.redirect("/adminProfiles");
+			res.redirect("/admin-profiles");
 		});
 	} else if (action == "Delete") {
 		pool.query(sql_query.query.delete_admin, ["f", username], (err, data) => {
 			if (err) {
 				console.error(err);
 			}
-			res.redirect("/adminProfiles");
+			res.redirect("/admin-profiles");
 		});
 	} else {
-		res.redirect("/adminProfiles");
+		res.redirect("/admin-profiles");
 	}
 }
 
