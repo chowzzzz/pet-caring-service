@@ -13,16 +13,20 @@ const pool = new Pool({
 function initRouter(app) {
   /* GET */
   app.get("/", (req, res, next) => {
-    res.render("index", { title: "Express", isSignedIn: req.isAuthenticated(), isAdmin: (req.isAuthenticated() ? (req.user.userType == "Admin") : false) });
+    res.render("index", { title: "Express", isSignedIn: req.isAuthenticated(), isAdmin: (req.isAuthenticated() ? (req.user.userType == "Admin") : false), 
+        isCaretaker: (req.isAuthenticated() ? (req.user.isCaretaker) : false) });
   });
 
   app.get("/about", (req, res, next) => {
-    res.render("about", { title: "About", isSignedIn: req.isAuthenticated(), isAdmin: (req.isAuthenticated() ? (req.user.userType == "Admin") : false) });
+    res.render("about", { title: "About", isSignedIn: req.isAuthenticated(), isAdmin: (req.isAuthenticated() ? (req.user.userType == "Admin") : false), 
+    isCaretaker: (req.isAuthenticated() ? (req.user.isCaretaker) : false) });
   });
 
   /* AUTHENTICATED GET */
   app.get("/users", passport.authMiddleware(), users);
   app.get("/profile", passport.authMiddleware(), passport.verifyNotAdmin(), petOwnerProfile);
+
+  app.get("/ct-home", passport.authMiddleware(), passport.verifyCaretaker(), caretakerHome);
 
   app.get("/admin-profile", passport.authMiddleware(), passport.verifyAdmin(), adminProfile);
   app.get("/admin-dashboard", passport.authMiddleware(), passport.verifyAdmin(), adminDashboard);
@@ -39,14 +43,16 @@ function initRouter(app) {
 
   /* SIGNUP */
   app.get("/signup", passport.antiMiddleware(), function (req, res, next) {
-    res.render("signup", { title: "Sign Up", isSignedIn: req.isAuthenticated(), isAdmin: (req.isAuthenticated() ? (req.user.userType == "Admin") : false) });
+    res.render("signup", { title: "Sign Up", isSignedIn: req.isAuthenticated(), isAdmin: (req.isAuthenticated() ? (req.user.userType == "Admin") : false),
+        isCaretaker: (req.isAuthenticated() ? (req.user.isCaretaker) : false) });
   });
 
   app.post("/signup", passport.antiMiddleware(), registerUser);
 
   /* SIGNIN */
   app.get("/signin", passport.antiMiddleware(), (req, res, next) => {
-    res.render("signin", { title: "Sign In", isSignedIn: req.isAuthenticated(), isAdmin: (req.isAuthenticated() ? (req.user.userType == "Admin") : false) });
+    res.render("signin", { title: "Sign In", isSignedIn: req.isAuthenticated(), isAdmin: (req.isAuthenticated() ? (req.user.userType == "Admin") : false),
+        isCaretaker: (req.isAuthenticated() ? (req.user.isCaretaker) : false) });
   });
 
   app.post(
@@ -67,7 +73,8 @@ function initRouter(app) {
 
   /* ADMINISTRATOR SIGN-IN */
   app.get("/admin-signin", passport.antiMiddleware(), (req, res, next) => {
-    res.render("admin-signin", { title: "Administrator Sign In", isSignedIn: req.isAuthenticated(), isAdmin: (req.isAuthenticated() ? (req.user.userType == "Admin") : false) });
+    res.render("admin-signin", { title: "Administrator Sign In", isSignedIn: req.isAuthenticated(), isAdmin: (req.isAuthenticated() ? (req.user.userType == "Admin") : false),
+        isCaretaker: (req.isAuthenticated() ? (req.user.isCaretaker) : false) });
   });
 
   app.post(
@@ -80,7 +87,8 @@ function initRouter(app) {
 
   /* ADMINISTRATOR CREATE NEW */
   app.get("/admin-createnew", passport.authMiddleware(), passport.verifyAdmin(), function (req, res, next) {
-    res.render("adminCreateNew", { title: "Create New Administrator", isSignedIn: req.isAuthenticated(), isAdmin: (req.isAuthenticated() ? (req.user.userType == "Admin") : false) });
+    res.render("adminCreateNew", { title: "Create New Administrator", isSignedIn: req.isAuthenticated(), isAdmin: (req.isAuthenticated() ? (req.user.userType == "Admin") : false),
+        isCaretaker: (req.isAuthenticated() ? (req.user.isCaretaker) : false) });
   });
 
   app.post("/admin-createnew", passport.authMiddleware(), passport.verifyAdmin(), registerAdmin);
@@ -91,7 +99,8 @@ function initRouter(app) {
 // GET
 function users(req, res, next) {
   pool.query(sql_query.query.all_users, (err, data) => {
-    res.render("users", { title: "Data", data: data.rows, isSignedIn: req.isAuthenticated(), isAdmin: (req.isAuthenticated() ? (req.user.userType == "Admin") : false) });
+    res.render("users", { title: "Data", data: data.rows, isSignedIn: req.isAuthenticated(), isAdmin: (req.isAuthenticated() ? (req.user.userType == "Admin") : false),
+        isCaretaker: (req.isAuthenticated() ? (req.user.isCaretaker) : false) });
   });
 }
 
@@ -115,10 +124,20 @@ function petOwnerProfile(req, res, next) {
           pets: pets.rows,
           reservations: reservations.rows,
           isSignedIn: req.isAuthenticated(),
-          isAdmin: (req.isAuthenticated() ? (req.user.userType == "Admin") : false)
+          isAdmin: (req.isAuthenticated() ? (req.user.userType == "Admin") : false),
+          isCaretaker: (req.isAuthenticated() ? (req.user.isCaretaker) : false)
         });
       });
     });
+  });
+}
+
+function caretakerHome(req, res, next) {
+  res.render("caretakerHome", {
+    title: "Caretaker Home",
+    isSignedIn: req.isAuthenticated(),
+    isAdmin: (req.isAuthenticated() ? (req.user.userType == "Admin") : false),
+    isCaretaker: (req.isAuthenticated() ? (req.user.isCaretaker) : false)
   });
 }
 
@@ -132,7 +151,8 @@ function adminProfile(req, res, next) {
     res.render("adminProfile", {
       title: "Administrator Profile",
       isSignedIn: req.isAuthenticated(),
-      isAdmin: (req.isAuthenticated() ? (req.user.userType == "Admin") : false)
+      isAdmin: (req.isAuthenticated() ? (req.user.userType == "Admin") : false),
+      isCaretaker: (req.isAuthenticated() ? (req.user.isCaretaker) : false)
     });
   });
 }
@@ -164,7 +184,8 @@ function adminDashboard(req, res, next) {
           month: month,
           amountpaid: amountpaid,
           isSignedIn: req.isAuthenticated(),
-          isAdmin: (req.isAuthenticated() ? (req.user.userType == "Admin") : false)
+          isAdmin: (req.isAuthenticated() ? (req.user.userType == "Admin") : false),
+          isCaretaker: (req.isAuthenticated() ? (req.user.isCaretaker) : false)
         });
       });
     });
@@ -175,7 +196,8 @@ function adminUser(req, res, next) {
   res.render("adminUser", {
     title: "Users",
     isSignedIn: req.isAuthenticated(),
-    isAdmin: (req.isAuthenticated() ? (req.user.userType == "Admin") : false) 
+    isAdmin: (req.isAuthenticated() ? (req.user.userType == "Admin") : false),
+    isCaretaker: (req.isAuthenticated() ? (req.user.isCaretaker) : false) 
   });
 }
 
@@ -183,7 +205,8 @@ function adminCaretaker(req, res, next) {
   res.render("adminCaretaker", {
     title: "Caretakers",
     isSignedIn: req.isAuthenticated(),
-    isAdmin: (req.isAuthenticated() ? (req.user.userType == "Admin") : false) 
+    isAdmin: (req.isAuthenticated() ? (req.user.userType == "Admin") : false),
+    isCaretaker: (req.isAuthenticated() ? (req.user.isCaretaker) : false) 
   });
 }
 
@@ -191,7 +214,8 @@ function adminPetowner(req, res, next) {
   res.render("adminPetowner", {
     title: "Pet owners",
     isSignedIn: req.isAuthenticated(),
-    isAdmin: (req.isAuthenticated() ? (req.user.userType == "Admin") : false) 
+    isAdmin: (req.isAuthenticated() ? (req.user.userType == "Admin") : false),
+    isCaretaker: (req.isAuthenticated() ? (req.user.isCaretaker) : false) 
   });
 }
 
@@ -199,7 +223,8 @@ function adminPet(req, res, next) {
   res.render("adminPet", {
     title: "Pets",
     isSignedIn: req.isAuthenticated(),
-    isAdmin: (req.isAuthenticated() ? (req.user.userType == "Admin") : false) 
+    isAdmin: (req.isAuthenticated() ? (req.user.userType == "Admin") : false),
+    isCaretaker: (req.isAuthenticated() ? (req.user.isCaretaker) : false) 
   });
 }
 
@@ -207,7 +232,8 @@ function adminJob(req, res, next) {
   res.render("adminJob", {
     title: "Jobs",
     isSignedIn: req.isAuthenticated(),
-    isAdmin: (req.isAuthenticated() ? (req.user.userType == "Admin") : false) 
+    isAdmin: (req.isAuthenticated() ? (req.user.userType == "Admin") : false),
+    isCaretaker: (req.isAuthenticated() ? (req.user.isCaretaker) : false) 
   });
 }
 
@@ -215,7 +241,8 @@ function adminProfiles(req, res, next) {
   res.render("adminProfiles", {
     title: "Admin profiles",
     isSignedIn: req.isAuthenticated(),
-    isAdmin: (req.isAuthenticated() ? (req.user.userType == "Admin") : false) 
+    isAdmin: (req.isAuthenticated() ? (req.user.userType == "Admin") : false),
+    isCaretaker: (req.isAuthenticated() ? (req.user.isCaretaker) : false) 
   });
 }
 
@@ -223,7 +250,8 @@ function adminProfile(req, res, next) {
   res.render("adminProfile", {
     title: "Admin Profile",
     isSignedIn: req.isAuthenticated(),
-    isAdmin: (req.isAuthenticated() ? (req.user.userType == "Admin") : false) 
+    isAdmin: (req.isAuthenticated() ? (req.user.userType == "Admin") : false),
+    isCaretaker: (req.isAuthenticated() ? (req.user.isCaretaker) : false) 
   });
 }
 

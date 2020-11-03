@@ -11,7 +11,8 @@ sql.query = {
 	// Job
 	petowner_job: "SELECT * FROM job WHERE pousername = $1",
 
-	// Caretaker profile Queries
+  // Caretaker profile Queries
+  caretaker_checkstatus: "SELECT * FROM caretaker WHERE username = $1",
 	caretaker_petType: "SELECT * FROM caretaker_petcategory WHERE username = $1",
 	caretaker_petLimit: "",
 	caretaker_review: "SELECT review FROM job WHERE ctusername = $1",

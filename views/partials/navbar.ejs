@@ -7,6 +7,11 @@
       <li class="nav-item">
         <a class="nav-link" href="/about">About</a>
       </li>
+      <% if (isCaretaker) { %>
+      <li class="nav-item">
+        <a class="nav-link" href="/ct-home">CT</a>
+      </li>
+      <% } %>
     </ul>
     <% if (!isSignedIn) { %>
     <ul class="navbar-nav ml-auto">
