@@ -34,6 +34,7 @@ function initRouter(app) {
 	app.get("/adminProfile", passport.authMiddleware(), adminProfile);
 
 	/* AUTHENTICATED POST */
+	app.post("/editAdmin", passport.authMiddleware(), editAdmin);
 
 	/* SIGNUP */
 	app.get("/signup", passport.antiMiddleware(), function (req, res, next) {
@@ -109,20 +110,26 @@ function adminDashboard(req, res, next) {
 				if (err) {
 					console.error(err);
 				}
-				let username = topCaretakers.rows.map((a) => a.username);
-				let totalAmount = topCaretakers.rows.map((a) => a.totalamount);
+				pool.query(sql_query.query.underperforming_ct, (err, underperformingCt) => {
+					if (err) {
+						console.error(err);
+					}
+					let username = topCaretakers.rows.map((a) => a.username);
+					let totalAmount = topCaretakers.rows.map((a) => a.totalamount);
 
-				let month = jobPerformance.rows.map((a) => a.month);
-				let amountpaid = jobPerformance.rows.map((a) => a.amountpaid);
-				console.log(amountpaid);
-				res.render("adminDashboard", {
-					title: "Admin Dashboard",
-					monthly_job: monthlyJob.rows,
-					username: username,
-					totalAmount: totalAmount,
-					month: month,
-					amountpaid: amountpaid,
-					isSignedIn: req.isAuthenticated()
+					let month = jobPerformance.rows.map((a) => a.month);
+					let amountpaid = jobPerformance.rows.map((a) => a.amountpaid);
+					console.log(amountpaid);
+					res.render("adminDashboard", {
+						title: "Admin Dashboard",
+						monthly_job: monthlyJob.rows,
+						username: username,
+						totalAmount: totalAmount,
+						month: month,
+						amountpaid: amountpaid,
+						underperformingCt: underperformingCt.rows,
+						isSignedIn: req.isAuthenticated()
+					});
 				});
 			});
 		});
@@ -165,16 +172,22 @@ function adminJob(req, res, next) {
 }
 
 function adminProfiles(req, res, next) {
-	res.render("adminProfiles", {
-		title: "Admin profiles",
-		isSignedIn: req.isAuthenticated()
+	pool.query(sql_query.query.get_admins, (err, data) => {
+		res.render("adminProfiles", {
+			title: "Admin Profiles",
+			data: data.rows,
+			isSignedIn: req.isAuthenticated()
+		});
 	});
 }
 
 function adminProfile(req, res, next) {
-	res.render("adminProfile", {
-		title: "Admin Profile",
-		isSignedIn: req.isAuthenticated()
+	pool.query(sql_query.query.get_admin, [req.query.username], (err, data) => {
+		res.render("adminProfile", {
+			title: "Admin Profile",
+			data: data.rows,
+			isSignedIn: req.isAuthenticated()
+		});
 	});
 }
 
@@ -213,6 +226,31 @@ function registerUser(req, res, next) {
 			res.redirect("/users");
 		}
 	);
+}
+
+function editAdmin(req, res, next) {
+	const name = req.body.name;
+	const email = req.body.email;
+	const password = req.body.password;
+	const username = req.body.username;
+	const action = req.body.action;
+	if (action == "Edit") {
+		pool.query(sql_query.query.edit_admin, [name, email, password, username], (err, data) => {
+			if (err) {
+				console.error(err);
+			}
+			res.redirect("/adminProfiles");
+		});
+	} else if (action == "Delete") {
+		pool.query(sql_query.query.delete_admin, ["f", username], (err, data) => {
+			if (err) {
+				console.error(err);
+			}
+			res.redirect("/adminProfiles");
+		});
+	} else {
+		res.redirect("/adminProfiles");
+	}
 }
 
 // Render Function
