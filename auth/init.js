@@ -7,6 +7,7 @@ const LocalStrategy = require("passport-local").Strategy;
 var authMiddleware = require("./middleware");
 var antiMiddleware = require("./antimiddle");
 var verifyAdmin = require("./verifyadmin");
+var verifyNotAdmin = require("./verifynotadmin");
 
 // Postgre SQL Connection
 const { Pool } = require("pg");
@@ -153,6 +154,7 @@ function initPassport() {
   passport.authMiddleware = authMiddleware;
   passport.antiMiddleware = antiMiddleware;
   passport.verifyAdmin = verifyAdmin;
+  passport.verifyNotAdmin = verifyNotAdmin;
   passport.findUser = findUser;
   passport.findAdmin = findAdmin;
 }
