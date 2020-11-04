@@ -8,15 +8,16 @@ sql.query = {
   // Pet
   all_pets: "SELECT * FROM pet WHERE username = $1",
 
-  // Job
+  // Petowner profile Queries
   petowner_job: "SELECT * FROM job WHERE pousername = $1",
+  petowner_creditCard: "SELECT * FROM petownerregisterscreditcard WHERE username = $1",
 
   // Caretaker profile Queries
   caretaker_petType: "SELECT * FROM caretaker_petcategory WHERE username = $1",
   caretaker_petLimit: "",
   caretaker_review: "SELECT review FROM job WHERE ctusername = $1",
   caretaker_jobview: "SELECT * FROM job WHERE ctusername = $1",
-
+  
   // Caretaker Availability Queries
   // full time
   fulltime_leavedays: "SELECT * FROM fulltimeappliesleaves WHERE username = $1",
@@ -66,7 +67,11 @@ sql.query = {
   register_admin:
     "INSERT INTO administrator VALUES ($1,$2,$3,$4,CURRENT_DATE,TRUE)",
 
-  search_caretaker: `	SELECT *
+  // Register credit card
+  register_credit_card:
+	"INSERT INTO petownerregisterscreditcard VALUES ($1,$2,$3,$4,$5)",
+
+  search_caretaker: `SELECT *
 		FROM fulltime f JOIN appuser u ON f.username = u.username
 		WHERE NOT EXISTS (
 			SELECT leavedate

@@ -32,8 +32,9 @@ function initRouter(app) {
 
   /* AUTHENTICATED GET */
   app.get("/users", passport.authMiddleware(), users);
+
   app.get(
-    "/profile",
+    "/petOwner-profile",
     passport.authMiddleware(),
     passport.verifyNotAdmin(),
     petOwnerProfile
@@ -105,6 +106,17 @@ function initRouter(app) {
   });
 
   app.post("/signup", passport.antiMiddleware(), registerUser);
+
+  /* REGISTER CREDIT CARD */
+  app.get("/petOwner-creditCard", passport.authMiddleware(), function (req, res, next) {
+    res.render("petOwner-creditCard", {
+      title: "Register Credit Card",
+      isSignedIn: req.isAuthenticated(),
+      isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false,
+    });
+  });
+
+  app.post("/petOwner-creditCard", passport.antiMiddleware(), registerCreditCard);
 
   /* SIGNIN */
   app.get("/signin", passport.antiMiddleware(), (req, res, next) => {
@@ -185,35 +197,47 @@ function users(req, res, next) {
 
 function petOwnerProfile(req, res, next) {
   const username = req.user.username;
-  pool.query(sql_query.query.get_user, [username], (err, details) => {
-    if (err) {
-      console.error(err);
-    }
-    pool.query(sql_query.query.all_pets, [username], (err, pets) => {
+  pool.query(
+    sql_query.query.get_user,
+    [username], (err, details) => {
       if (err) {
         console.error(err);
       }
       pool.query(
-        sql_query.query.petowner_job,
-        [username],
-        (err, reservations) => {
+        sql_query.query.all_pets,
+        [username], (err, pets) => {
           if (err) {
             console.error(err);
           }
-          res.render("profile", {
-            title: "Pet Owner",
-            details: details.rows,
-            pets: pets.rows,
-            reservations: reservations.rows,
-            isSignedIn: req.isAuthenticated(),
-            isAdmin: req.isAuthenticated()
-              ? req.user.userType == "Admin"
-              : false,
-          });
-        }
-      );
+          pool.query(
+            sql_query.query.petowner_job,
+            [username],
+            (err, reservations) => {
+              if (err) {
+                console.error(err);
+              }
+              pool.query(
+                sql_query.query.petowner_creditCard,
+                [username],
+                (err, creditcard) => {
+                  if (err) {
+                    console.error(err);
+                  }
+                  res.render("petOwner-profile", {
+                    title: "Pet Owner",
+                    details: details.rows,
+                    pets: pets.rows,
+                    reservations: reservations.rows,
+                    creditcard: creditcard.rows,
+                    isSignedIn: req.isAuthenticated(),
+                    isAdmin: req.isAuthenticated()
+                      ? req.user.userType == "Admin"
+                      : false,
+                  });
+                });
+            });
+        });
     });
-  });
 }
 
 function adminDashboard(req, res, next) {
@@ -390,6 +414,24 @@ function registerAdmin(req, res, next) {
         );
       } */
       res.redirect("/admin-dashboard");
+    }
+  );
+}
+
+
+function registerCreditCard(req, res, next) {
+  console.log("hello");
+  const username = req.user.username;
+  const cardnumber = req.body.cardnumber;
+  const nameoncard = req.body.nameoncard;
+  const cvv = req.body.cvv;
+  const expirydate = req.body.expirydate;
+
+  pool.query(
+    sql_query.query.register_credit_card,
+    [username, cardnumber, nameoncard, cvv, expirydate],
+    (err, data) => {
+      res.redirect("/petOwner-profile");
     }
   );
 }

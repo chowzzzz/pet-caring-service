@@ -2,8 +2,8 @@
 
 \c postgres
 
-DROP DATABASE IF EXISTS petcaringservice;
-CREATE DATABASE petcaringservice;
+DROP DATABASE IF EXISTS PetCaringService;
+CREATE DATABASE PetCaringService;
 
 \c petcaringservice
 
@@ -14,8 +14,8 @@ CREATE TABLE Administrator (
 	name VARCHAR(100) NOT NULL,
 	email VARCHAR(100) NOT NULL UNIQUE,
 	password VARCHAR(20) NOT NULL,
-	joindate DATE NOT NULL DEFAULT CURRENT_DATE,
-	isactive BOOLEAN NOT NULL DEFAULT TRUE,
+	joindate DATE NOT NULL,
+	isactive BOOLEAN NOT NULL,
 	PRIMARY KEY(username)
 );
 
@@ -24,8 +24,8 @@ CREATE TABLE AppUser (
 	name VARCHAR(100) NOT NULL,
 	email VARCHAR(100) NOT NULL UNIQUE,
 	password VARCHAR(20) NOT NULL,
-	joindate DATE NOT NULL DEFAULT CURRENT_DATE,
-	isactive BOOLEAN NOT NULL DEFAULT TRUE,
+	joindate DATE NOT NULL,
+	isactive BOOLEAN NOT NULL,
 	gender VARCHAR(1) NOT NULL,
 	address VARCHAR(100) NOT NULL,
 	dateofbirth DATE NOT NULL,
@@ -91,6 +91,15 @@ CREATE TABLE PetOwnerRegistersCreditCard (
 
 /*----------------------------------------------------*/
 
+CREATE TABLE CareTakerCatersPetCategory (
+	username VARCHAR(20),
+	category VARCHAR(20),
+	/* price NUMERIC(31,2) NOT NULL,*/
+	PRIMARY KEY(username, category),
+	FOREIGN KEY(username) REFERENCES CareTaker(username),
+	FOREIGN KEY(category) REFERENCES PetCategory(category)	
+);
+
 CREATE TABLE PetCategory (
 	category VARCHAR(20),
 	baseprice NUMERIC(31,2) NOT NULL,
@@ -105,8 +114,10 @@ CREATE TABLE Pet (
 	description VARCHAR(100) NOT NULL,
 	specialreqs VARCHAR(100),
 	personality VARCHAR(100) NOT NULL,
+	category VARCHAR(20) NOT NULL,
 	PRIMARY KEY(username, name),
-	FOREIGN KEY(username) REFERENCES AppUser(username)	
+	FOREIGN KEY(username) REFERENCES AppUser(username),	
+	FOREIGN KEY(category) REFERENCES PetCategory(category)	
 );
 
 /*----------------------------------------------------*/
@@ -131,6 +142,7 @@ CREATE TABLE Job (
 );
 
 /* END OF DATABASE CREATION */
+
 /* START OF DATA INITIALISATION */
 /* Administrator 10*/
 INSERT INTO Administrator VALUES ('admin', 'admin', 'admin@pcs.com', 'admin', '2020-08-24', 'true');
@@ -2067,7 +2079,7 @@ INSERT INTO PartTimeIndicatesAvailability VALUES ('Harry', '2019-06-04', '2021-0
 
 /*----------------------------------------------------*/
 /* PetOwnerRegistersCreditCard 100*/
-INSERT INTO PetOwnerRegistersCreditCard VALUES ('Antons', '9856884100909724', 'Antons Mayor', '590', '2022-12-07');
+INSERT INTO PetOwnerRegistersCreditCard VALUES ('Quincey', '9856884100909724', 'Quincey Mayor', '590', '2022-12-07');
 INSERT INTO PetOwnerRegistersCreditCard VALUES ('Eberhard', '4086214032724664', 'Eberhard Cantera', '498', '2025-12-24');
 INSERT INTO PetOwnerRegistersCreditCard VALUES ('Lyda', '1444301753777758', 'Lyda Manville', '504', '2028-06-06');
 INSERT INTO PetOwnerRegistersCreditCard VALUES ('Frank', '4555992176730890', 'Frank Twinn', '904', '2024-10-18');
@@ -2085,7 +2097,7 @@ INSERT INTO PetOwnerRegistersCreditCard VALUES ('Freddy', '5649143672939560', 'F
 INSERT INTO PetOwnerRegistersCreditCard VALUES ('Baxie', '8410264827957177', 'Baxie Deboo', '654', '2023-08-25');
 INSERT INTO PetOwnerRegistersCreditCard VALUES ('Robin', '2276389234876044', 'Robin Taggart', '649', '2024-11-24');
 INSERT INTO PetOwnerRegistersCreditCard VALUES ('Moritz', '5861762511328953', 'Moritz Tomasutti', '214', '2022-08-13');
-INSERT INTO PetOwnerRegistersCreditCard VALUES ('Gloriane', '8940686230876234', 'Gloriane Baskeyfied', '246', '2028-10-08');
+INSERT INTO PetOwnerRegistersCreditCard VALUES ('Quincey', '8940686230876234', 'Gloriane Baskeyfied', '246', '2028-10-08');
 INSERT INTO PetOwnerRegistersCreditCard VALUES ('Jami', '2754087036568450', 'Jami McCrae', '990', '2024-09-17');
 INSERT INTO PetOwnerRegistersCreditCard VALUES ('Gare', '6727604930002412', 'Gare Coie', '620', '2025-07-08');
 INSERT INTO PetOwnerRegistersCreditCard VALUES ('Yolanthe', '7051221480666114', 'Yolanthe Josskoviz', '392', '2024-06-17');
@@ -2093,7 +2105,7 @@ INSERT INTO PetOwnerRegistersCreditCard VALUES ('Jemima', '7002268881072300', 'J
 INSERT INTO PetOwnerRegistersCreditCard VALUES ('Dewitt', '1188328342302334', 'Dewitt Almond', '429', '2027-02-23');
 INSERT INTO PetOwnerRegistersCreditCard VALUES ('Carin', '3554736669996268', 'Carin Goodlip', '579', '2029-10-15');
 INSERT INTO PetOwnerRegistersCreditCard VALUES ('Kean', '4106268007384321', 'Kean Flanner', '153', '2024-05-11');
-INSERT INTO PetOwnerRegistersCreditCard VALUES ('Clint', '3018188553021994', 'Clint Janauschek', '332', '2026-10-27');
+INSERT INTO PetOwnerRegistersCreditCard VALUES ('Quincey', '3018188553021994', 'Clint Janauschek', '332', '2026-10-27');
 INSERT INTO PetOwnerRegistersCreditCard VALUES ('Regan', '2201418263605274', 'Regan Steiner', '269', '2028-03-08');
 INSERT INTO PetOwnerRegistersCreditCard VALUES ('Emalee', '2194462677407700', 'Emalee Gaskell', '701', '2029-09-06');
 INSERT INTO PetOwnerRegistersCreditCard VALUES ('Natty', '5422551007366825', 'Natty Shakelady', '889', '2029-07-14');
@@ -2170,260 +2182,134 @@ INSERT INTO PetOwnerRegistersCreditCard VALUES ('Constantino', '5765214651003066
 
 /*----------------------------------------------------*/
 /* PetCategory 100*/
-INSERT INTO PetCategory VALUES ('Grison', '698.11');
-INSERT INTO PetCategory VALUES ('Horned puffin', '247.12');
-INSERT INTO PetCategory VALUES ('Crowned eagle', '904.37');
-INSERT INTO PetCategory VALUES ('Cape Barren goose', '352.31');
-INSERT INTO PetCategory VALUES ('Cuis', '282.64');
-INSERT INTO PetCategory VALUES ('Hyrax', '925.62');
-INSERT INTO PetCategory VALUES ('Nilgai', '770.28');
-INSERT INTO PetCategory VALUES ('Fat-tailed dunnart', '672.67');
-INSERT INTO PetCategory VALUES ('Mountain goat', '805.76');
-INSERT INTO PetCategory VALUES ('Red squirrel', '410.45');
-INSERT INTO PetCategory VALUES ('Common duiker', '769.66');
-INSERT INTO PetCategory VALUES ('Common pheasant', '989.28');
-INSERT INTO PetCategory VALUES ('Spectacled caiman', '341.73');
-INSERT INTO PetCategory VALUES ('Blue-faced booby', '708.56');
-INSERT INTO PetCategory VALUES ('Native cat', '719.10');
-INSERT INTO PetCategory VALUES ('Mandras tree shrew', '734.63');
-INSERT INTO PetCategory VALUES ('Blue crane', '471.65');
-INSERT INTO PetCategory VALUES ('Chuckwalla', '588.52');
-INSERT INTO PetCategory VALUES ('Peregrine falcon', '831.78');
-INSERT INTO PetCategory VALUES ('Tayra', '914.93');
-INSERT INTO PetCategory VALUES ('Indian tree pie', '718.79');
-INSERT INTO PetCategory VALUES ('White stork', '457.26');
-INSERT INTO PetCategory VALUES ('Boat-billed heron', '485.91');
-INSERT INTO PetCategory VALUES ('Horned rattlesnake', '207.72');
-INSERT INTO PetCategory VALUES ('Black-backed magpie', '567.95');
-INSERT INTO PetCategory VALUES ('Bontebok', '365.29');
-INSERT INTO PetCategory VALUES ('Crested barbet', '794.26');
-INSERT INTO PetCategory VALUES ('Indian red admiral', '400.57');
-INSERT INTO PetCategory VALUES ('Oribi', '262.82');
-INSERT INTO PetCategory VALUES ('Striped dolphin', '786.24');
-INSERT INTO PetCategory VALUES ('Two-toed sloth', '794.54');
-INSERT INTO PetCategory VALUES ('Canada goose', '702.30');
-INSERT INTO PetCategory VALUES ('Blue fox', '437.37');
-INSERT INTO PetCategory VALUES ('Egyptian vulture', '650.04');
-INSERT INTO PetCategory VALUES ('Frilled dragon', '909.28');
-INSERT INTO PetCategory VALUES ('Carmine bee-eater', '283.69');
-INSERT INTO PetCategory VALUES ('Agile wallaby', '602.55');
-INSERT INTO PetCategory VALUES ('Black bear', '342.29');
-INSERT INTO PetCategory VALUES ('Water monitor', '226.78');
-INSERT INTO PetCategory VALUES ('Common ringtail', '964.77');
-INSERT INTO PetCategory VALUES ('Large-eared bushbaby', '719.01');
-INSERT INTO PetCategory VALUES ('Caribou', '414.36');
-INSERT INTO PetCategory VALUES ('Desert kangaroo rat', '215.81');
-INSERT INTO PetCategory VALUES ('Mule deer', '669.07');
-INSERT INTO PetCategory VALUES ('Cape fox', '843.24');
-INSERT INTO PetCategory VALUES ('Common palm civet', '725.27');
-INSERT INTO PetCategory VALUES ('Roan antelope', '255.24');
-INSERT INTO PetCategory VALUES ('Caracal', '738.37');
-INSERT INTO PetCategory VALUES ('Little blue penguin', '935.20');
-INSERT INTO PetCategory VALUES ('Coqui partridge', '793.20');
-INSERT INTO PetCategory VALUES ('Arctic tern', '926.53');
-INSERT INTO PetCategory VALUES ('Sage grouse', '968.52');
-INSERT INTO PetCategory VALUES ('Lily trotter', '477.39');
-INSERT INTO PetCategory VALUES ('Fringe-eared oryx', '846.24');
-INSERT INTO PetCategory VALUES ('Bird (unidentified)', '562.91');
-INSERT INTO PetCategory VALUES ('Yellow baboon', '428.95');
-INSERT INTO PetCategory VALUES ('Pronghorn', '805.07');
-INSERT INTO PetCategory VALUES ('Tasmanian devil', '862.27');
-INSERT INTO PetCategory VALUES ('Jabiru stork', '385.25');
-INSERT INTO PetCategory VALUES ('Golden jackal', '955.22');
-INSERT INTO PetCategory VALUES ('Racer snake', '606.46');
-INSERT INTO PetCategory VALUES ('Honey badger', '423.77');
-INSERT INTO PetCategory VALUES ('Carpet python', '412.06');
-INSERT INTO PetCategory VALUES ('Black-crowned crane', '406.74');
-INSERT INTO PetCategory VALUES ('Mallard', '279.46');
-INSERT INTO PetCategory VALUES ('Field flicker', '689.92');
-INSERT INTO PetCategory VALUES ('Red-billed hornbill', '227.70');
-INSERT INTO PetCategory VALUES ('Sandhill crane', '741.84');
-INSERT INTO PetCategory VALUES ('African skink', '228.15');
-INSERT INTO PetCategory VALUES ('Brush-tailed bettong', '901.00');
-INSERT INTO PetCategory VALUES ('Hawk-headed parrot', '885.92');
-INSERT INTO PetCategory VALUES ('Tiger', '995.10');
-INSERT INTO PetCategory VALUES ('Black-eyed bulbul', '876.77');
-INSERT INTO PetCategory VALUES ('Indian leopard', '914.27');
-INSERT INTO PetCategory VALUES ('Great white pelican', '793.10');
-INSERT INTO PetCategory VALUES ('Common goldeneye', '731.92');
-INSERT INTO PetCategory VALUES ('African polecat', '604.89');
-INSERT INTO PetCategory VALUES ('Grizzly bear', '807.80');
-INSERT INTO PetCategory VALUES ('Collared lizard', '363.15');
-INSERT INTO PetCategory VALUES ('Asian water buffalo', '828.96');
-INSERT INTO PetCategory VALUES ('Banded mongoose', '823.26');
-INSERT INTO PetCategory VALUES ('Pied crow', '555.84');
-INSERT INTO PetCategory VALUES ('Red-tailed hawk', '217.07');
-INSERT INTO PetCategory VALUES ('American badger', '991.37');
-INSERT INTO PetCategory VALUES ('African lynx', '740.80');
-INSERT INTO PetCategory VALUES ('Red-necked wallaby', '604.81');
-INSERT INTO PetCategory VALUES ('Roe deer', '341.04');
-INSERT INTO PetCategory VALUES ('Arctic fox', '902.17');
-INSERT INTO PetCategory VALUES ('Ring dove', '949.29');
-INSERT INTO PetCategory VALUES ('American crow', '689.86');
-INSERT INTO PetCategory VALUES ('African black crake', '592.02');
-INSERT INTO PetCategory VALUES ('Rhesus macaque', '723.96');
-INSERT INTO PetCategory VALUES ('Desert tortoise', '308.10');
-INSERT INTO PetCategory VALUES ('Mouflon', '800.61');
-INSERT INTO PetCategory VALUES ('African pied wagtail', '343.07');
-INSERT INTO PetCategory VALUES ('Roseate cockatoo', '761.18');
-INSERT INTO PetCategory VALUES ('Green vine snake', '951.76');
-INSERT INTO PetCategory VALUES ('Least chipmunk', '679.42');
-INSERT INTO PetCategory VALUES ('Pale white-eye', '656.74');
-INSERT INTO PetCategory VALUES ('African buffalo', '404.29');
+INSERT INTO PetCategory VALUES ('Koi', '70.00');
+INSERT INTO PetCategory VALUES ('Rodents', '90.00');
+INSERT INTO PetCategory VALUES ('Ferrets', '110.00');
+INSERT INTO PetCategory VALUES ('Mosquitofish', '120.00');
+INSERT INTO PetCategory VALUES ('Columbines', '180.00');
+INSERT INTO PetCategory VALUES ('Chinchillas', '60.00');
+INSERT INTO PetCategory VALUES ('Guppy', '100.00');
+INSERT INTO PetCategory VALUES ('Sheep', '90.00');
+INSERT INTO PetCategory VALUES ('Fowl', '140.00');
+INSERT INTO PetCategory VALUES ('Goldfish', '50.00');
+INSERT INTO PetCategory VALUES ('Rabbits', '130.00');
+INSERT INTO PetCategory VALUES ('Alpacas', '60.00');
+INSERT INTO PetCategory VALUES ('Goats', '60.00');
+INSERT INTO PetCategory VALUES ('Barb', '160.00');
+INSERT INTO PetCategory VALUES ('Cattle', '90.00');
+INSERT INTO PetCategory VALUES ('Dogs', '70.00');
+INSERT INTO PetCategory VALUES ('Hedgehogs', '160.00');
+INSERT INTO PetCategory VALUES ('Horses', '120.00');
+INSERT INTO PetCategory VALUES ('Cats', '150.00');
+INSERT INTO PetCategory VALUES ('Pigs', '70.00');
+
+/*----------------------------------------------------*/
+/* CareTakerCatersPetCategory 100*/
 
 /*----------------------------------------------------*/
 /* Pet 100*/
-INSERT INTO Pet VALUES ('Udall', 'Malinda', '2011-05-15', 'M', 'Operative 24 hour implementation', 'Total', 'software');
-INSERT INTO Pet VALUES ('Weidar', 'Maris', '2007-06-10', 'F', 'Fundamental uniform data-warehouse', 'analyzer', 'Enterprise-wide');
-INSERT INTO Pet VALUES ('Nils', 'Amandie', '2012-06-08', 'F', 'Enhanced reciprocal analyzer', 'access', 'customer loyalty');
-INSERT INTO Pet VALUES ('Berne', 'Timmy', '2000-08-03', 'F', 'Re-contextualized radical solution', 'database', 'Robust');
-INSERT INTO Pet VALUES ('Rickard', 'Harmonie', '2004-02-17', 'F', 'Secured asymmetric hardware', 'methodical', 'Decentralized');
-INSERT INTO Pet VALUES ('Pascale', 'Zitella', '2015-05-15', 'F', 'Multi-tiered multimedia artificial intelligence', 'global', 'fault-tolerant');
-INSERT INTO Pet VALUES ('Arel', 'Bianca', '2006-03-19', 'F', 'Mandatory even-keeled core', 'portal', 'Secured');
-INSERT INTO Pet VALUES ('Reinaldos', 'Brittan', '2001-02-08', 'F', 'Persistent asymmetric project', 'Innovative', 'Programmable');
-INSERT INTO Pet VALUES ('Tremaine', 'Jacquelynn', '2012-05-08', 'M', 'Persevering 5th generation hub', 'contextually-based', 'Decentralized');
-INSERT INTO Pet VALUES ('Nero', 'Alla', '2012-10-26', 'F', 'Monitored object-oriented encoding', 'concept', 'budgetary management');
-INSERT INTO Pet VALUES ('Harper', 'Kelsey', '2002-03-04', 'M', 'Re-engineered mission-critical orchestration', 'actuating', 'non-volatile');
-INSERT INTO Pet VALUES ('Allard', 'Ketty', '2003-02-18', 'M', 'Virtual methodical parallelism', 'Vision-oriented', 'systemic');
-INSERT INTO Pet VALUES ('Filbert', 'Meriel', '2000-10-06', 'M', 'Integrated object-oriented application', 'Enterprise-wide', 'didactic');
-INSERT INTO Pet VALUES ('Bob', 'Dara', '2002-11-08', 'M', 'De-engineered grid-enabled array', 'open architecture', 'internet solution');
-INSERT INTO Pet VALUES ('Thatcher', 'Edeline', '2013-03-01', 'F', 'Quality-focused regional alliance', 'static', 'structure');
-INSERT INTO Pet VALUES ('Tanney', 'Oneida', '2010-01-10', 'F', 'Focused modular hardware', 'internet solution', 'Decentralized');
-INSERT INTO Pet VALUES ('Abby', 'Carlie', '2010-07-11', 'F', 'Profound non-volatile secured line', 'Reverse-engineered', 'bifurcated');
-INSERT INTO Pet VALUES ('Reamonn', 'Sophi', '2004-09-22', 'M', 'Operative multimedia framework', 'Enhanced', 'hybrid');
-INSERT INTO Pet VALUES ('Antoni', 'Carlota', '2008-09-19', 'M', 'Enterprise-wide empowering software', 'Optional', 'matrix');
-INSERT INTO Pet VALUES ('Carver', 'Marj', '2003-07-11', 'F', 'Versatile systemic migration', '24 hour', 'software');
-INSERT INTO Pet VALUES ('Arvie', 'Camilla', '2001-12-18', 'M', 'Total bi-directional concept', 'collaboration', 'task-force');
-INSERT INTO Pet VALUES ('Raynor', 'Lona', '2013-12-11', 'F', 'De-engineered cohesive help-desk', 'Optional', '24 hour');
-INSERT INTO Pet VALUES ('Reinwald', 'Yalonda', '2005-05-08', 'M', 'Grass-roots executive neural-net', 'architecture', 'Self-enabling');
-INSERT INTO Pet VALUES ('Nataniel', 'Cloris', '2015-06-01', 'M', 'Function-based needs-based encoding', 'Automated', 'heuristic');
-INSERT INTO Pet VALUES ('Levi', 'Clarine', '2010-06-05', 'M', 'Switchable analyzing flexibility', 'info-mediaries', 'systemic');
-INSERT INTO Pet VALUES ('Andras', 'Rochell', '2007-03-11', 'F', 'Enhanced zero tolerance functionalities', 'high-level', 'framework');
-INSERT INTO Pet VALUES ('Berne', 'Brittney', '2012-12-04', 'F', 'Function-based bi-directional forecast', 'Fundamental', '3rd generation');
-INSERT INTO Pet VALUES ('Lane', 'Enid', '2010-09-18', 'F', 'Intuitive upward-trending synergy', 'optimal', 'uniform');
-INSERT INTO Pet VALUES ('Tammy', 'Angy', '2013-05-08', 'M', 'Enterprise-wide radical emulation', 'even-keeled', 'Realigned');
-INSERT INTO Pet VALUES ('Fairfax', 'Rea', '2002-03-19', 'M', 'Multi-layered web-enabled matrices', 'next generation', 'monitoring');
-INSERT INTO Pet VALUES ('Georgi', 'Dorie', '2004-06-12', 'F', 'Mandatory foreground database', 'intangible', 'actuating');
-INSERT INTO Pet VALUES ('Evelin', 'Austin', '2002-04-18', 'M', 'Profound hybrid collaboration', 'Upgradable', 'moderator');
-INSERT INTO Pet VALUES ('Trevar', 'Kettie', '2007-09-15', 'F', 'Ergonomic 3rd generation open architecture', 'Synchronised', 'Face to face');
-INSERT INTO Pet VALUES ('Lorry', 'Randie', '2000-11-16', 'M', 'Managed upward-trending time-frame', 'Implemented', 'Re-engineered');
-INSERT INTO Pet VALUES ('Bax', 'Claudelle', '2011-12-28', 'F', 'Multi-channelled coherent initiative', 'local area network', 'value-added');
-INSERT INTO Pet VALUES ('Richart', 'Joye', '2015-07-11', 'M', 'Up-sized tangible budgetary management', 'system-worthy', 'client-driven');
-INSERT INTO Pet VALUES ('Mauricio', 'Ainsley', '2014-02-23', 'M', 'De-engineered user-facing benchmark', 'homogeneous', 'solution-oriented');
-INSERT INTO Pet VALUES ('Slade', 'Fayth', '2004-12-20', 'M', 'Cloned full-range toolset', 'open system', 'user-facing');
-INSERT INTO Pet VALUES ('Pascale', 'Melinde', '2007-10-31', 'F', 'Innovative real-time Graphic Interface', 'focus group', 'concept');
-INSERT INTO Pet VALUES ('Maurice', 'Norina', '2014-08-20', 'F', 'Programmable explicit protocol', '24 hour', 'Inverse');
-INSERT INTO Pet VALUES ('Lemuel', 'Katerina', '2012-06-10', 'M', 'Cross-platform disintermediate array', 'interface', 'well-modulated');
-INSERT INTO Pet VALUES ('Samuele', 'Kirsten', '2008-08-22', 'F', 'Front-line web-enabled structure', 'matrix', 'Visionary');
-INSERT INTO Pet VALUES ('Alfonse', 'Oona', '2015-07-31', 'M', 'Multi-lateral human-resource interface', 'fresh-thinking', 'groupware');
-INSERT INTO Pet VALUES ('Rockwell', 'Adelheid', '2008-11-14', 'F', 'Ergonomic homogeneous database', 'Optimized', 'adapter');
-INSERT INTO Pet VALUES ('Vincent', 'Mickie', '2006-11-02', 'F', 'Synergistic multimedia core', 'hub', 'responsive');
-INSERT INTO Pet VALUES ('Fran', 'Ruthann', '2004-03-20', 'F', 'Multi-layered executive migration', 'alliance', 'Balanced');
-INSERT INTO Pet VALUES ('Humbert', 'Daffie', '2005-10-22', 'M', 'Pre-emptive didactic neural-net', 'knowledge base', 'background');
-INSERT INTO Pet VALUES ('Udall', 'Carmon', '2003-07-07', 'M', 'Synchronised empowering infrastructure', 'interactive', 'project');
-INSERT INTO Pet VALUES ('Carver', 'Bernie', '2002-03-10', 'M', 'Upgradable human-resource support', 'complexity', 'holistic');
-INSERT INTO Pet VALUES ('Ellswerth', 'Babita', '2003-05-14', 'M', 'Synchronised even-keeled hub', 'Multi-channelled', 'customer loyalty');
-INSERT INTO Pet VALUES ('Karlan', 'Deeanne', '2004-10-16', 'M', 'Switchable well-modulated moderator', 'Universal', 'Versatile');
-INSERT INTO Pet VALUES ('Freeland', 'Othelia', '2009-01-03', 'F', 'Programmable 24/7 algorithm', 'toolset', 'solution');
-INSERT INTO Pet VALUES ('Pepito', 'Larisa', '2003-08-01', 'M', 'User-centric didactic protocol', 'Operative', 'portal');
-INSERT INTO Pet VALUES ('Janek', 'Conni', '2013-11-05', 'M', 'Expanded needs-based adapter', 'human-resource', 'Optimized');
-INSERT INTO Pet VALUES ('Brig', 'Zena', '2015-08-16', 'F', 'User-centric next generation website', 'Reactive', 'protocol');
-INSERT INTO Pet VALUES ('Quinlan', 'Alicia', '2006-12-02', 'F', 'Streamlined intangible monitoring', 'workforce', 'Customer-focused');
-INSERT INTO Pet VALUES ('Miltie', 'Zenia', '2008-01-03', 'F', 'Self-enabling asynchronous firmware', 'Configurable', 'Optimized');
-INSERT INTO Pet VALUES ('Allin', 'Tabatha', '2001-12-15', 'M', 'Cross-group mission-critical productivity', 'system engine', 'Synergistic');
-INSERT INTO Pet VALUES ('Hunter', 'Mariam', '2010-06-17', 'M', 'Enterprise-wide 5th generation approach', 'Optional', 'Fundamental');
-INSERT INTO Pet VALUES ('Nealson', 'Lisette', '2007-02-28', 'F', 'Team-oriented local extranet', 'monitoring', 'Centralized');
-INSERT INTO Pet VALUES ('Reg', 'Gisella', '2002-04-07', 'F', 'Progressive demand-driven product', 'conglomeration', 'Realigned');
-INSERT INTO Pet VALUES ('Lorry', 'Juana', '2005-04-02', 'F', 'Fully-configurable grid-enabled groupware', 'asymmetric', 'systemic');
-INSERT INTO Pet VALUES ('Ulberto', 'Dulcie', '2012-01-27', 'F', 'Cross-platform user-facing focus group', 'De-engineered', 'Self-enabling');
-INSERT INTO Pet VALUES ('Galvan', 'Vivyanne', '2007-04-23', 'M', 'Pre-emptive intangible time-frame', 'Digitized', 'open architecture');
-INSERT INTO Pet VALUES ('Nichols', 'Janaye', '2010-02-21', 'F', 'De-engineered encompassing model', 'Upgradable', 'neural-net');
-INSERT INTO Pet VALUES ('Decca', 'Lelah', '2002-12-06', 'F', 'Virtual grid-enabled pricing structure', 'upward-trending', 'foreground');
-INSERT INTO Pet VALUES ('Ricki', 'Raphaela', '2002-04-25', 'M', 'Compatible zero defect application', 'Configurable', 'Ameliorated');
-INSERT INTO Pet VALUES ('Cristiano', 'Alina', '2010-12-05', 'F', 'Expanded needs-based solution', 'bifurcated', 'Total');
-INSERT INTO Pet VALUES ('Hurlee', 'Brandea', '2008-11-13', 'F', 'Cross-group fault-tolerant methodology', 'process improvement', 'Focused');
-INSERT INTO Pet VALUES ('Palm', 'Trixi', '2000-07-30', 'M', 'Expanded holistic orchestration', 'complexity', 'multi-tasking');
-INSERT INTO Pet VALUES ('Adam', 'Ronni', '2008-04-08', 'M', 'Visionary mission-critical info-mediaries', 'high-level', 'Organized');
-INSERT INTO Pet VALUES ('Maddy', 'Ailyn', '2007-06-04', 'F', 'Ameliorated 6th generation functionalities', 'clear-thinking', 'bi-directional');
-INSERT INTO Pet VALUES ('Waldon', 'Jolene', '2003-04-08', 'F', 'Re-contextualized maximized conglomeration', 'Synergized', 'Managed');
-INSERT INTO Pet VALUES ('Angie', 'Joyann', '2007-12-15', 'F', 'Adaptive 6th generation encryption', 'analyzing', 'collaboration');
-INSERT INTO Pet VALUES ('Wade', 'Henrieta', '2009-03-30', 'M', 'Ergonomic contextually-based info-mediaries', 'multi-tasking', 'approach');
-INSERT INTO Pet VALUES ('Patrizius', 'Retha', '2008-05-15', 'F', 'Universal asymmetric archive', 'regional', 'productivity');
-INSERT INTO Pet VALUES ('Hillyer', 'Velma', '2013-08-17', 'F', 'Profound zero administration artificial intelligence', 'benchmark', 'even-keeled');
-INSERT INTO Pet VALUES ('Trevar', 'Jori', '2010-04-02', 'F', 'Monitored directional groupware', 'coherent', 'mission-critical');
-INSERT INTO Pet VALUES ('Conan', 'Sharai', '2014-07-23', 'F', 'Multi-tiered tertiary matrix', 'User-friendly', 'static');
-INSERT INTO Pet VALUES ('Richmond', 'Caren', '2013-01-06', 'F', 'Front-line 3rd generation collaboration', 'synergy', 'Integrated');
-INSERT INTO Pet VALUES ('Nero', 'Sandye', '2014-07-02', 'F', 'Persevering zero tolerance framework', 'tertiary', 'groupware');
-INSERT INTO Pet VALUES ('Caesar', 'Tommie', '2013-01-11', 'F', 'Fundamental tangible Graphic Interface', 'product', 'responsive');
-INSERT INTO Pet VALUES ('Samuele', 'Peri', '2005-09-02', 'M', 'Organized bottom-line toolset', 'throughput', 'Reactive');
-INSERT INTO Pet VALUES ('Harlen', 'Elsy', '2003-07-12', 'M', 'Up-sized multimedia open system', 'customer loyalty', 'hierarchy');
-INSERT INTO Pet VALUES ('Darryl', 'Gilbertine', '2007-03-27', 'M', 'Multi-channelled user-facing orchestration', 'asynchronous', 'context-sensitive');
-INSERT INTO Pet VALUES ('Virgil', 'Sunshine', '2009-12-02', 'M', 'Quality-focused multimedia groupware', 'multi-state', 'actuating');
-INSERT INTO Pet VALUES ('Kirby', 'Lauretta', '2002-01-14', 'F', 'Vision-oriented empowering knowledge base', 'Exclusive', 'Proactive');
-INSERT INTO Pet VALUES ('Oliviero', 'Faina', '2012-05-23', 'F', 'De-engineered composite complexity', 'Implemented', 'frame');
-INSERT INTO Pet VALUES ('Ario', 'Zia', '2014-07-31', 'M', 'Inverse cohesive open architecture', 'secondary', 'Optimized');
-INSERT INTO Pet VALUES ('Torr', 'Kylila', '2007-11-30', 'M', 'Seamless explicit superstructure', 'radical', 'dedicated');
-INSERT INTO Pet VALUES ('Armando', 'Letisha', '2014-06-07', 'M', 'Realigned intangible alliance', 'executive', 'migration');
-INSERT INTO Pet VALUES ('Klemens', 'Kat', '2012-11-09', 'M', 'Customizable background pricing structure', 'Polarised', 'zero administration');
-INSERT INTO Pet VALUES ('Joshia', 'Anthiathia', '2013-10-19', 'F', 'Pre-emptive methodical knowledge base', 'responsive', 'workforce');
-INSERT INTO Pet VALUES ('Andres', 'Anetta', '2008-09-26', 'M', 'Object-based multi-state conglomeration', 'collaboration', 'optimal');
-INSERT INTO Pet VALUES ('Ellwood', 'Mandie', '2014-11-15', 'F', 'Multi-layered mission-critical collaboration', 'approach', 'groupware');
-INSERT INTO Pet VALUES ('Kevin', 'Cassey', '2002-11-17', 'F', 'Profound foreground framework', 'analyzing', 'instruction set');
-INSERT INTO Pet VALUES ('Weidar', 'Paolina', '2013-08-23', 'F', 'Pre-emptive transitional architecture', 'system engine', 'hierarchy');
-INSERT INTO Pet VALUES ('Davie', 'Lilla', '2003-08-16', 'M', 'Horizontal systematic challenge', 'access', 'homogeneous');
-INSERT INTO Pet VALUES ('Steven', 'Genna', '2008-06-13', 'M', 'Quality-focused composite database', 'database', 'regional');
-INSERT INTO Pet VALUES ('Burton', 'Diena', '2012-10-25', 'F', 'Operative radical encryption', 'eco-centric', 'Inverse');
+INSERT INTO Pet VALUES ('Quincey', 'Hendrika', '2009-04-23', 'F', 'definition', 'project', 'local', 'Sheep');
+INSERT INTO Pet VALUES ('Romola', 'Sabine', '2013-07-14', 'F', 'uniform', '24 hour', 'Fully-configurable', 'Fowl');
+INSERT INTO Pet VALUES ('Belita', 'Tadio', '2003-04-16', 'M', 'Reduced', 'monitoring', 'analyzer', 'Alpacas');
+INSERT INTO Pet VALUES ('Allin', 'Ernesta', '2001-09-30', 'F', 'focus group', 'workforce', 'Synergistic', 'Koi');
+INSERT INTO Pet VALUES ('Hildagard', 'Jania', '2012-08-17', 'F', 'Implemented', 'complexity', 'Future-proofed', 'Goats');
+INSERT INTO Pet VALUES ('Hilarius', 'Marissa', '2002-07-11', 'M', 'access', 'optimal', 'mobile', 'Guppy');
+INSERT INTO Pet VALUES ('Holly', 'Arden', '2000-05-08', 'F', 'non-volatile', 'time-frame', 'groupware', 'Hedgehogs');
+INSERT INTO Pet VALUES ('Morissa', 'Imelda', '2002-08-19', 'F', 'toolset', 'Sharable', 'zero defect', 'Goats');
+INSERT INTO Pet VALUES ('Hildagard', 'Germaine', '2008-08-12', 'F', 'static', 'product', 'Total', 'Goldfish');
+INSERT INTO Pet VALUES ('Hildagard', 'Pattie', '2003-05-06', 'F', 'local area network', 'extranet', 'moratorium', 'Goldfish');
+INSERT INTO Pet VALUES ('Tades', 'Bantock', '2006-01-30', 'M', 'maximized', 'Exclusive', 'Profound', 'Mosquitofish');
+INSERT INTO Pet VALUES ('Holly', 'Matteucci', '2002-06-05', 'F', 'real-time', 'matrix', 'projection', 'Columbines');
+INSERT INTO Pet VALUES ('Belita', 'Pepper', '2001-08-16', 'M', 'tertiary', 'Optimized', 'website', 'Sheep');
+INSERT INTO Pet VALUES ('Allin', 'Lisetta', '2005-10-13', 'M', 'methodology', 'systematic', 'bifurcated', 'Alpacas');
+INSERT INTO Pet VALUES ('Akim', 'Charmion', '2011-12-03', 'F', 'Synchronised', 'adapter', 'Fundamental', 'Ferrets');
+INSERT INTO Pet VALUES ('Winny', 'Ashlan', '2002-05-20', 'F', 'open architecture', 'Intuitive', 'portal', 'Sheep');
+INSERT INTO Pet VALUES ('Morissa', 'Andy', '2000-10-11', 'F', 'hybrid', 'open architecture', 'Cross-platform', 'Cats');
+INSERT INTO Pet VALUES ('Tremaine', 'Jenilee', '2012-06-27', 'F', 'system engine', 'contextually-based', 'Integrated', 'Cats');
+INSERT INTO Pet VALUES ('Gianna', 'Renata', '2007-12-14', 'F', 'Mandatory', 'product', 'hub', 'Goldfish');
+INSERT INTO Pet VALUES ('Romola', 'Kelley', '2001-02-06', 'M', 'archive', 'Organic', 'asynchronous', 'Mosquitofish');
+INSERT INTO Pet VALUES ('Gianna', 'Ulrike', '2006-09-27', 'F', 'Programmable', 'composite', 'Object-based', 'Fowl');
+INSERT INTO Pet VALUES ('Winny', 'Margrie', '2009-06-06', 'M', 'internet solution', 'matrices', 'customer loyalty', 'Alpacas');
+INSERT INTO Pet VALUES ('Belita', 'Laure', '2013-10-09', 'F', 'responsive', 'foreground', 'Synergized', 'Sheep');
+INSERT INTO Pet VALUES ('Romola', 'Lomath', '2001-12-26', 'M', 'hardware', 'Secured', 'Automated', 'Cattle');
+INSERT INTO Pet VALUES ('Akim', 'Alys', '2014-09-09', 'M', 'Integrated', 'intermediate', 'open system', 'Columbines');
+INSERT INTO Pet VALUES ('Allin', 'Brewer', '2000-05-11', 'M', 'knowledge base', 'logistical', 'moratorium', 'Goats');
+INSERT INTO Pet VALUES ('Quincey', 'Judd', '2008-01-13', 'M', 'contextually-based', 'client-driven', 'actuating', 'Sheep');
+INSERT INTO Pet VALUES ('Winny', 'Job', '2006-07-05', 'M', 'logistical', 'systemic', 'Multi-tiered', 'Goats');
+INSERT INTO Pet VALUES ('Allin', 'Evyn', '2005-05-22', 'M', 'extranet', 'Synergized', 'methodical', 'Dogs');
+INSERT INTO Pet VALUES ('Tades', 'Corie', '2000-10-19', 'M', 'model', 'radical', 'product', 'Sheep');
+INSERT INTO Pet VALUES ('Tades', 'Claretta', '2001-02-14', 'F', 'Polarised', 'Re-engineered', 'Compatible', 'Guppy');
+INSERT INTO Pet VALUES ('Morissa', 'Reba', '2001-12-19', 'F', 'Graphical User Interface', 'multi-state', 'Self-enabling', 'Cattle');
+INSERT INTO Pet VALUES ('Allin', 'Jacquelin', '2010-10-04', 'F', 'Profound', 'monitoring', 'Fundamental', 'Cats');
+INSERT INTO Pet VALUES ('Akim', 'Solomon', '2009-04-21', 'M', 'Customer-focused', 'Reverse-engineered', 'Centralized', 'Pigs');
+INSERT INTO Pet VALUES ('Allin', 'Scarface', '2003-06-20', 'M', 'leverage', 'Inverse', 'fault-tolerant', 'Pigs');
+INSERT INTO Pet VALUES ('Tades', 'Bobbie', '2000-05-31', 'F', 'access', '3rd generation', 'Down-sized', 'Cats');
+INSERT INTO Pet VALUES ('Akim', 'Jacob', '2000-12-27', 'M', 'alliance', 'Integrated', 'stable', 'Chinchillas');
+INSERT INTO Pet VALUES ('Quincey', 'Fitz', '2005-08-13', 'M', 'Visionary', 'intranet', 'framework', 'Horses');
+INSERT INTO Pet VALUES ('Hilarius', 'Crystal', '2014-09-03', 'M', 'multimedia', 'hierarchy', 'Reactive', 'Koi');
+INSERT INTO Pet VALUES ('Gianna', 'Flexman', '2007-08-10', 'F', 'migration', 'stable', 'knowledge base', 'Columbines');
+INSERT INTO Pet VALUES ('Holly', 'Cathrine', '2009-08-31', 'F', 'non-volatile', 'moratorium', 'actuating', 'Barb');
+INSERT INTO Pet VALUES ('Quincey', 'Stollwerck', '2001-09-08', 'F', 'ability', 'cohesive', 'optimal', 'Dogs');
+INSERT INTO Pet VALUES ('Hilarius', 'Anastasia', '2003-10-21', 'F', 'Reactive', 'Object-based', 'forecast', 'Pigs');
+INSERT INTO Pet VALUES ('Romola', 'Penny', '2013-08-05', 'M', 'multi-tasking', 'circuit', 'challenge', 'Guppy');
+INSERT INTO Pet VALUES ('Akim', 'Leechman', '2000-01-12', 'M', 'Operative', 'system engine', 'Open-architected', 'Cats');
+INSERT INTO Pet VALUES ('Gianna', 'Theodosia', '2009-02-18', 'M', 'installation', 'intranet', 'bifurcated', 'Cats');
+INSERT INTO Pet VALUES ('Allin', 'Honatsch', '2005-01-16', 'F', 'database', 'tangible', 'Switchable', 'Horses');
+INSERT INTO Pet VALUES ('Gianna', 'Cacilie', '2002-01-26', 'F', 'bottom-line', 'neutral', 'uniform', 'Cattle');
+INSERT INTO Pet VALUES ('Akim', 'Liliane', '2011-08-12', 'M', 'local', 'methodology', 'mobile', 'Cattle');
+INSERT INTO Pet VALUES ('Romola', 'Ashlee', '2009-09-28', 'F', 'interface', 'User-centric', 'capacity', 'Goats');
+INSERT INTO Pet VALUES ('Gianna', 'Modesty', '2013-04-05', 'F', 'systemic', 'Customizable', '5th generation', 'Rodents');
+INSERT INTO Pet VALUES ('Belita', 'Melisande', '2014-05-20', 'M', 'architecture', 'Reverse-engineered', 'Synchronised', 'Koi');
+INSERT INTO Pet VALUES ('Tremaine', 'Stirzaker', '2011-06-23', 'F', 'emulation', 'capability', 'Monitored', 'Cattle');
+INSERT INTO Pet VALUES ('Belita', 'Jodee', '2000-11-11', 'F', 'zero administration', 'mission-critical', 'productivity', 'Barb');
+INSERT INTO Pet VALUES ('Tades', 'Brigitte', '2012-02-13', 'M', 'help-desk', 'budgetary management', 'foreground', 'Sheep');
+INSERT INTO Pet VALUES ('Morissa', 'Adela', '2009-01-06', 'F', 'open system', 'forecast', '3rd generation', 'Cats');
+INSERT INTO Pet VALUES ('Belita', 'Catina', '2013-08-20', 'F', 'initiative', 'attitude', 'multi-state', 'Columbines');
+INSERT INTO Pet VALUES ('Akim', 'Aigneis', '2012-05-13', 'M', 'Expanded', 'Mandatory', 'parallelism', 'Chinchillas');
+INSERT INTO Pet VALUES ('Allin', 'Ferdie', '2006-04-11', 'M', 'fault-tolerant', 'Cloned', 'adapter', 'Hedgehogs');
+INSERT INTO Pet VALUES ('Quincey', 'Cherry', '2012-02-14', 'F', 'Team-oriented', 'dynamic', 'functionalities', 'Barb');
+INSERT INTO Pet VALUES ('Romola', 'Karry', '2006-08-18', 'F', 'fault-tolerant', 'exuding', 'Realigned', 'Mosquitofish');
+INSERT INTO Pet VALUES ('Hildagard', 'Carlie', '2013-02-07', 'F', 'disintermediate', 'local', 'Extended', 'Ferrets');
+INSERT INTO Pet VALUES ('Hilarius', 'Dorie', '2008-05-24', 'M', 'bifurcated', 'foreground', 'matrices', 'Sheep');
+INSERT INTO Pet VALUES ('Hilarius', 'Estrella', '2005-11-18', 'F', 'capacity', 'algorithm', 'data-warehouse', 'Pigs');
+INSERT INTO Pet VALUES ('Akim', 'Beryl', '2006-12-12', 'M', 'impactful', 'infrastructure', 'Multi-tiered', 'Koi');
+INSERT INTO Pet VALUES ('Tades', 'Clo', '2014-04-02', 'F', 'system-worthy', 'flexibility', 'Mandatory', 'Sheep');
+INSERT INTO Pet VALUES ('Hilarius', 'Sapshed', '2013-04-14', 'F', 'ability', 'Stand-alone', 'portal', 'Cats');
+INSERT INTO Pet VALUES ('Allin', 'Hannie', '2007-10-29', 'F', 'forecast', 'Programmable', 'framework', 'Cats');
+INSERT INTO Pet VALUES ('Gianna', 'Quintana', '2008-10-13', 'M', 'portal', 'local', 'frame', 'Barb');
+INSERT INTO Pet VALUES ('Tades', 'Barty', '2014-05-24', 'M', 'scalable', 'Persevering', 'Progressive', 'Columbines');
+INSERT INTO Pet VALUES ('Gianna', 'Rosana', '2011-11-04', 'M', 'optimal', 'methodology', 'bifurcated', 'Chinchillas');
+INSERT INTO Pet VALUES ('Morissa', 'Borgesio', '2009-02-09', 'M', 'protocol', 'mobile', 'reciprocal', 'Guppy');
+INSERT INTO Pet VALUES ('Gianna', 'Felicia', '2006-01-12', 'M', 'algorithm', 'attitude-oriented', 'motivating', 'Goats');
+INSERT INTO Pet VALUES ('Tades', 'Liuka', '2004-05-12', 'F', 'bandwidth-monitored', 'Optional', 'Multi-lateral', 'Pigs');
+INSERT INTO Pet VALUES ('Hildagard', 'Angele', '2009-01-27', 'F', 'composite', 'Diverse', 'emulation', 'Guppy');
+INSERT INTO Pet VALUES ('Belita', 'Maure', '2007-11-15', 'F', 'Upgradable', 'Future-proofed', 'flexibility', 'Ferrets');
+INSERT INTO Pet VALUES ('Quincey', 'Casey', '2008-08-07', 'F', 'Reduced', 'grid-enabled', 'array', 'Horses');
+INSERT INTO Pet VALUES ('Hilarius', 'Rebeca', '2003-09-15', 'M', 'Synchronised', 'time-frame', 'Fully-configurable', 'Columbines');
+INSERT INTO Pet VALUES ('Allin', 'Idell', '2005-10-26', 'F', 'zero defect', 'hub', 'reciprocal', 'Rodents');
+INSERT INTO Pet VALUES ('Holly', 'Corinna', '2014-01-08', 'F', 'Multi-tiered', 'mobile', '3rd generation', 'Ferrets');
+INSERT INTO Pet VALUES ('Holly', 'Inglebert', '2002-09-08', 'M', 'Universal', 'application', 'toolset', 'Hedgehogs');
+INSERT INTO Pet VALUES ('Romola', 'Dorolice', '2007-06-30', 'F', 'orchestration', 'focus group', 'infrastructure', 'Hedgehogs');
+INSERT INTO Pet VALUES ('Tades', 'Riobard', '2003-01-25', 'M', '3rd generation', 'Polarised', 'Automated', 'Cats');
+INSERT INTO Pet VALUES ('Holly', 'Mallissa', '2005-04-29', 'F', 'content-based', 'Reactive', 'modular', 'Ferrets');
+INSERT INTO Pet VALUES ('Tades', 'Devin', '2006-01-25', 'M', 'discrete', 'Innovative', 'Down-sized', 'Ferrets');
+INSERT INTO Pet VALUES ('Gianna', 'Gracia', '2000-03-03', 'M', 'transitional', 'asynchronous', 'hierarchy', 'Guppy');
+INSERT INTO Pet VALUES ('Gianna', 'Regan', '2013-12-17', 'M', 'contextually-based', 'matrix', 'orchestration', 'Columbines');
+INSERT INTO Pet VALUES ('Hilarius', 'Clarine', '2008-05-09', 'F', '4th generation', 'website', 'open architecture', 'Hedgehogs');
+INSERT INTO Pet VALUES ('Hildagard', 'Krissie', '2014-05-06', 'M', 'Polarised', 'open architecture', 'parallelism', 'Mosquitofish');
+INSERT INTO Pet VALUES ('Hildagard', 'Hallede', '2002-08-25', 'F', '4th generation', 'Integrated', 'implementation', 'Koi');
+INSERT INTO Pet VALUES ('Tades', 'Norman', '2005-09-14', 'M', 'internet solution', 'multi-tasking', 'function', 'Cats');
+INSERT INTO Pet VALUES ('Holly', 'Sheerman', '2006-11-15', 'F', 'Visionary', 'solution', 'De-engineered', 'Barb');
+INSERT INTO Pet VALUES ('Quincey', 'Dulcie', '2002-10-19', 'F', 'Right-sized', 'open system', 'throughput', 'Sheep');
+INSERT INTO Pet VALUES ('Belita', 'Rollin', '2002-03-26', 'F', 'implementation', 'web-enabled', 'Robust', 'Horses');
+INSERT INTO Pet VALUES ('Romola', 'Cherida', '2004-08-12', 'M', 'user-facing', 'solution', 'static', 'Ferrets');
+INSERT INTO Pet VALUES ('Romola', 'Minetta', '2003-08-30', 'M', 'value-added', 'local area network', 'Mandatory', 'Horses');
+INSERT INTO Pet VALUES ('Winny', 'Lopez', '2011-07-25', 'M', 'Implemented', 'coherent', 'success', 'Barb');
+INSERT INTO Pet VALUES ('Romola', 'Fredson', '2009-06-19', 'M', 'encompassing', 'productivity', 'Multi-layered', 'Cattle');
+INSERT INTO Pet VALUES ('Winny', 'Lissi', '2013-03-24', 'M', '24 hour', 'solution-oriented', 'Decentralized', 'Fowl');
+INSERT INTO Pet VALUES ('Winny', 'Krissy', '2003-10-21', 'M', 'client-driven', 'access', 'value-added', 'Barb');
 
 /*----------------------------------------------------*/
 /* Job 50*/
-INSERT INTO Job VALUES ('Filbert', 'Waylen', 'Meriel', '2020-10-07', '2021-01-23', '2020-08-31', 'CANCELLED', '3.2', 'CREDITCARD', 'POD', '691.19', 'Fluency Treatment using Speech Analysis Equipment');
-INSERT INTO Job VALUES ('Tanney', 'Edythe', 'Oneida', '2020-11-24', '2021-01-08', '2020-09-28', 'PENDING', '2.7', 'CREDITCARD', 'PTB', '445.77', 'HDR Brachytherapy of Parathyroid Glands w Californium 252');
-INSERT INTO Job VALUES ('Nataniel', 'Eulalie', 'Cloris', '2020-10-29', '2021-01-07', '2020-09-08', 'CONFIRMED', '2.5', 'CREDITCARD', 'PTB', '892.83', 'Beam Radiation of Cervix using Photons 1 - 10 MeV');
-INSERT INTO Job VALUES ('Evelin', 'Richart', 'Austin', '2020-10-13', '2020-12-02', '2020-09-09', 'DONE', '2.1', 'CREDITCARD', 'CTP', '907.44', 'LDR Brachytherapy of Diaphragm using Iridium 192');
-INSERT INTO Job VALUES ('Pascale', 'Zebulen', 'Melinde', '2020-10-24', '2021-01-20', '2020-09-10', 'PENDING', '0.9', 'CASH', 'PTB', '398.47', 'Wound Management Treatment of Integu Body using Prosthesis');
-INSERT INTO Job VALUES ('Janek', 'Alisander', 'Conni', '2020-11-05', '2020-12-24', '2020-09-15', 'PENDING', '0.1', 'CASH', 'POD', '643.52', 'Beam Radiation of Neck Lymphatics using Photons 1 - 10 MeV');
-INSERT INTO Job VALUES ('Brig', 'Janey', 'Zena', '2020-11-11', '2021-01-20', '2020-09-08', 'CANCELLED', '3.0', 'CREDITCARD', 'POD', '672.21', 'Auditory Processing Assessment using Other Equipment');
-INSERT INTO Job VALUES ('Ricki', 'Anabelle', 'Raphaela', '2020-11-03', '2021-01-19', '2020-09-05', 'CANCELLED', '0.0', 'CREDITCARD', 'CTP', '380.64', 'Therapeutic Massage');
-INSERT INTO Job VALUES ('Hurlee', 'Arel', 'Brandea', '2020-10-09', '2020-12-09', '2020-09-10', 'CANCELLED', '3.7', 'CREDITCARD', 'POD', '544.66', 'Fluoroscopy of Pharynx and Epiglottis');
-INSERT INTO Job VALUES ('Patrizius', 'Grant', 'Retha', '2020-10-25', '2021-01-17', '2020-09-09', 'DONE', '2.3', 'CASH', 'POD', '465.96', 'Computerized Tomography (CT Scan) of Bi Temporomand Jt');
-INSERT INTO Job VALUES ('Weidar', 'Garth', 'Maris', '2020-10-04', '2021-01-14', '2020-09-08', 'CONFIRMED', '3.2', 'CREDITCARD', 'PTB', '542.12', 'Muscle Perform Assess Neuro Up Back/UE w Assist Equip');
-INSERT INTO Job VALUES ('Rickard', 'Berenice', 'Harmonie', '2020-10-17', '2021-01-10', '2020-09-15', 'CONFIRMED', '1.7', 'CREDITCARD', 'CTP', '711.19', 'Plaque Radiation of Skull');
-INSERT INTO Job VALUES ('Pascale', 'Antoni', 'Zitella', '2020-10-22', '2021-01-05', '2020-09-06', 'DONE', '2.5', 'CASH', 'CTP', '901.34', 'Fluoroscopy of R Low Extrem Vein using Oth Contrast');
-INSERT INTO Job VALUES ('Allard', 'Giuditta', 'Ketty', '2020-10-14', '2021-01-08', '2020-09-08', 'DONE', '1.8', 'CASH', 'PTB', '667.91', 'HDR Brachytherapy of Pituitary Gland using Palladium 103');
-INSERT INTO Job VALUES ('Fairfax', 'Richard', 'Rea', '2020-11-11', '2021-01-05', '2020-09-03', 'CANCELLED', '0.2', 'CASH', 'CTP', '491.17', 'Planar Nuclear Medicine Imaging of Abd using Thallium 201');
-INSERT INTO Job VALUES ('Maurice', 'Mortie', 'Norina', '2020-11-19', '2020-12-26', '2020-09-11', 'CANCELLED', '0.9', 'CASH', 'POD', '905.17', 'Ultrasonography of Liver and Spleen');
-INSERT INTO Job VALUES ('Hunter', 'Karoly', 'Mariam', '2020-11-24', '2020-12-18', '2020-09-02', 'PENDING', '4.7', 'CASH', 'CTP', '839.3', 'Coord/Dexterity Trmt Integu Low Back/LE w Orthosis');
-INSERT INTO Job VALUES ('Ulberto', 'Tiffy', 'Dulcie', '2020-10-18', '2020-12-11', '2020-09-22', 'PENDING', '4.2', 'CREDITCARD', 'CTP', '924.75', 'Somatosens Evoked Potentials Assess w Somatosensory Equip');
-INSERT INTO Job VALUES ('Fran', 'Valencia', 'Ruthann', '2020-11-05', '2021-01-16', '2020-09-03', 'PENDING', '4.1', 'CASH', 'PTB', '616.04', 'Magnetic Resonance Imaging (MRI) of Right Kidney');
-INSERT INTO Job VALUES ('Brig', 'Hillard', 'Zena', '2020-11-14', '2021-01-09', '2020-09-12', 'DONE', '2.3', 'CASH', 'CTP', '608.5', 'MRI of Uterus using Oth Contrast');
-INSERT INTO Job VALUES ('Palm', 'Wade', 'Trixi', '2020-11-04', '2020-12-11', '2020-09-03', 'DONE', '4.4', 'CREDITCARD', 'POD', '519.11', 'Stereotactic Other Photon Radiosurgery of Chest');
-INSERT INTO Job VALUES ('Kevin', 'Carmel', 'Cassey', '2020-10-22', '2020-12-04', '2020-09-05', 'DONE', '1.6', 'CREDITCARD', 'POD', '914.72', 'Plaque Radiation of Nasopharynx');
-INSERT INTO Job VALUES ('Allard', 'Cathy', 'Ketty', '2020-10-04', '2020-12-24', '2020-09-01', 'DONE', '0.1', 'CASH', 'POD', '645.1', 'Magnetic Resonance Imaging (MRI) of Pelvic Region');
-INSERT INTO Job VALUES ('Bob', 'Fernande', 'Dara', '2020-10-08', '2020-12-09', '2020-09-11', 'CONFIRMED', '0.4', 'CASH', 'PTB', '864.58', 'CT Scan of R Elbow using Oth Contrast');
-INSERT INTO Job VALUES ('Reamonn', 'Palm', 'Sophi', '2020-11-08', '2021-01-18', '2020-09-10', 'DONE', '0.1', 'CASH', 'PTB', '848.7', 'HDR Brachytherapy of Pineal Body using Oth Isotope');
-INSERT INTO Job VALUES ('Lane', 'Pietra', 'Enid', '2020-10-21', '2020-12-09', '2020-09-12', 'CANCELLED', '4.7', 'CASH', 'CTP', '969.26', 'Immobilization of Left Lower Arm using Other Device');
-INSERT INTO Job VALUES ('Fairfax', 'Phillie', 'Rea', '2020-10-15', '2021-01-30', '2020-09-04', 'CONFIRMED', '0.8', 'CASH', 'CTP', '896.15', 'Plain Radiography of Right Epididymis using Other Contrast');
-INSERT INTO Job VALUES ('Maurice', 'Irma', 'Norina', '2020-11-05', '2021-01-01', '2020-09-28', 'CANCELLED', '3.6', 'CREDITCARD', 'CTP', '380.92', 'Beam Radiation of Chest Wall using Neutrons');
-INSERT INTO Job VALUES ('Pepito', 'Fernande', 'Larisa', '2020-11-12', '2021-01-12', '2020-09-05', 'PENDING', '4.1', 'CASH', 'CTP', '696.0', 'CT Scan of Lumbar Spine using L Osm Contrast');
-INSERT INTO Job VALUES ('Miltie', 'Pauly', 'Zenia', '2020-10-11', '2021-01-12', '2020-09-24', 'DONE', '1.0', 'CREDITCARD', 'CTP', '528.46', 'CT Scan of R Toe using H Osm Contrast');
-INSERT INTO Job VALUES ('Lorry', 'Cobbie', 'Juana', '2020-10-03', '2020-12-07', '2020-09-20', 'PENDING', '0.3', 'CREDITCARD', 'PTB', '369.16', 'Fluoroscopy of Left Pelvic (Iliac) Veins');
-INSERT INTO Job VALUES ('Galvan', 'Harlen', 'Vivyanne', '2020-10-28', '2020-12-15', '2020-09-10', 'DONE', '3.2', 'CASH', 'CTP', '382.44', 'Compression of R Inguinal Region using Intermit Pressure Dev');
-INSERT INTO Job VALUES ('Hurlee', 'Vaughan', 'Brandea', '2020-11-28', '2020-12-27', '2020-09-01', 'CANCELLED', '1.1', 'CASH', 'PTB', '876.82', 'Fluoroscopy of Left Ribs');
-INSERT INTO Job VALUES ('Adam', 'Kane', 'Ronni', '2020-10-29', '2021-01-10', '2020-09-04', 'CONFIRMED', '1.4', 'CREDITCARD', 'POD', '972.65', 'Articulation/Phonology Treatment');
-INSERT INTO Job VALUES ('Waldon', 'Suzi', 'Jolene', '2020-10-16', '2020-12-14', '2020-09-16', 'CANCELLED', '0.8', 'CASH', 'CTP', '405.28', 'CT Scan of R Ankle using L Osm Contrast');
-INSERT INTO Job VALUES ('Conan', 'Francklin', 'Sharai', '2020-11-02', '2020-12-23', '2020-09-23', 'PENDING', '1.2', 'CASH', 'CTP', '683.46', 'CT Scan of Bi Verteb Art using L Osm Contrast');
-INSERT INTO Job VALUES ('Pascale', 'Arline', 'Zitella', '2020-10-14', '2021-01-09', '2020-09-13', 'DONE', '1.3', 'CASH', 'PTB', '560.69', 'HDR Brachytherapy of Chest using Palladium 103');
-INSERT INTO Job VALUES ('Nero', 'Adoree', 'Alla', '2020-11-09', '2021-01-14', '2020-09-07', 'CANCELLED', '0.8', 'CASH', 'CTP', '725.89', 'HDR Brachytherapy of Nose using Californium 252');
-INSERT INTO Job VALUES ('Reamonn', 'Dalton', 'Sophi', '2020-10-26', '2020-12-13', '2020-09-15', 'DONE', '2.7', 'CREDITCARD', 'CTP', '412.71', 'CT Scan of Bi Pulm Vein using Intravasc Optic Cohere');
-INSERT INTO Job VALUES ('Lane', 'Burton', 'Enid', '2020-10-21', '2021-01-09', '2020-09-01', 'PENDING', '0.1', 'CASH', 'PTB', '770.2', 'MRI of L Testicle using Oth Contrast');
-INSERT INTO Job VALUES ('Conan', 'Pascal', 'Sharai', '2020-11-01', '2021-01-22', '2020-09-09', 'PENDING', '3.2', 'CREDITCARD', 'PTB', '373.31', 'Muscle Performance Assessment of Integu Body using Orthosis');
-INSERT INTO Job VALUES ('Joshia', 'Rasla', 'Anthiathia', '2020-10-12', '2020-12-21', '2020-09-15', 'DONE', '0.1', 'CREDITCARD', 'CTP', '591.49', 'Fluoroscopy of Head and Neck using Other Contrast');
-INSERT INTO Job VALUES ('Andras', 'Carmina', 'Rochell', '2020-10-14', '2021-01-25', '2020-09-09', 'CONFIRMED', '0.2', 'CREDITCARD', 'CTP', '927.59', 'Feeding/Eating Treatment using Other Equipment');
-INSERT INTO Job VALUES ('Bax', 'Elka', 'Claudelle', '2020-10-18', '2020-12-11', '2020-09-03', 'CANCELLED', '2.7', 'CREDITCARD', 'POD', '627.7', 'Removal of Pressure Dressing on Back');
-INSERT INTO Job VALUES ('Slade', 'Phillie', 'Fayth', '2020-11-15', '2021-01-22', '2020-09-13', 'PENDING', '3.3', 'CASH', 'CTP', '846.44', 'Ergonomics and Body Mechanics Assessment using Prosthesis');
-INSERT INTO Job VALUES ('Nichols', 'Lulita', 'Janaye', '2020-10-02', '2021-01-07', '2020-09-08', 'CONFIRMED', '2.8', 'CREDITCARD', 'POD', '320.66', 'Wound Mgmt Trmt Musculosk Low Back/LE w Prosthesis');
-INSERT INTO Job VALUES ('Decca', 'Napoleon', 'Lelah', '2020-10-17', '2021-01-07', '2020-09-19', 'CANCELLED', '4.7', 'CREDITCARD', 'PTB', '371.32', 'LDR Brachytherapy of Peripheral Nerve using Palladium 103');
-INSERT INTO Job VALUES ('Maddy', 'Hedwiga', 'Ailyn', '2020-11-28', '2020-12-27', '2020-09-08', 'PENDING', '1.8', 'CASH', 'POD', '573.56', 'Nonimag Nucl Med Prob of Chest using Technetium 99m');
-INSERT INTO Job VALUES ('Angie', 'Phineas', 'Joyann', '2020-10-11', '2021-01-08', '2020-09-12', 'DONE', '4.8', 'CASH', 'PTB', '691.41', 'Beam Radiation of Stomach using Heavy Particles');
-INSERT INTO Job VALUES ('Weidar', 'Dina', 'Paolina', '2020-11-21', '2020-12-25', '2020-09-01', 'PENDING', '4.3', 'CASH', 'CTP', '439.94', 'Fluoroscopy of Upper GI and Small Bowel');
+
 /* END OF DATA INITIALISATION */
