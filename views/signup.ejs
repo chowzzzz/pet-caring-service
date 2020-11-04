@@ -1,13 +1,14 @@
 <!DOCTYPE html>
 <html>
+
 <head>
 	<%- include('./partials/head'); %>
 	<script src="javascripts/signupScript.js"></script>
 </head>
+
 <body>
 	<%- include('./partials/navbar'); %>
 	<main>
-
 		<div class="container rounded bg-white pl-5 pr-5 pt-3 pb-3">
 			<h1 class="mb-2">Sign Up</h1> <br />
 			<div class="d-flex flex-row justify-content-between">
@@ -67,10 +68,11 @@
 					<img style="width: 100%" src="../images/puppy1.png" alt="puppy1">
 				</div>
 			</div>
+		</div>
 	</main>
 	<script>
-		(function() {
-			window.addEventListener('load', function() {
+		(function () {
+			window.addEventListener('load', function () {
 				var forms = [document.getElementById('html_form')];
 				var validation = Array.prototype.filter.call(forms, function (form) {
 					form.addEventListener('submit', check, false);

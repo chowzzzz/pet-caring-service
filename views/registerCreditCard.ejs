@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <%- include('./partials/head'); %>
+    <script src="javascripts/registerCreditCard.js"></script>
+</head>
+
+<body>
+    <%- include('./partials/navbar'); %>
+    <main>
+        <div class="jumbotron">
+            <div class="container rounded bg-white pl-5 pr-5 pt-3 pb-3">
+                <h1 class="mb-2">Register Credit Card</h1> <br />
+                <div class="d-flex flex-row justify-content-between">
+                    <div style="min-width: 50%">
+                        <form id="html_form" action="/registerCreditCard_post" role="form" method="post">
+                            <div class="form-group w-75 mb-2">
+                                <label for="cardnumber">Card Number</label>
+                                <input type="text" class="form-control" id="cardnumber" name="cardnumber"
+                                    onkeypress="return checkDigit(event)" placeholder="Enter your card number" required>
+                            </div>
+                            <div class="form-group w-75 mb-2">
+                                <label for="nameoncard">Name on Card</label>
+                                <input type="text" class="form-control" id="nameoncard" name="nameoncard"
+                                    placeholder="Enter your name on card" required>
+                            </div>
+                            <div class="form-group w-75 mb-2">
+                                <label for="cvv">CVV</label>
+                                <input type="text" class="form-control" id="cvv" name="cvv"
+                                    onkeypress="return checkDigit(event)" placeholder="Enter your CVV" required>
+                            </div>
+                            <div class="form-group w-75 mb-3">
+                                <label for="expirydate">Expiry Date</label>
+                                <input type="date" class="form-control" id="expirydate" name="expirydate"
+                                    required></input>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Register</button>
+                        </form>
+                    </div>
+
+                    <div class="d-flex align-items-center">
+                        <img style="width: 100%" src="../images/creditcard1.png" alt="puppy1">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+    <script>
+        (function () {
+            window.addEventListener('load', function () {
+                var forms = [document.getElementById('html_form')];
+                var validation = Array.prototype.filter.call(forms, function (form) {
+                    form.addEventListener('submit', check, false);
+                });
+            }, false);
+        })();
+
+        onload = function () {
+            document.getElementById('cardnumber').oninput = function () {
+                this.value = cc_format(this.value)
+            }
+        }
+
+        function check(event) {
+            // Get Values
+            var cardnumber = document.getElementById('cardnumber').value.trim();
+            var nameoncard = document.getElementById('nameoncard').value.trim();
+            var cvv = document.getElementById('cvv').value.trim();
+            var expirydate = document.getElementById('expirydate').value.trim();
+            var today = new Date();
+
+            if (cardnumber.length < 13) {
+                alert("Invalid Credit Card Number");
+                event.preventDefault();
+                event.stopPropagation();
+                return false;
+            }
+            if (nameoncard.length == 0) {
+                alert("Invalid Name on Card!");
+                event.preventDefault();
+                event.stopPropagation();
+                return false;
+            }
+            if (cvv.length == 0) {
+                alert("Invalid CVV!");
+                event.preventDefault();
+                event.stopPropagation();
+                return false;
+            }
+            if (new Date(expirydate).getTime() <= today.getTime()) {
+                alert("Invalid Expiry Date!");
+                event.preventDefault();
+                event.stopPropagation();
+                return false;
+            }
+        }
+
+        function cc_format(value) {
+            var v = value.replace(/\s+/g, '').replace(/[^0-9]/gi, '')
+            var matches = v.match(/\d{4,16}/g);
+            var match = matches && matches[0] || ''
+            var parts = []
+            for (i = 0, len = match.length; i < len; i += 4) {
+                parts.push(match.substring(i, i + 4))
+            }
+            if (parts.length) {
+                return parts.join(' ')
+            } else {
+                return value
+            }
+        }
+
+        function checkDigit(event) {
+            var code = (event.which) ? event.which : event.keyCode;
+
+            if ((code < 48 || code > 57) && (code > 31)) {
+                return false;
+            }
+
+            return true;
+        }
+    </script>
+</body>
+
+</html>

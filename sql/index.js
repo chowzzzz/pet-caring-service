@@ -11,6 +11,9 @@ sql.query = {
 	// Job
 	petowner_job: "SELECT * FROM job WHERE pousername = $1",
 
+	// Credit card
+	petowner_creditcard: "SELECT * FROM petownerregisterscreditcard WHERE username = $1",
+
 	// Caretaker profile Queries
 	caretaker_petType: "SELECT * FROM caretaker_petcategory WHERE username = $1",
 	caretaker_petLimit: "",
@@ -43,7 +46,11 @@ sql.query = {
 
 	// Register appuser
 	register_user:
-		"INSERT INTO appuser (username, name, email, password, gender, address, dateofbirth) VALUES($1,$2,$3,$4,$5,$6,$7)"
+		"INSERT INTO appuser (username, name, email, password, gender, address, dateofbirth) VALUES($1,$2,$3,$4,$5,$6,$7)",
+
+	// Register credit card
+	register_credit_card:
+		"INSERT INTO petownerregisterscreditcard (username, cardnumber, nameoncard, cvv, expirydate) VALUES($1,$2,$3,$4,$5)"
 
 	/*// Counting & Average
 	count_play: 'SELECT COUNT(winner) FROM game_plays WHERE user1=$1 OR user2=$1',

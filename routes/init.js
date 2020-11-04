@@ -24,7 +24,12 @@ function initRouter(app) {
 	app.get("/profile", passport.authMiddleware(), petOwnerProfile);
 	app.get("/admin-dashboard", passport.authMiddleware(), adminDashboard);
 
+
 	/* AUTHENTICATED POST */
+
+	/* REGISTER CREDIT CARD */
+	app.get("/registerCreditCard", passport.authMiddleware(), registerCreditCard_get);
+	app.post("/registerCreditCard", passport.authMiddleware(), registerCreditCard_post);
 
 	/* SIGNUP */
 	app.get("/signup", passport.antiMiddleware(), registerUser);
@@ -97,15 +102,28 @@ function petOwnerProfile(req, res, next) {
 				if (err) {
 					console.error(err);
 				}
-				res.render("profile", {
-					title: "Pet Owner",
-					details: details.rows,
-					pets: pets.rows,
-					reservations: reservations.rows,
-					isSignedIn: req.isAuthenticated()
+				pool.query(sql_query.query.petowner_creditcard, [username], (err, creditcard) => {
+					if (err) {
+						console.error(err);
+					}
+					res.render("profile", {
+						title: "Pet Owner",
+						details: details.rows,
+						pets: pets.rows,
+						reservations: reservations.rows,
+						creditcard: creditcard.rows,
+						isSignedIn: req.isAuthenticated()
+					});
 				});
 			});
 		});
+	});
+}
+
+function registerCreditCard_get(req, res, next) {
+	res.render("registerCreditCard", {
+		title: "Register Credit Card", 
+		isSignedIn: req.isAuthenticated()
 	});
 }
 
@@ -175,6 +193,22 @@ function registerUser(req, res, next) {
 				);
 			} */
 			res.redirect("/users");
+		}
+	);
+}
+
+function registerCreditCard_post(req, res, next) {
+	const username = req.user.username;
+	const cardnumber = req.body.cardnumber;
+	const nameoncard = req.body.nameoncard;
+	const cvv = req.body.cvv;
+	const expirydate = req.body.expirydate;
+	
+	pool.query(
+		sql_query.query.register_credit_card,
+		[username, cardnumber, nameoncard, cvv, expirydate],
+		(err, data) => {
+			res.redirect("/profile");
 		}
 	);
 }
