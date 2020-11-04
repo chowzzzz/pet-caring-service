@@ -31,8 +31,6 @@ function initRouter(app) {
   app.get("/search", search);
 
   /* AUTHENTICATED GET */
-  app.get("/users", passport.authMiddleware(), users);
-
   app.get(
     "/petOwner-profile",
     passport.authMiddleware(),
@@ -116,7 +114,7 @@ function initRouter(app) {
     });
   });
 
-  app.post("/petOwner-creditCard", passport.antiMiddleware(), registerCreditCard);
+  app.post("/petOwner-creditCard", passport.authMiddleware(), registerCreditCard);
 
   /* SIGNIN */
   app.get("/signin", passport.antiMiddleware(), (req, res, next) => {
@@ -130,7 +128,7 @@ function initRouter(app) {
   app.post(
     "/signin",
     passport.authenticate("user-local", {
-      successRedirect: "/users",
+      successRedirect: "/petOwner-profile",
       failureRedirect: "/signin",
     })
   );
@@ -184,16 +182,6 @@ function initRouter(app) {
 
 // Define functions to get your data + routes here if its too long in the intiRouter() function
 // GET
-function users(req, res, next) {
-  pool.query(sql_query.query.all_users, (err, data) => {
-    res.render("users", {
-      title: "Data",
-      data: data.rows,
-      isSignedIn: req.isAuthenticated(),
-      isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false,
-    });
-  });
-}
 
 function petOwnerProfile(req, res, next) {
   const username = req.user.username;
@@ -380,7 +368,7 @@ function registerUser(req, res, next) {
           }
         );
       } */
-      res.redirect("/users");
+      res.redirect("/petOwner-profile");
     }
   );
 }
@@ -420,7 +408,7 @@ function registerAdmin(req, res, next) {
 
 
 function registerCreditCard(req, res, next) {
-  console.log("hello");
+  console.log("hi");
   const username = req.user.username;
   const cardnumber = req.body.cardnumber;
   const nameoncard = req.body.nameoncard;
