@@ -11,11 +11,12 @@
 	<main>
 		<div class="container rounded bg-white pl-5 pr-5 pt-3 pb-3">
 			<div class="d-flex flex-row justify-content-between">
-				<h1 class="display-4"><%= details[0].username %></h1>
+				<h1 class="display-4"><%= username %></h1>
 				<div>
-					<form id="html_form" action="caretaker-bidding" role="form" method="post">
-						<button type="submit" id=username name=username value="<%= details[0].username%>"
-							class="btn btn-success btn-lg">Bid for service!</button>
+					<p align="right"><b>Available from <%= start %> to <%= end %>!</b></p>
+					<% let url = "caretaker-bidding?username=" + username + "&start=" + start + "&end=" + end;%>
+					<form align="right" id="html_form" action="<%= url%>" role="form" method="post">
+						<button type="submit" class="btn btn-primary btn-lg lm-auto">Bid for service!</button>
 					</form>
 				</div>
 			</div>

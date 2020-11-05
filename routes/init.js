@@ -71,15 +71,16 @@ function initRouter(app) {
 	});
 
 	/* POST */
-	app.post("/search", searchCaretaker, passport.authMiddleware(), passport.verifyNotAdmin());
-	app.post("/caretaker-details", caretakerDetails, passport.authMiddleware(), passport.verifyNotAdmin());
-	app.post("/caretaker-bidding", caretakerBidding, passport.authMiddleware(), passport.verifyNotAdmin());
+	app.post("/search", searchCaretaker);
+	app.post("/caretaker-details", caretakerDetails);
 
 	/* AUTHENTICATED POST */
 	app.post("/petOwner-creditCard", passport.authMiddleware(), passport.verifyNotAdmin(), registerCreditCard); // REGISTER CREDIT CARD
 	app.post("/petOwner-pet", passport.authMiddleware(), passport.verifyNotAdmin(), registerPet); // REGISTER PET
 
 	app.post("/editAdmin", passport.authMiddleware(), passport.verifyAdmin(), editAdmin);
+
+	app.post("/caretaker-bidding", passport.authMiddleware(), passport.verifyNotAdmin(), caretakerBidding);
 
 	/* SIGNUP */
 	app.get("/signup", passport.antiMiddleware(), function (req, res, next) {
@@ -524,7 +525,7 @@ function searchCaretaker(req, res, next) {
 }
 
 function caretakerDetails(req, res, next) {
-	const username = req.body.username;
+	const username = req.query.username;
 	pool.query(sql_query.query.caretaker_asAppUser, [username], (err, details) => {
 		if (err) {
 			console.log(err);
@@ -542,6 +543,9 @@ function caretakerDetails(req, res, next) {
 				}
 				res.render("caretaker-details", {
 					title: "Data",
+					username,
+					start: req.query.start,
+					end: req.query.end,
 					details: details.rows,
 					petCategories: petCategories.rows,
 					reservations: reservations.rows,
@@ -555,13 +559,13 @@ function caretakerDetails(req, res, next) {
 }
 
 function caretakerBidding(req, res, next) {
-	const username = req.body.username;
+	const username = req.query.username;
 	pool.query(sql_query.query.caretaker_asAppUser, [username], (err, details) => {
 		if (err) {
 			console.log(err);
 			return;
 		}
-		pool.query(sql_query.query.caretaker_category, [username], (err, petCategories) => {
+		pool.query(sql_query.query.petowner_creditCard, [username], (err, cards) => {
 			if (err) {
 				console.error(err);
 				return;
@@ -573,8 +577,11 @@ function caretakerBidding(req, res, next) {
 				}
 				res.render("caretaker-bidding", {
 					title: "Data",
+					username,
+					start: req.query.start,
+					end: req.query.end,
 					details: details.rows,
-					petCategories: petCategories.rows,
+					cards: cards.rows,
 					reservations: reservations.rows,
 					isSignedIn: req.isAuthenticated(),
 					isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false,
