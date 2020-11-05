@@ -25,11 +25,14 @@ sql.query = {
 	petowner_creditCard: "SELECT * FROM petownerregisterscreditcard WHERE username = $1 ORDER BY expirydate ASC",
 
 	// Caretaker profile Queries
-	caretaker_petType: "SELECT * FROM caretaker_petcategory WHERE username = $1",
+	caretaker_petType: "SELECT c.category, pc.baseprice FROM caretakercaterspetcategory c JOIN petcategory pc WHERE c.username = $1",
 	caretaker_petLimit: "",
 	caretaker_review: "SELECT review FROM job WHERE ctusername = $1",
 	caretaker_jobview: "SELECT * FROM job WHERE ctusername = $1",
 	caretaker_category: "SELECT * FROM caretakercaterspetcategory WHERE username = $1",
+	
+	
+	
 	yearly_petdays: `SELECT SUM(date_part('day', enddate::timestamp - startdate::timestamp)) AS petdays
 				FROM job
 				WHERE date_part('year',startdate) = date_part('year', CURRENT_DATE)

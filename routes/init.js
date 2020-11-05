@@ -64,6 +64,9 @@ function initRouter(app) {
 		});
 	});
 
+	app.get("/caretaker-profile",passport.authMiddleware(),caretakerProfile);
+	app.get("/caretaker-Jobs",passport.authMiddleware(),caretakerJobs);
+
 	/* POST */
 	app.post("/search", passport.antiMiddleware(), searchCaretaker);
 
@@ -470,6 +473,53 @@ function searchCaretaker(req, res, next) {
 			title: "Data",
 			data: data.rows,
 			isSignedIn: req.isAuthenticated()
+		});
+	});
+}
+
+function caretakerProfile(req, res, next) {
+	const username = req.user.username;
+	pool.query(sql_query.query.get_user, [username], (err, details) => {
+		if (err) {
+			console.error(err);
+		}
+		pool.query(sql_query.query.caretaker_petType, [username], (err, pets) => {
+			if (err) {
+				console.error(err);
+			}
+			pool.query(sql_query.query.caretaker_review, [username], (err, review) => {
+				if (err) {
+					console.error(err);
+				}
+				res.render("caretaker-profile", {
+					title: "Care Taker Profile",
+					details: details.rows,
+					pets: pets.rows,
+					review: review.rows,
+					isSignedIn: req.isAuthenticated(),
+					isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false
+				});
+			});
+		});
+	});
+}
+
+function caretakerJobs(req, res,next) {
+	const username = req.user.username;
+	pool.query(sql_query.query.get_user, [username], (err, details) => {
+		if (err) {
+			console.error(err);
+		}
+		pool.query(sql_query.query.caretaker_jobview, [username], (err, job) => {
+			if (err) {
+				console.error(err);
+			}
+			res.render("caretaker-Jobs", {
+				title: "Care Taker Jobs",
+				job: job.rows,
+				isSignedIn: req.isAuthenticated(),
+				isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false
+			});
 		});
 	});
 }
