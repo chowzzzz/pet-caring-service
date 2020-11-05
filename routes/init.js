@@ -37,9 +37,7 @@ function initRouter(app) {
 
 	app.get("/admin-user-profiles", passport.authMiddleware(), passport.verifyAdmin(), adminUserProfiles);
 	app.get("/admin-user-profile", passport.authMiddleware(), passport.verifyAdmin(), adminUserProfile);
-	app.get("/admin-caretaker", passport.authMiddleware(), passport.verifyAdmin(), adminCaretaker);
-	app.get("/admin-petowner", passport.authMiddleware(), passport.verifyAdmin(), adminPetowner);
-	app.get("/admin-pet", passport.authMiddleware(), passport.verifyAdmin(), adminPet);
+	app.get("/admin-jobs", passport.authMiddleware(), passport.verifyAdmin(), adminJobs);
 	app.get("/admin-job", passport.authMiddleware(), passport.verifyAdmin(), adminJob);
 	app.get("/admin-profiles", passport.authMiddleware(), passport.verifyAdmin(), adminProfiles);
 
@@ -191,22 +189,28 @@ function adminDashboard(req, res, next) {
 					if (err) {
 						console.error(err);
 					}
-					let username = topCaretakers.rows.map((a) => a.username);
-					let totalAmount = topCaretakers.rows.map((a) => a.totalamount);
+					pool.query(sql_query.query.monthly_salary, (err, monthly_salary) => {
+						if (err) {
+							console.error(err);
+						}
+						let username = topCaretakers.rows.map((a) => a.username);
+						let totalAmount = topCaretakers.rows.map((a) => a.totalamount);
 
-					let month = jobPerformance.rows.map((a) => a.month);
-					let amountpaid = jobPerformance.rows.map((a) => a.amountpaid);
-					console.log(amountpaid);
-					res.render("adminDashboard", {
-						title: "Admin Dashboard",
-						monthly_job: monthlyJob.rows,
-						username: username,
-						totalAmount: totalAmount,
-						month: month,
-						amountpaid: amountpaid,
-						underperformingCt: underperformingCt.rows,
-						isSignedIn: req.isAuthenticated(),
-						isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false
+						let month = jobPerformance.rows.map((a) => a.month);
+						let amountpaid = jobPerformance.rows.map((a) => a.amountpaid);
+						console.log(amountpaid);
+						res.render("adminDashboard", {
+							title: "Admin Dashboard",
+							monthly_job: monthlyJob.rows,
+							monthly_salary: monthly_salary.rows,
+							username: username,
+							totalAmount: totalAmount,
+							month: month,
+							amountpaid: amountpaid,
+							underperformingCt: underperformingCt.rows,
+							isSignedIn: req.isAuthenticated(),
+							isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false
+						});
 					});
 				});
 			});
@@ -235,20 +239,28 @@ function adminUserProfile(req, res, next) {
 						pool.query(sql_query.query.caretaker_category, [username], (err, caretaker_category) => {
 							pool.query(sql_query.query.fulltime_leaves, [username], (err, caretaker_leaves) => {
 								pool.query(sql_query.query.yearly_petdays, [username], (err, yearly_petdays) => {
-									pool.query(sql_query.query.monthly_petdays, [username], (err, monthly_petdays) => {
+									pool.query(sql_query.query.monthly_petdays, [username], (err, monthly_stats) => {
 										pool.query(sql_query.query.caretaker_salary, [username], (err, caretaker_salary) => {
 											user = user ? user.rows : null;
 											pets = pets ? pets.rows : null;
 											caretaker_category = caretaker_category ? caretaker_category.rows : null;
-											caretaker_leaves = caretaker_leaves ? caretaker_leaves.rows : null;
-											yearly_petdays = yearly_petdays ? yearly_petdays.rows : null;
-											monthly_petdays = monthly_petdays ? monthly_petdays.rows : null;
-											caretaker_salary = caretaker_salary ? caretaker_salary.rows : null;
-
-											isCaretaker = caretaker ? true : false;
-											isPetowner = pets ? true : false;
-											isFulltime = fulltime ? true : false;
-											isParttime = parttime ? true : false;
+											caretaker_leaves =
+												caretaker_leaves.rows[0] && !caretaker_leaves.rows.length == 0 && caretaker_leaves.rows[0].leaves
+													? caretaker_leaves.rows[0].leaves
+													: 0;
+											yearly_petdays =
+												yearly_petdays.rows[0] && !yearly_petdays.rows.length == 0 && yearly_petdays.rows[0].petdays ? yearly_petdays.rows[0].petdays : 0;
+											let monthly_petdays =
+												monthly_stats.rows[0] && !monthly_stats.rows.length == 0 && monthly_stats.rows[0].petdays ? monthly_stats.rows[0].petdays : 0;
+											let monthly_amount =
+												monthly_stats.rows[0] && !monthly_stats.rows.length == 0 && monthly_stats.rows[0].amountearned
+													? monthly_stats.rows[0].amountearned
+													: 0;
+											caretaker_salary = caretaker_salary.rows[0] && !caretaker_salary.rows.length == 0 ? caretaker_salary.rows[0].totalamount : 0;
+											let isCaretaker = caretaker ? true : false;
+											let isPetowner = pets ? true : false;
+											let isFulltime = fulltime ? true : false;
+											let isParttime = parttime ? true : false;
 											res.render("adminUserProfile", {
 												title: "User Profile",
 												data: user,
@@ -257,6 +269,7 @@ function adminUserProfile(req, res, next) {
 												caretaker_leaves: caretaker_leaves,
 												yearly_petdays: yearly_petdays,
 												monthly_petdays: monthly_petdays,
+												monthly_amount: monthly_amount,
 												caretaker_salary: caretaker_salary,
 												isCaretaker: isCaretaker,
 												isPetowner: isPetowner,
@@ -277,25 +290,9 @@ function adminUserProfile(req, res, next) {
 	});
 }
 
-function adminCaretaker(req, res, next) {
-	res.render("adminCaretaker", {
-		title: "Caretakers",
-		isSignedIn: req.isAuthenticated(),
-		isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false
-	});
-}
-
-function adminPetowner(req, res, next) {
-	res.render("adminPetowner", {
-		title: "Pet owners",
-		isSignedIn: req.isAuthenticated(),
-		isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false
-	});
-}
-
-function adminPet(req, res, next) {
-	res.render("adminPet", {
-		title: "Pets",
+function adminJobs(req, res, next) {
+	res.render("adminJobs", {
+		title: "Jobs",
 		isSignedIn: req.isAuthenticated(),
 		isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false
 	});
@@ -303,7 +300,7 @@ function adminPet(req, res, next) {
 
 function adminJob(req, res, next) {
 	res.render("adminJob", {
-		title: "Jobs",
+		title: "Job",
 		isSignedIn: req.isAuthenticated(),
 		isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false
 	});

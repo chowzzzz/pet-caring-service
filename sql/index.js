@@ -59,6 +59,9 @@ sql.query = {
 	monthly_job: `SELECT COUNT(*) FROM job 
 					WHERE date_part('month', startdate) = date_part('month', CURRENT_DATE) 
 						AND date_part('year', startdate) = date_part('year', CURRENT_DATE)`,
+	monthly_salary: `SELECT SUM(totalamount) FROM caretakerearnssalary 
+						WHERE date_part('month', salarydate) = date_part('month', CURRENT_DATE) 
+							AND date_part('year', salarydate) = date_part('year', CURRENT_DATE)`,
 	top_caretakers: `SELECT username, totalamount FROM caretakerearnssalary 
 						WHERE date_part('month', salarydate) = date_part('month', CURRENT_DATE) 
 							AND date_part('year', salarydate) = date_part('year', CURRENT_DATE)
