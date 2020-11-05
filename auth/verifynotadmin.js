@@ -1,10 +1,10 @@
 function verifyNotAdmin() {
   return function (req, res, next) {
-    if (req.user.userType == "User") {
-      return next()
+    if (req.user.userType == "Admin") {
+      res.redirect('/')
     }
     
-    res.redirect('/')
+    return next();
   }
 }
 

@@ -22,44 +22,51 @@
 
 						<!-- Content Row -->
 						<div class="row">
-							<!-- No. of pets this month Card -->
-							<div class="col-xl-4 col-lg-4 mb-4">
-								<div class="card border-left-primary shadow h-100 py-2">
-									<div class="card-body">
-										<div class="row no-gutters align-items-center">
-											<div class="col mr-1 ml-2">
-												<div class="row justify-content-end">
-													<div class="col-4">
+							<div class="col">
+								<div class="row">
+									<!-- No. of pets this month Card -->
+									<div class="col-xl-12 col-md-12 mb-4">
+										<div class="card border-left-primary shadow h-100 py-4">
+											<div class="card-body">
+												<div class="row no-gutters align-items-center">
+													<div class="col mr-2">
+														<div class="text-s font-weight-bold text-primary text-uppercase mb-2">Pets taken care of this month</div>
+														<div class="h1 mb-0 font-weight-bold text-gray-800"><%= monthly_job[0].count %></div>
+													</div>
+													<div class="col-auto">
 														<i class="fas fa-dog"></i>
 													</div>
 												</div>
-												<div
-													class="h1 mb-1 font-weight-bold text-gray-800"
-													style="font-size: 10vw"
-												>
-													<%= monthly_job[0].count %>
-												</div>
-												<div
-													class="font-weight-bold text-primary text-uppercase mb-0"
-												>
-													Pets taken care of this month
+											</div>
+										</div>
+									</div>
+								</div>
+								<div class="row">
+									<div class="col-xl-12 col-md-12 mb-4">
+										<div class="card border-left-primary shadow h-100 py-4">
+											<div class="card-body">
+												<div class="row no-gutters align-items-center">
+													<div class="col mr-2">
+														<div class="text-s font-weight-bold text-primary text-uppercase mb-2">Salary to pay this month</div>
+														<div class="h1 mb-0 font-weight-bold text-gray-800">
+															<%= parseInt(monthly_salary[0].sum).toLocaleString('en-US', { style: 'currency', currency: 'USD' }); %>
+														</div>
+													</div>
+													<div class="col-auto">
+														<i class="fas fa-dollar-sign"></i>
+													</div>
 												</div>
 											</div>
 										</div>
 									</div>
 								</div>
 							</div>
-
 							<!-- Chart -->
 							<div class="col-xl-8 col-lg-8">
 								<div class="card shadow mb-4">
 									<!-- Card Header - Dropdown -->
-									<div
-										class="card-header py-3 d-flex flex-row align-items-center justify-content-between"
-									>
-										<h6 class="m-0 font-weight-bold text-primary">
-											Top 10 Care Takers of the month
-										</h6>
+									<div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+										<h6 class="m-0 font-weight-bold text-primary">Top 10 Care Takers of the month</h6>
 									</div>
 									<!-- Card Body -->
 									<div class="card-body">
@@ -80,11 +87,7 @@
 											<div class="card-body">
 												<div class="row no-gutters align-items-center">
 													<div class="col mr-2">
-														<div
-															class="h4 mb-0 font-weight-bold text-gray-800"
-														>
-															Users
-														</div>
+														<div class="h4 mb-0 font-weight-bold text-gray-800">Users</div>
 													</div>
 													<div class="col-auto">
 														<i class="fas fa-caret-right fa-2x"></i>
@@ -102,11 +105,7 @@
 											<div class="card-body">
 												<div class="row no-gutters align-items-center">
 													<div class="col mr-2">
-														<div
-															class="h4 mb-0 font-weight-bold text-gray-800"
-														>
-															Jobs
-														</div>
+														<div class="h4 mb-0 font-weight-bold text-gray-800">Jobs</div>
 													</div>
 													<div class="col-auto">
 														<i class="fas fa-caret-right fa-2x"></i>
@@ -124,11 +123,7 @@
 											<div class="card-body">
 												<div class="row no-gutters align-items-center">
 													<div class="col mr-2">
-														<div
-															class="h4 mb-0 font-weight-bold text-gray-800"
-														>
-															Admins
-														</div>
+														<div class="h4 mb-0 font-weight-bold text-gray-800">Admins</div>
 													</div>
 													<div class="col-auto">
 														<i class="fas fa-caret-right fa-2x"></i>
@@ -144,12 +139,8 @@
 							<div class="col-xl-8 col-lg-8">
 								<div class="card shadow mb-4">
 									<!-- Card Header - Dropdown -->
-									<div
-										class="card-header py-3 d-flex flex-row align-items-center justify-content-between"
-									>
-										<h6 class="m-0 font-weight-bold text-primary">
-											Montly performance
-										</h6>
+									<div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+										<h6 class="m-0 font-weight-bold text-primary">Montly performance</h6>
 									</div>
 									<!-- Card Body -->
 									<div class="card-body">
@@ -165,12 +156,8 @@
 							<div class="col-xl-12 col-lg-12">
 								<div class="card shadow mb-4">
 									<!-- Card Header - Dropdown -->
-									<div
-										class="card-header py-3 d-flex flex-row align-items-center justify-content-between"
-									>
-										<h6 class="m-0 font-weight-bold text-primary">
-											Underperforming Caretakers this month
-										</h6>
+									<div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+										<h6 class="m-0 font-weight-bold text-primary">Underperforming Caretakers this month</h6>
 									</div>
 									<!-- Card Body -->
 									<div class="card-body">
@@ -185,9 +172,8 @@
 												</tr>
 											</thead>
 											<tbody>
-												<% for(var i=0; i < underperformingCt.length; i++) {
-												%>
-												<tr>
+												<% for(var i=0; i < underperformingCt.length; i++) { %>
+												<tr onclick="window.location='/admin-user-profile?username=<%= underperformingCt[i].username%>';" class="pointer">
 													<td><%= i+1%></td>
 													<td><%= underperformingCt[i].username%></td>
 													<td><%= underperformingCt[i].petdays%></td>

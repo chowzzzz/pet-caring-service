@@ -24,7 +24,8 @@ sql.query = {
 	petowner_job: "SELECT * FROM job WHERE pousername = $1",
 	petowner_creditCard: "SELECT * FROM petownerregisterscreditcard WHERE username = $1 ORDER BY expirydate ASC",
 
-	// Caretaker profile Queries
+  // Caretaker profile Queries
+  caretaker_checkstatus: "SELECT * FROM caretaker WHERE username = $1",
 	caretaker_petType: "SELECT * FROM caretaker_petcategory WHERE username = $1",
 	caretaker_petLimit: "",
 	caretaker_review: "SELECT review FROM job WHERE ctusername = $1",
@@ -59,6 +60,9 @@ sql.query = {
 	monthly_job: `SELECT COUNT(*) FROM job 
 					WHERE date_part('month', startdate) = date_part('month', CURRENT_DATE) 
 						AND date_part('year', startdate) = date_part('year', CURRENT_DATE)`,
+	monthly_salary: `SELECT SUM(totalamount) FROM caretakerearnssalary 
+						WHERE date_part('month', salarydate) = date_part('month', CURRENT_DATE) 
+							AND date_part('year', salarydate) = date_part('year', CURRENT_DATE)`,
 	top_caretakers: `SELECT username, totalamount FROM caretakerearnssalary 
 						WHERE date_part('month', salarydate) = date_part('month', CURRENT_DATE) 
 							AND date_part('year', salarydate) = date_part('year', CURRENT_DATE)
