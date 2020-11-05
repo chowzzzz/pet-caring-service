@@ -38,7 +38,7 @@
 				</tr>
 			</table>
 
-			<br/>
+			<br />
 			<table class="table">
 				<thead class="thead-dark">
 					<tr>
@@ -46,6 +46,7 @@
 						<th scope="col">Name</th>
 						<th scope="col">CVV</th>
 						<th scope="col">Expiry Date</th>
+						<th scope="col"></th>
 					</tr>
 				</thead>
 				<% for (var i = 0; i < creditcard.length; i++) { %>
@@ -55,6 +56,12 @@
 					<td scope="row" data-title="CVV"><%= creditcard[i].cvv %></td>
 					<td scope="row" data-title="Expiry Date" date-type="date">
 						<%= creditcard[i].expirydate.getDate() %>-<%= creditcard[i].expirydate.getMonth() %>-<%= creditcard[i].expirydate.getFullYear() %>
+					</td>
+					<td>
+						<!-- <a class="btn"
+							style="background-color: rgb(29, 28, 28); border-color: rgb(29, 28, 28); color: white;" role="button">
+							X
+						</a> -->
 					</td>
 				</tr>
 				<% } %>
@@ -94,6 +101,10 @@
 				</tr>
 				<% } %>
 			</table>
+			<a class="btn btn-primary btn-lg" style="background-color: rgb(29, 28, 28); border-color: rgb(29, 28, 28);"
+				href="/petOwner-pet" role="button">
+				Add Pet
+			</a>
 
 			<br /><br /><br />
 			<h1 class="display-5">Reviews</h1>
