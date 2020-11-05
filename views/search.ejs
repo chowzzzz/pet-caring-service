@@ -31,9 +31,10 @@
 					<div id="optional" style="display: none">
 						<div class="d-flex flex-row justify-content-between">
 							<span class="m-2">Username:</span>
-							<input type="text" class="form-control" placeholder="Enter username">
+							<input type="text" class="form-control" id="username" name="username"
+								placeholder="Enter username">
 							<span class="m-2">Name:</span>
-							<input type="text" class="form-control" placeholder="Enter name">
+							<input type="text" class="form-control" id="name" name="name" placeholder="Enter name">
 						</div>
 						<br>
 					</div>
@@ -50,7 +51,11 @@
 					<span><%= data[i].username%></span>
 				</div>
 				<div>
-					<button class="btn btn-primary btn-lg">Choose</button>
+					<form id="html_form" action="caretaker-details" role="form" method="post">
+						<button type="submit" id=username name=username class="btn btn-primary btn-lg"
+							value="<%= data[i].username%>">Check
+							details</button>
+					</form>
 				</div>
 			</div>
 			<% } %>

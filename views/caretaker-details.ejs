@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<link rel="stylesheet" href="/stylesheets/profile.css" />
+	<%- include('./partials/head'); %>
+</head>
+
+<body>
+	<%- include('./partials/navbar'); %>
+	<main>
+		<div class="jumbotron">
+			<h1 class="display-1">Caretaker Details</h1>
+			<h1 class="display-4"><%= details[0].name %></h1>
+			<table class="table">
+				<tr>
+					<td scope="row"><b>Email:</b> <%= details[0].email %></td>
+				</tr>
+			</table>
+			<br />
+
+			<h1 class="display-5">Job History</h1>
+			<table class="table">
+				<thead class="thead-dark">
+					<tr>
+						<th scope="col">Pet Owner</th>
+						<th scope="col">Pet Name</th>
+						<th scope="col">Request Date</th>
+						<th scope="col">Start Date</th>
+						<th scope="col">End Date</th>
+						<th scope="col">Status</th>
+						<th scope="col">Rating</th>
+						<th scope="col">Review</th>
+					</tr>
+				</thead>
+				<% for (var i = 0; i < reservations.length; i++) { %>
+				<tr>
+					<td scope="col" data-title="Care Taker">
+						<%= reservations[i].pousername %>
+					</td>
+					<td scope="col" data-title="Pet Name">
+						<%= reservations[i].petname %>
+					</td>
+					<td scope="col" data-title="Request Date">
+						<%= reservations[i].requestdate.getDate() %>-<%=
+								reservations[i].requestdate.getMonth() %>-<%=
+								reservations[i].requestdate.getFullYear() %>
+					</td>
+					<td scope="col" data-title="Start Date">
+						<%= reservations[i].startdate.getDate() %>-<%=
+								reservations[i].startdate.getMonth() %>-<%=
+								reservations[i].startdate.getFullYear() %>
+					</td>
+					<td scope="col" data-title="End Date">
+						<%= reservations[i].enddate.getDate() %>-<%=
+								reservations[i].enddate.getMonth() %>-<%=
+								reservations[i].enddate.getFullYear() %>
+					</td>
+					<td scope="col" data-title="Status"><%= reservations[i].status %></td>
+					<td scope="col" data-title="Rating"><%= reservations[i].rating %></td>
+					<td scope="col" data-title="Review"><%= reservations[i].review %></td>
+				</tr>
+				<% } %>
+			</table>
+	</main>
+</body>
+
+</html>
