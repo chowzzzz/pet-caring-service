@@ -248,7 +248,7 @@ ON CareTakerCatersPetCategory
 FOR EACH ROW
 EXECUTE PROCEDURE set_baseprice();
 
-
+/* Caculate base price with reference to rating on update */
 /*----------------------------------------------------*/
 
 CREATE OR REPLACE FUNCTION update_baseprice()
@@ -300,6 +300,61 @@ AFTER UPDATE
 ON caretaker
 FOR EACH ROW
 EXECUTE PROCEDURE update_baseprice();
+
+/* Check is caretaker is eligible to apply for leave based on 2 x 150 consecutive work days */
+/*----------------------------------------------------*/
+
+CREATE OR REPLACE FUNCTION limit_leaves()
+  RETURNS TRIGGER AS
+$$
+DECLARE
+  prevdate fulltimeappliesleaves%rowtype;
+  prevprevdate DATE;
+  lastdate DATE;
+  consecdays integer := 0;
+BEGIN
+  FOR prevdate IN SELECT * FROM fulltimeappliesleaves 
+  					WHERE username = new.username 
+					AND date_part('year', leavedate) = date_part('year', CURRENT_DATE) 
+					ORDER BY leavedate DESC LOOP
+
+    prevprevdate = (SELECT * FROM fulltimeappliesleaves 
+					WHERE username = new.username 
+					AND leavedate < prevdate.leavedate 
+					LIMIT 1
+					ORDER BY leavedate DESC);
+    IF new.leavedate < CURRENT_DATE THEN
+      RAISE EXCEPTION 'Please select a future date';
+    ELSE
+      IF prevdate.leavedate - prevprevdate >= 150 THEN
+        consecdays := consecdays + 1;
+      END IF;
+    END IF;
+
+  END LOOP;
+
+  lastdate = (SELECT * FROM fulltimeappliesleaves 
+  			 WHERE username = new.username 
+			 AND leavedate < CURRENT_DATE 
+			 ORDER BY leavedate DESC LIMIT 1);
+  IF CURRENT_DATE - lastdate >= 150 THEN
+    consecdays := consecdays + 1;
+  END IF;
+
+  IF consecdays < 2 THEN
+    RAISE EXCEPTION 'Invalid date, you need to work for at least 2x150 consecutive days a year.';
+  END IF;
+  
+  RETURN NEW;
+END
+$$
+LANGUAGE plpgsql;
+
+CREATE TRIGGER limit_leaves
+BEFORE INSERT
+ON fulltimeappliesleaves
+FOR EACH ROW
+EXECUTE PROCEDURE limit_leaves();
 
 /*----------------------------------------------------*/
 
@@ -3016,5 +3071,3 @@ INSERT INTO Job VALUES ('Dalt', 'Quincey', 'Hendrika', '2020-11-28', '2020-12-30
 
 UPDATE Job SET pousername = pousername;
 /* END OF DATA INITIALISATION */
-
-SELECT * FROM CareTakerCatersPetCategory WHERE username = 'Felicio';
