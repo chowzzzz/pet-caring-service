@@ -29,6 +29,7 @@ function initRouter(app) {
 	});
 
 	app.get("/search", search);
+	app.get("/caretaker-details", caretakerDetails);
 
 	/* AUTHENTICATED GET */
 	app.get("/petOwner-profile", passport.authMiddleware(), passport.verifyNotAdmin(), petOwnerProfile);
@@ -65,7 +66,8 @@ function initRouter(app) {
 	});
 
 	/* POST */
-	app.post("/search", passport.antiMiddleware(), searchCaretaker);
+	app.post("/search", searchCaretaker);
+	app.post("/caretaker-details", caretakerDetails);
 
 	/* AUTHENTICATED POST */
 	app.post("/petOwner-creditCard", passport.authMiddleware(), registerCreditCard); // REGISTER CREDIT CARD
@@ -96,7 +98,7 @@ function initRouter(app) {
 	app.post(
 		"/signin",
 		passport.authenticate("user-local", {
-			successRedirect: "/users",
+			successRedirect: "/",
 			failureRedirect: "/signin"
 		})
 	);
@@ -344,23 +346,23 @@ function registerUser(req, res, next) {
 
 	pool.query(sql_query.query.register_user, [username, name, email, password, gender, address, dob], (err, data) => {
 		/* if (err) {
-        console.error("Error in adding user", err);
-        res.redirect("/signup?reg=fail");
-      } else {
-        req.login(
-          {
-            username: username,
-            password: password
-          },
-          function (err) {
-            if (err) {
-              return res.redirect("/signup?reg=fail");
-            } else {
-              return res.redirect("/users");
-            }
-          }
-        );
-      } */
+		console.error("Error in adding user", err);
+		res.redirect("/signup?reg=fail");
+	  } else {
+		req.login(
+		  {
+			username: username,
+			password: password
+		  },
+		  function (err) {
+			if (err) {
+			  return res.redirect("/signup?reg=fail");
+			} else {
+			  return res.redirect("/users");
+			}
+		  }
+		);
+	  } */
 		res.redirect("/petOwner-profile");
 	});
 }
@@ -373,23 +375,23 @@ function registerAdmin(req, res, next) {
 
 	pool.query(sql_query.query.register_admin, [username, name, email, password], (err, data) => {
 		/* if (err) {
-        console.error("Error in adding user", err);
-        res.redirect("/signup?reg=fail");
-      } else {
-        req.login(
-          {
-            username: username,
-            password: password
-          },
-          function (err) {
-            if (err) {
-              return res.redirect("/signup?reg=fail");
-            } else {
-              return res.redirect("/users");
-            }
-          }
-        );
-      } */
+		console.error("Error in adding user", err);
+		res.redirect("/signup?reg=fail");
+	  } else {
+		req.login(
+		  {
+			username: username,
+			password: password
+		  },
+		  function (err) {
+			if (err) {
+			  return res.redirect("/signup?reg=fail");
+			} else {
+			  return res.redirect("/users");
+			}
+		  }
+		);
+	  } */
 		res.redirect("/admin-dashboard");
 	});
 }
@@ -448,12 +450,11 @@ function editAdmin(req, res, next) {
 }
 
 function search(req, res, next) {
-	pool.query(sql_query.query.all_users, (err, data) => {
-		res.render("search", {
-			title: "Data",
-			data: data.rows,
-			isSignedIn: req.isAuthenticated()
-		});
+	res.render("search", {
+		title: "Data",
+		data: {},
+		isSignedIn: req.isAuthenticated(),
+		isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false
 	});
 }
 
@@ -469,7 +470,38 @@ function searchCaretaker(req, res, next) {
 		res.render("search", {
 			title: "Data",
 			data: data.rows,
-			isSignedIn: req.isAuthenticated()
+			isSignedIn: req.isAuthenticated(),
+			isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false
+		});
+	});
+}
+
+function caretakerDetails(req, res, next) {
+	const username = req.body.username;
+	pool.query(sql_query.query.get_user, [username], (err, details) => {
+		if (err) {
+			console.log(err);
+			return;
+		}
+		pool.query(sql_query.query.caretaker_category, [username], (err, petTypes) => {
+			if (err) {
+				console.error(err);
+				return;
+			}
+			pool.query(sql_query.query.caretaker_jobview, [username], (err, reservations) => {
+				if (err) {
+					console.error(err);
+					return;
+				}
+				res.render("caretaker-details", {
+					title: "Data",
+					details: details.rows,
+					petTypes: petTypes.rows,
+					reservations: reservations.rows,
+					isSignedIn: req.isAuthenticated(),
+					isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false
+				});
+			});
 		});
 	});
 }

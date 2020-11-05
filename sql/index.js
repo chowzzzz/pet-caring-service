@@ -95,7 +95,7 @@ sql.query = {
 	// Register credit card
 	register_credit_card: "INSERT INTO petownerregisterscreditcard VALUES ($1,$2,$3,$4,$5)",
 
-	// Register credit card
+	// Register pet
 	register_pet: "INSERT INTO pet VALUES ($1,$2,$3,$4,$5,$6,$7,$8)",
 
 	search_caretaker: `SELECT *

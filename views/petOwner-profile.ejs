@@ -148,17 +148,17 @@
 								reservations[i].enddate.getFullYear() %>
 					</td>
 					<td scope="col" data-title="Status"><%= reservations[i].status %></td>
-					<td scope="col" data-title="Status"><%= reservations[i].rating %></td>
-					<td scope="col" data-title="Status">
+					<td scope="col" data-title="Payment Type">
 						<%= reservations[i].paymenttype %>
 					</td>
-					<td scope="col" data-title="Status">
+					<td scope="col" data-title="Delivery Type">
 						<%= reservations[i].deliverytype %>
 					</td>
-					<td scope="col" data-title="Status">
+					<td scope="col" data-title="Amount Paid">
 						<%= reservations[i].amountpaid %>
 					</td>
-					<td scope="col" data-title="Status"><%= reservations[i].review %></td>
+					<td scope="col" data-title="Rating"><%= reservations[i].rating %></td>
+					<td scope="col" data-title="Review"><%= reservations[i].review %></td>
 				</tr>
 				<% } %>
 			</table>
