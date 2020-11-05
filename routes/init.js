@@ -116,6 +116,25 @@ function initRouter(app) {
 
   app.post("/petOwner-creditCard", passport.authMiddleware(), registerCreditCard);
 
+  /* REGISTER PET */
+  app.get("/petOwner-pet", passport.authMiddleware(), function (req, res, next) {
+    pool.query(
+      sql_query.query.all_pet_categories,
+      (err, petcategories) => {
+        if (err) {
+          console.error(err);
+        }
+        res.render("petOwner-pet", {
+          title: "Register Pet",
+          petcategories: petcategories.rows,
+          isSignedIn: req.isAuthenticated(),
+          isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false,
+        });
+      });
+  });
+
+  app.post("/petOwner-pet", passport.authMiddleware(), registerPet);
+
   /* SIGNIN */
   app.get("/signin", passport.antiMiddleware(), (req, res, next) => {
     res.render("signin", {
@@ -406,11 +425,9 @@ function registerAdmin(req, res, next) {
   );
 }
 
-
 function registerCreditCard(req, res, next) {
-  console.log("hi");
   const username = req.user.username;
-  const cardnumber = req.body.cardnumber;
+  const cardnumber = req.body.cardnumber.replace(/\s/g, '');
   const nameoncard = req.body.nameoncard;
   const cvv = req.body.cvv;
   const expirydate = req.body.expirydate;
@@ -418,6 +435,26 @@ function registerCreditCard(req, res, next) {
   pool.query(
     sql_query.query.register_credit_card,
     [username, cardnumber, nameoncard, cvv, expirydate],
+    (err, data) => {
+      res.redirect("/petOwner-profile");
+    }
+  );
+}
+
+function registerPet(req, res, next) {
+  const username = req.user.username;
+  const petname = req.body.petname;
+  const dateofbirth = req.body.dateofbirth;
+  const gender = req.body.gender;
+  const description = req.body.description;
+  const specialreqs = req.body.specialreqs;
+  const personality = req.body.personality;
+  const category = req.body.category;
+
+  console.log(category);
+  pool.query(
+    sql_query.query.register_pet,
+    [username, petname, dateofbirth, gender, description, specialreqs, personality, category],
     (err, data) => {
       res.redirect("/petOwner-profile");
     }
