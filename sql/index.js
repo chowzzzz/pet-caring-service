@@ -2,8 +2,17 @@ const sql = {};
 
 sql.query = {
 	// Users
-	all_users: "SELECT * FROM appuser",
+	all_users: "SELECT * FROM appuser ORDER BY username",
 	get_user: "SELECT * FROM appuser WHERE username = $1",
+	get_petowners: `SELECT DISTINCT u.username, u.name, u.email, u.gender, u.address, u.dateofbirth 
+					FROM appuser u JOIN pet p ON u.username = p.username
+					WHERE u.isactive = 't'
+					ORDER BY u.username`,
+	get_caretakers: `SELECT u.username, u.name, u.email, u.gender, u.address, u.dateofbirth 
+					FROM appuser u JOIN caretaker ct ON u.username = ct.username
+					WHERE u.isactive = 't'
+					ORDER BY u.username`,
+	get_caretaker: "SELECT username FROM caretaker WHERE username = $1",
 
 	// Pet
 	all_pets: "SELECT * FROM pet WHERE username = $1",
@@ -16,15 +25,32 @@ sql.query = {
 	caretaker_petLimit: "",
 	caretaker_review: "SELECT review FROM job WHERE ctusername = $1",
 	caretaker_jobview: "SELECT * FROM job WHERE ctusername = $1",
+	caretaker_category: "SELECT * FROM caretakercaterspetcategory WHERE username = $1",
+	yearly_petdays: `SELECT SUM(date_part('day', enddate::timestamp - startdate::timestamp)) AS petdays
+				FROM job
+				WHERE date_part('year',startdate) = date_part('year', CURRENT_DATE)
+					AND ctusername = $1`,
+	monthly_petdays: `SELECT SUM(date_part('day', enddate::timestamp - startdate::timestamp)) AS petdays, SUM(amountpaid) AS amountearned
+				FROM job
+				WHERE date_part('month',startdate) = date_part('month', CURRENT_DATE)
+					AND date_part('year',startdate) = date_part('year', CURRENT_DATE)
+					AND ctusername = $1`,
+	caretaker_salary: `SELECT totalamount
+				FROM caretakerearnssalary
+				WHERE date_part('month',salarydate) = date_part('month', CURRENT_DATE)
+					AND date_part('year',salarydate) = date_part('year', CURRENT_DATE)
+					AND username = $1`,
 
 	// Caretaker Availability Queries
 	// full time
+	get_fulltime: "SELECT username FROM fulltime WHERE username = $1",
 	fulltime_leavedays: "SELECT * FROM fulltimeappliesleaves WHERE username = $1",
+	fulltime_leaves: "SELECT COUNT(*) AS leaves FROM fulltimeappliesleaves WHERE username = $1",
 	// part time
+	get_parttime: "SELECT username FROM parttime WHERE username = $1",
 	parttime_availdays: "SELECT * FROM parttimeindicatesavailability WHERE username = $1",
 
-  // Admin
-  get_admin: "SELECT * FROM administrator WHERE username = $1",
+	// Admin
 	monthly_job: `SELECT COUNT(*) FROM job 
 					WHERE date_part('month', startdate) = date_part('month', CURRENT_DATE) 
 						AND date_part('year', startdate) = date_part('year', CURRENT_DATE)`,
@@ -52,16 +78,15 @@ sql.query = {
 	delete_admin: "UPDATE administrator SET isactive = $1 WHERE username = $2",
 
 	//Sign In
-  signin_query: "SELECT * FROM appuser WHERE username = $1",
-  adminsignin_query: "SELECT * FROM administrator WHERE username = $1",
+	signin_query: "SELECT * FROM appuser WHERE username = $1",
+	adminsignin_query: "SELECT * FROM administrator WHERE username = $1",
 
 	// Register appuser
 	register_user:
 		"INSERT INTO appuser (username, name, email, password, gender, address, dateofbirth) VALUES ($1,$2,$3,$4,$5,$6,$7)",
 
-  // Register admin
-  register_admin:
-    "INSERT INTO administrator VALUES ($1,$2,$3,$4,CURRENT_DATE,TRUE)",
+	// Register admin
+	register_admin: "INSERT INTO administrator VALUES ($1,$2,$3,$4,CURRENT_DATE,TRUE)"
 
 	/*// Counting & Average
 	count_play: 'SELECT COUNT(winner) FROM game_plays WHERE user1=$1 OR user2=$1',

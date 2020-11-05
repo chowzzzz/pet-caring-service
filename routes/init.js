@@ -35,7 +35,8 @@ function initRouter(app) {
 	app.get("/admin-profile", passport.authMiddleware(), passport.verifyAdmin(), adminProfile);
 	app.get("/admin-dashboard", passport.authMiddleware(), passport.verifyAdmin(), adminDashboard);
 
-	app.get("/admin-user", passport.authMiddleware(), passport.verifyAdmin(), adminUser);
+	app.get("/admin-user-profiles", passport.authMiddleware(), passport.verifyAdmin(), adminUserProfiles);
+	app.get("/admin-user-profile", passport.authMiddleware(), passport.verifyAdmin(), adminUserProfile);
 	app.get("/admin-caretaker", passport.authMiddleware(), passport.verifyAdmin(), adminCaretaker);
 	app.get("/admin-petowner", passport.authMiddleware(), passport.verifyAdmin(), adminPetowner);
 	app.get("/admin-pet", passport.authMiddleware(), passport.verifyAdmin(), adminPet);
@@ -99,11 +100,7 @@ function initRouter(app) {
 	);
 
 	/* ADMINISTRATOR CREATE NEW */
-	app.get("/admin-createnew", passport.authMiddleware(), passport.verifyAdmin(), function (
-		req,
-		res,
-		next
-	) {
+	app.get("/admin-createnew", passport.authMiddleware(), passport.verifyAdmin(), function (req, res, next) {
 		res.render("adminCreateNew", {
 			title: "Create New Administrator",
 			isSignedIn: req.isAuthenticated(),
@@ -194,11 +191,66 @@ function adminDashboard(req, res, next) {
 	});
 }
 
-function adminUser(req, res, next) {
-	res.render("adminUser", {
-		title: "Users",
-		isSignedIn: req.isAuthenticated(),
-		isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false
+function adminUserProfiles(req, res, next) {
+	pool.query(sql_query.query.all_users, (err, data) => {
+		res.render("adminUserProfiles", {
+			title: "User Profiles",
+			data: data.rows,
+			isSignedIn: req.isAuthenticated(),
+			isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false
+		});
+	});
+}
+
+function adminUserProfile(req, res, next) {
+	const username = req.query.username ? req.query.username : req.user.username;
+	pool.query(sql_query.query.get_user, [username], (err, user) => {
+		pool.query(sql_query.query.get_caretaker, [username], (err, caretaker) => {
+			pool.query(sql_query.query.all_pets, [username], (err, pets) => {
+				pool.query(sql_query.query.get_fulltime, [username], (err, fulltime) => {
+					pool.query(sql_query.query.get_parttime, [username], (err, parttime) => {
+						pool.query(sql_query.query.caretaker_category, [username], (err, caretaker_category) => {
+							pool.query(sql_query.query.fulltime_leaves, [username], (err, caretaker_leaves) => {
+								pool.query(sql_query.query.yearly_petdays, [username], (err, yearly_petdays) => {
+									pool.query(sql_query.query.monthly_petdays, [username], (err, monthly_petdays) => {
+										pool.query(sql_query.query.caretaker_salary, [username], (err, caretaker_salary) => {
+											user = user ? user.rows : null;
+											pets = pets ? pets.rows : null;
+											caretaker_category = caretaker_category ? caretaker_category.rows : null;
+											caretaker_leaves = caretaker_leaves ? caretaker_leaves.rows : null;
+											yearly_petdays = yearly_petdays ? yearly_petdays.rows : null;
+											monthly_petdays = monthly_petdays ? monthly_petdays.rows : null;
+											caretaker_salary = caretaker_salary ? caretaker_salary.rows : null;
+
+											isCaretaker = caretaker ? true : false;
+											isPetowner = pets ? true : false;
+											isFulltime = fulltime ? true : false;
+											isParttime = parttime ? true : false;
+											res.render("adminUserProfile", {
+												title: "User Profile",
+												data: user,
+												pets: pets,
+												caretaker_category: caretaker_category,
+												caretaker_leaves: caretaker_leaves,
+												yearly_petdays: yearly_petdays,
+												monthly_petdays: monthly_petdays,
+												caretaker_salary: caretaker_salary,
+												isCaretaker: isCaretaker,
+												isPetowner: isPetowner,
+												isFulltime: isFulltime,
+												isParttime: isParttime,
+												isSignedIn: req.isAuthenticated(),
+												isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false
+											});
+										});
+									});
+								});
+							});
+						});
+					});
+				});
+			});
+		});
 	});
 }
 
@@ -236,7 +288,7 @@ function adminJob(req, res, next) {
 
 function adminProfiles(req, res, next) {
 	pool.query(sql_query.query.get_admins, (err, data) => {
-		res.render("admin-profiles", {
+		res.render("adminProfiles", {
 			title: "Admin Profiles",
 			data: data.rows,
 			isSignedIn: req.isAuthenticated(),
@@ -267,11 +319,8 @@ function registerUser(req, res, next) {
 	const address = req.body.address;
 	const dob = req.body.dob;
 
-	pool.query(
-		sql_query.query.register_user,
-		[username, name, email, password, gender, address, dob],
-		(err, data) => {
-			/* if (err) {
+	pool.query(sql_query.query.register_user, [username, name, email, password, gender, address, dob], (err, data) => {
+		/* if (err) {
         console.error("Error in adding user", err);
         res.redirect("/signup?reg=fail");
       } else {
@@ -289,9 +338,8 @@ function registerUser(req, res, next) {
           }
         );
       } */
-			res.redirect("/users");
-		}
-	);
+		res.redirect("/users");
+	});
 }
 
 function registerAdmin(req, res, next) {

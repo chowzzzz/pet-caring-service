@@ -2384,7 +2384,8 @@ INSERT INTO Job VALUES ('Pascale', 'Zebulen', 'Melinde', '2020-10-24', '2021-01-
 INSERT INTO Job VALUES ('Janek', 'Alisander', 'Conni', '2020-11-05', '2020-12-24', '2020-09-15', 'PENDING', '0.1', 'CASH', 'POD', '643.52', 'Beam Radiation of Neck Lymphatics using Photons 1 - 10 MeV');
 INSERT INTO Job VALUES ('Brig', 'Janey', 'Zena', '2020-11-11', '2021-01-20', '2020-09-08', 'CANCELLED', '3.0', 'CREDITCARD', 'POD', '672.21', 'Auditory Processing Assessment using Other Equipment');
 INSERT INTO Job VALUES ('Ricki', 'Anabelle', 'Raphaela', '2020-11-03', '2021-01-19', '2020-09-05', 'CANCELLED', '0.0', 'CREDITCARD', 'CTP', '380.64', 'Therapeutic Massage');
-INSERT INTO Job VALUES ('Hurlee', 'Arel', 'Brandea', '2020-10-09', '2020-12-09', '2020-09-10', 'CANCELLED', '3.7', 'CREDITCARD', 'POD', '544.66', 'Fluoroscopy of Pharynx and Epiglottis');
+INSERT INTO Job VALUES ('Hurlee', 'Arel', 'Brandea', '2020-10-09', '2020-10-10', '2020-09-10', 'CANCELLED', '3.7', 'CREDITCARD', 'POD', '544.66', 'Fluoroscopy of Pharynx and Epiglottis');
+INSERT INTO Job VALUES ('Hurlee', 'Arel', 'Brandea', '2020-11-09', '2020-12-09', '2020-11-09', 'PENDING', '3.7', 'CREDITCARD', 'POD', '600', 'Fluoroscopy of Pharynx and Epiglottis');
 INSERT INTO Job VALUES ('Patrizius', 'Grant', 'Retha', '2020-10-25', '2021-01-17', '2020-09-09', 'DONE', '2.3', 'CASH', 'POD', '465.96', 'Computerized Tomography (CT Scan) of Bi Temporomand Jt');
 INSERT INTO Job VALUES ('Weidar', 'Garth', 'Maris', '2020-10-04', '2021-01-14', '2020-09-08', 'CONFIRMED', '3.2', 'CREDITCARD', 'PTB', '542.12', 'Muscle Perform Assess Neuro Up Back/UE w Assist Equip');
 INSERT INTO Job VALUES ('Rickard', 'Berenice', 'Harmonie', '2020-10-17', '2021-01-10', '2020-09-15', 'CONFIRMED', '1.7', 'CREDITCARD', 'CTP', '711.19', 'Plaque Radiation of Skull');
