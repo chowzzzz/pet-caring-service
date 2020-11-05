@@ -7,7 +7,7 @@
 	<body id="page-top">
 		<%- include('./partials/navbar'); %>
 		<div class="jumbotron bg-white">
-			<h1>Administrators</h1>
+			<h1 class="mb-4">Users</h1>
 			<table class="table table-bordered table-hover table-striped">
 				<thead>
 					<tr>
@@ -15,20 +15,21 @@
 						<th scope="col">Username</th>
 						<th scope="col">Name</th>
 						<th scope="col">Email</th>
-						<th scope="col">Join Date</th>
+						<th scope="col">Gender</th>
+						<th scope="col">Address</th>
+						<th scope="col">Date of Birth</th>
 					</tr>
 				</thead>
 				<tbody>
 					<% for(var i=0; i < data.length; i++) { %>
-					<tr
-						onclick="window.location='/admin-profile?username=<%= data[i].username%>';"
-						class="pointer"
-					>
+					<tr onclick="window.location='/admin-user-profile?username=<%= data[i].username%>';" class="pointer">
 						<td><%= i+1%></td>
 						<td><%= data[i].username%></td>
 						<td><%= data[i].name%></td>
 						<td><%= data[i].email%></td>
-						<td><%= data[i].joindate.toLocaleDateString("en-US")%></td>
+						<td><%= data[i].gender%></td>
+						<td><%= data[i].address%></td>
+						<td><%= data[i].dateofbirth.toLocaleDateString("en-US")%></td>
 					</tr>
 					<% } %>
 				</tbody>

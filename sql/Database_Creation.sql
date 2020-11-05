@@ -36,6 +36,7 @@ CREATE TABLE AppUser (
 
 CREATE TABLE CareTaker (
 	username VARCHAR(20),
+	avgrating NUMERIC(2,1) NOT NULL,
 	PRIMARY KEY(username),
 	FOREIGN KEY(username) REFERENCES AppUser(username)
 );
@@ -81,8 +82,8 @@ CREATE TABLE PartTimeIndicatesAvailability (
 
 CREATE TABLE PetOwnerRegistersCreditCard (
 	username VARCHAR(20),
-cardnumber VARCHAR(20) UNIQUE,
-nameoncard VARCHAR(100) NOT NULL,
+	cardnumber VARCHAR(20) UNIQUE,
+	nameoncard VARCHAR(100) NOT NULL,
 	cvv VARCHAR(20) NOT NULL,
 	expirydate DATE NOT NULL,
 	PRIMARY KEY(username, cardnumber),
@@ -97,6 +98,15 @@ CREATE TABLE PetCategory (
 	PRIMARY KEY(category)
 );
 
+CREATE TABLE CareTakerCatersPetCategory (
+	username VARCHAR(20) NOT NULL,
+	category VARCHAR(20) NOT NULL,
+	price NUMERIC(31,2) NOT NULL,
+	PRIMARY KEY(username, category),
+	FOREIGN KEY(username) REFERENCES CareTaker(username),
+	FOREIGN KEY(category) REFERENCES PetCategory(category)	
+);
+
 CREATE TABLE Pet (
 	username VARCHAR(20),
 	name VARCHAR(50) UNIQUE,
@@ -105,15 +115,17 @@ CREATE TABLE Pet (
 	description VARCHAR(100) NOT NULL,
 	specialreqs VARCHAR(100),
 	personality VARCHAR(100) NOT NULL,
+	category VARCHAR(20) NOT NULL,
 	PRIMARY KEY(username, name),
-	FOREIGN KEY(username) REFERENCES AppUser(username)	
+	FOREIGN KEY(username) REFERENCES AppUser(username),	
+	FOREIGN KEY(category) REFERENCES PetCategory(category)	
 );
 
 /*----------------------------------------------------*/
 
 CREATE TABLE Job (
-	pousername VARCHAR(20),
 	ctusername VARCHAR(20),
+	pousername VARCHAR(20),	
 	petname VARCHAR(20),
 	startdate DATE,
 	enddate DATE NOT NULL,
@@ -127,7 +139,168 @@ CREATE TABLE Job (
 	PRIMARY KEY(pousername, ctusername, petname, startdate),
 	FOREIGN KEY(pousername, petname) REFERENCES Pet(username, name),
 	FOREIGN KEY(ctusername) REFERENCES CareTaker(username),
-	CHECK(pousername != ctusername)
+	CHECK(pousername != ctusername),
+	CHECK(startdate < enddate),
+	CHECK(requestdate < enddate)
 );
 
 /* END OF DATABASE CREATION */
+
+/* START OF TRIGGERS */
+/* Update CareTaker.avgrating through Job */
+/*----------------------------------------------------*/
+
+CREATE OR REPLACE FUNCTION update_avg_rating()
+  RETURNS TRIGGER AS
+$$
+BEGIN
+  UPDATE caretaker
+  SET avgrating = (SELECT AVG(rating) FROM job WHERE ctusername = OLD.ctusername)
+  WHERE username = OLD.ctusername;
+  RETURN NEW;
+END
+$$
+LANGUAGE 'plpgsql';
+
+CREATE TRIGGER update_avg_rating
+AFTER UPDATE
+ON job
+FOR EACH ROW
+EXECUTE PROCEDURE update_avg_rating();
+
+/* Create default Cater entry when new CareTaker created */
+/*----------------------------------------------------*/
+
+CREATE OR REPLACE FUNCTION create_petcat()
+  RETURNS TRIGGER AS
+$$
+BEGIN
+  INSERT INTO CareTakerCatersPetCategory(username, category, price)
+  VALUES(NEW.username, 'Dogs', (SELECT baseprice FROM petcategory where category = 'Dogs'));
+  RETURN NEW;
+END
+$$
+LANGUAGE 'plpgsql';
+
+CREATE TRIGGER create_petcat
+AFTER INSERT
+ON caretaker
+FOR EACH ROW
+EXECUTE PROCEDURE create_petcat();
+
+/* Caculate Job total price based on days and base price */
+/*----------------------------------------------------*/
+
+CREATE OR REPLACE FUNCTION calc_job_price()
+  RETURNS TRIGGER AS
+$$
+BEGIN
+  new.amountpaid := (date_part('day', new.enddate::timestamp - new.startdate::timestamp) 
+  					* (SELECT price FROM caretakercaterspetcategory WHERE username = new.ctusername AND category 
+					= (SELECT category FROM pet WHERE username = new.pousername AND name = new.petname)));
+  RETURN NEW;
+END
+$$
+LANGUAGE plpgsql;
+
+CREATE TRIGGER calc_job_price
+BEFORE INSERT
+ON job
+FOR EACH ROW
+EXECUTE PROCEDURE calc_job_price();
+
+/* Caculate base price with reference to rating when insert new pets caretaker can take */
+/*----------------------------------------------------*/
+
+CREATE OR REPLACE FUNCTION set_baseprice()
+  RETURNS TRIGGER AS
+$$
+DECLARE 
+    newavgrating NUMERIC(2,1);
+    currbaseprice NUMERIC(31,2);
+BEGIN
+    newavgrating = (SELECT avgrating FROM caretaker WHERE username = new.username);
+    currbaseprice = (SELECT baseprice FROM petcategory WHERE category = new.category);
+
+    IF newavgrating = 5.0 THEN
+    new.price := currbaseprice * 2;
+    RETURN NEW;
+    ELSEIF newavgrating < 5.0 AND newavgrating >= 4.5 THEN
+    new.price := currbaseprice * 1.75;
+    RETURN NEW;
+    ELSEIF newavgrating < 4.5 AND newavgrating >= 4.0 THEN
+    new.price := currbaseprice * 1.5;
+    RETURN NEW;
+    ELSEIF newavgrating < 4.0 AND newavgrating >= 3.5 THEN
+    new.price := currbaseprice * 1.25;
+    RETURN NEW;
+    ELSE
+    new.price := currbaseprice;
+    RETURN NEW;
+  END IF;
+END
+$$
+LANGUAGE plpgsql;
+
+CREATE TRIGGER set_baseprice
+BEFORE INSERT
+ON CareTakerCatersPetCategory
+FOR EACH ROW
+EXECUTE PROCEDURE set_baseprice();
+
+
+/*----------------------------------------------------*/
+
+CREATE OR REPLACE FUNCTION update_baseprice()
+  RETURNS TRIGGER AS
+$$
+DECLARE
+    currbaseprice NUMERIC(31,2);
+  newprice NUMERIC(31,2);
+  cater CareTakerCatersPetCategory%rowtype;
+BEGIN
+
+  FOR cater IN SELECT * FROM CareTakerCatersPetCategory WHERE username = new.username LOOP
+    currbaseprice = (SELECT baseprice FROM petcategory WHERE category = cater.category);
+
+    IF new.avgrating = 5.0 THEN
+      UPDATE CareTakerCatersPetCategory
+      SET price = currbaseprice * 2 
+      WHERE username = new.username AND category = cater.category;
+      RETURN NEW;
+    ELSEIF new.avgrating < 5.0 AND new.avgrating >= 4.5 THEN
+      UPDATE CareTakerCatersPetCategory
+      SET price = currbaseprice * 1.75
+      WHERE username = new.username AND category = cater.category;
+      RETURN NEW;
+    ELSEIF new.avgrating < 4.5 AND new.avgrating >= 4.0 THEN
+      UPDATE CareTakerCatersPetCategory
+      SET price = currbaseprice * 1.5
+      WHERE username = new.username AND category = cater.category;
+      RETURN NEW;
+    ELSEIF new.avgrating < 4.0 AND new.avgrating >= 3.5 THEN
+      UPDATE CareTakerCatersPetCategory
+      SET price = currbaseprice * 1.25
+      WHERE username = new.username AND category = cater.category;
+      RETURN NEW;
+    ELSE
+      UPDATE CareTakerCatersPetCategory
+      SET price = currbaseprice
+      WHERE username = new.username AND category = cater.category;
+      RETURN NEW;
+      
+    END IF;
+  END LOOP;
+END
+$$
+LANGUAGE plpgsql;
+
+CREATE TRIGGER update_baseprice
+AFTER UPDATE
+ON caretaker
+FOR EACH ROW
+EXECUTE PROCEDURE update_baseprice();
+
+/*----------------------------------------------------*/
+
+/* END OF TRIGGERS */
