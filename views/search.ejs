@@ -44,13 +44,17 @@
 				</form>
 			</div>
 			<br>
+			<span> Found <%= data.length%> results </span>
 			<% for(var i=0; i<data.length; i++) { %>
-			<div class="d-flex flex-row justify-content-between rounded border p-3 mb-2">
-				<div>
-					<span> <b><%= data[i].name%></b></span> <br>
-					<span><%= data[i].username%></span>
+			<div class="row rounded border p-3 mb-2">
+				<div class="col-sm">
+					<span> <b><%= data[i].username%></b></span> <br>
+					<span><%= data[i].name%></span>
 				</div>
-				<div>
+				<div class="col-sm" align="left">
+					<span> Rating: <%= data[i].avgrating%></span> <br>
+				</div>
+				<div class="col-sm" align="right">
 					<form id="html_form" action="caretaker-details" role="form" method="post">
 						<button type="submit" id=username name=username class="btn btn-primary btn-lg"
 							value="<%= data[i].username%>">Check

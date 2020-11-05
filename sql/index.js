@@ -24,8 +24,9 @@ sql.query = {
 	petowner_job: "SELECT * FROM job WHERE pousername = $1",
 	petowner_creditCard: "SELECT * FROM petownerregisterscreditcard WHERE username = $1 ORDER BY expirydate ASC",
 
-  // Caretaker profile Queries
-  caretaker_checkstatus: "SELECT * FROM caretaker WHERE username = $1",
+	// Caretaker profile Queries
+	caretaker_checkstatus: "SELECT * FROM caretaker WHERE username = $1",
+	caretaker_asAppUser: "SELECT * FROM caretaker NATURAL JOIN appuser WHERE username = $1",
 	caretaker_petType: "SELECT * FROM caretaker_petcategory WHERE username = $1",
 	caretaker_petLimit: "",
 	caretaker_review: "SELECT review FROM job WHERE ctusername = $1",
@@ -104,6 +105,7 @@ sql.query = {
 
 	search_caretaker: `SELECT *
 		FROM fulltime f JOIN appuser u ON f.username = u.username AND f.username <> $3
+		JOIN caretaker c ON f.username = c.username
 		WHERE NOT EXISTS (
 			SELECT leavedate
 			FROM fulltimeappliesleaves
