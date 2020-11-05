@@ -459,9 +459,10 @@ function search(req, res, next) {
 }
 
 function searchCaretaker(req, res, next) {
+	const username = req.isAuthenticated() ? req.user.username : '';
 	const start = req.body.start;
 	const end = req.body.end;
-	pool.query(sql_query.query.search_caretaker, [start, end], (err, data) => {
+	pool.query(sql_query.query.search_caretaker, [start, end, username], (err, data) => {
 		if (err) {
 			console.log(err);
 			return;

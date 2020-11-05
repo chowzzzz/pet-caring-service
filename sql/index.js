@@ -99,7 +99,7 @@ sql.query = {
 	register_pet: "INSERT INTO pet VALUES ($1,$2,$3,$4,$5,$6,$7,$8)",
 
 	search_caretaker: `SELECT *
-		FROM fulltime f JOIN appuser u ON f.username = u.username
+		FROM fulltime f JOIN appuser u ON f.username = u.username AND f.username <> $3
 		WHERE NOT EXISTS (
 			SELECT leavedate
 			FROM fulltimeappliesleaves
