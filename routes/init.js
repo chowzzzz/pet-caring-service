@@ -31,7 +31,6 @@ function initRouter(app) {
 	});
 
 	app.get("/search", search);
-	app.get("/caretaker-details", passport.authMiddleware(), passport.verifyNotAdmin(), caretakerDetails);
 
 	/* AUTHENTICATED GET */
 	app.get("/petOwner-profile", passport.authMiddleware(), passport.verifyNotAdmin(), petOwnerProfile);
@@ -74,6 +73,7 @@ function initRouter(app) {
 	/* POST */
 	app.post("/search", searchCaretaker, passport.authMiddleware(), passport.verifyNotAdmin());
 	app.post("/caretaker-details", caretakerDetails, passport.authMiddleware(), passport.verifyNotAdmin());
+	app.post("/caretaker-bidding", caretakerBidding, passport.authMiddleware(), passport.verifyNotAdmin());
 
 	/* AUTHENTICATED POST */
 	app.post("/petOwner-creditCard", passport.authMiddleware(), passport.verifyNotAdmin(), registerCreditCard); // REGISTER CREDIT CARD
@@ -106,7 +106,7 @@ function initRouter(app) {
 	app.post(
 		"/signin",
 		passport.authenticate("user-local", {
-			successRedirect: "/users",
+			successRedirect: "/",
 			failureRedirect: "/signin"
 		})
 	);
@@ -169,23 +169,33 @@ function petOwnerProfile(req, res, next) {
 	pool.query(sql_query.query.get_user, [username], (err, details) => {
 		if (err) {
 			console.error(err);
+			return;
 		}
 		pool.query(sql_query.query.all_pets, [username], (err, pets) => {
 			if (err) {
 				console.error(err);
+				return;
 			}
 			pool.query(sql_query.query.petowner_job, [username], (err, reservations) => {
 				if (err) {
 					console.error(err);
+					return;
 				}
-				res.render("profile", {
-					title: "Pet Owner",
-					details: details.rows,
-					pets: pets.rows,
-					reservations: reservations.rows,
-					isSignedIn: req.isAuthenticated(),
-					isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false,
-					isCaretaker: req.isAuthenticated() ? req.user.isCaretaker : false
+				pool.query(sql_query.query.petowner_creditCard, [username], (err, creditcard) => {
+					if (err) {
+						console.error(err);
+						return;
+					}
+					res.render("petOwner-profile", {
+						title: "Pet Owner",
+						details: details.rows,
+						pets: pets.rows,
+						reservations: reservations.rows,
+						creditcard: creditcard.rows,
+						isSignedIn: req.isAuthenticated(),
+						isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false,
+						isCaretaker: req.isAuthenticated() ? req.user.isCaretaker : false
+					});
 				});
 			});
 		});
@@ -488,7 +498,8 @@ function search(req, res, next) {
 		title: "Data",
 		data: {},
 		isSignedIn: req.isAuthenticated(),
-		isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false
+		isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false,
+		isCaretaker: req.isAuthenticated() ? req.user.isCaretaker : false
 	});
 }
 
@@ -506,19 +517,20 @@ function searchCaretaker(req, res, next) {
 			title: "Data",
 			data: data.rows,
 			isSignedIn: req.isAuthenticated(),
-			isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false
+			isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false,
+			isCaretaker: req.isAuthenticated() ? req.user.isCaretaker : false
 		});
 	});
 }
 
 function caretakerDetails(req, res, next) {
 	const username = req.body.username;
-	pool.query(sql_query.query.get_user, [username], (err, details) => {
+	pool.query(sql_query.query.caretaker_asAppUser, [username], (err, details) => {
 		if (err) {
 			console.log(err);
 			return;
 		}
-		pool.query(sql_query.query.caretaker_category, [username], (err, petTypes) => {
+		pool.query(sql_query.query.caretaker_category, [username], (err, petCategories) => {
 			if (err) {
 				console.error(err);
 				return;
@@ -531,10 +543,42 @@ function caretakerDetails(req, res, next) {
 				res.render("caretaker-details", {
 					title: "Data",
 					details: details.rows,
-					petTypes: petTypes.rows,
+					petCategories: petCategories.rows,
 					reservations: reservations.rows,
 					isSignedIn: req.isAuthenticated(),
-					isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false
+					isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false,
+					isCaretaker: req.isAuthenticated() ? req.user.isCaretaker : false
+				});
+			});
+		});
+	});
+}
+
+function caretakerBidding(req, res, next) {
+	const username = req.body.username;
+	pool.query(sql_query.query.caretaker_asAppUser, [username], (err, details) => {
+		if (err) {
+			console.log(err);
+			return;
+		}
+		pool.query(sql_query.query.caretaker_category, [username], (err, petCategories) => {
+			if (err) {
+				console.error(err);
+				return;
+			}
+			pool.query(sql_query.query.caretaker_jobview, [username], (err, reservations) => {
+				if (err) {
+					console.error(err);
+					return;
+				}
+				res.render("caretaker-bidding", {
+					title: "Data",
+					details: details.rows,
+					petCategories: petCategories.rows,
+					reservations: reservations.rows,
+					isSignedIn: req.isAuthenticated(),
+					isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false,
+					isCaretaker: req.isAuthenticated() ? req.user.isCaretaker : false
 				});
 			});
 		});

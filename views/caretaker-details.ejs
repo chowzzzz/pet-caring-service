@@ -9,22 +9,55 @@
 <body>
 	<%- include('./partials/navbar'); %>
 	<main>
-		<div class="jumbotron">
-			<h1 class="display-1">Caretaker Details</h1>
-			<h1 class="display-4"><%= details[0].name %></h1>
+		<div class="container rounded bg-white pl-5 pr-5 pt-3 pb-3">
+			<div class="d-flex flex-row justify-content-between">
+				<h1 class="display-4"><%= details[0].username %></h1>
+				<div>
+					<form id="html_form" action="caretaker-bidding" role="form" method="post">
+						<button type="submit" id=username name=username value="<%= details[0].username%>"
+							class="btn btn-success btn-lg">Bid for service!</button>
+					</form>
+				</div>
+			</div>
+			<br>
 			<table class="table">
-				<tr>
-					<td scope="row"><b>Email:</b> <%= details[0].email %></td>
+				<tr class="d-flex">
+					<td class="col-2"><b>Name:</b></td>
+					<td class="col-4"><%= details[0].name %></td>
+				</tr>
+				<tr class="d-flex">
+					<td class="col-2"><b>Email:</b></td>
+					<td class="col-4"><%= details[0].email %></td>
+				</tr>
+				<tr class="d-flex">
+					<td class="col-2"><b>Average rating:</td>
+					<td class="col-4"><%= details[0].avgrating %></td>
 				</tr>
 			</table>
 			<br />
 
+			<h1 class="display-5">Pet Categories</h1>
+			<% if (petCategories.length == 0) { %>
+			<span>
+				&lt;empty&gt;
+			</span>
+			<% } %>
+			<ul>
+				<% for (var i = 0; i < petCategories.length; i++) { %>
+				<li scope="col" data-title="Care Taker">
+					<%= petCategories[i].category %>
+				</li>
+				<% } %>
+			</ul>
+
+			<br>
+
 			<h1 class="display-5">Job History</h1>
+			<br>
 			<table class="table">
 				<thead class="thead-dark">
 					<tr>
 						<th scope="col">Pet Owner</th>
-						<th scope="col">Pet Name</th>
 						<th scope="col">Request Date</th>
 						<th scope="col">Start Date</th>
 						<th scope="col">End Date</th>
@@ -37,9 +70,6 @@
 				<tr>
 					<td scope="col" data-title="Care Taker">
 						<%= reservations[i].pousername %>
-					</td>
-					<td scope="col" data-title="Pet Name">
-						<%= reservations[i].petname %>
 					</td>
 					<td scope="col" data-title="Request Date">
 						<%= reservations[i].requestdate.getDate() %>-<%=
