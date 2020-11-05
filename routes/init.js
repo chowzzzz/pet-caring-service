@@ -484,7 +484,7 @@ function caretakerDetails(req, res, next) {
 			console.log(err);
 			return;
 		}
-		pool.query(sql_query.query.caretaker_category, [username], (err, petTypes) => {
+		pool.query(sql_query.query.caretaker_category, [username], (err, petCategories) => {
 			if (err) {
 				console.error(err);
 				return;
@@ -497,7 +497,7 @@ function caretakerDetails(req, res, next) {
 				res.render("caretaker-details", {
 					title: "Data",
 					details: details.rows,
-					petTypes: petTypes.rows,
+					petCategories: petCategories.rows,
 					reservations: reservations.rows,
 					isSignedIn: req.isAuthenticated(),
 					isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false
