@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <%- include('./partials/head'); %>
+</head>
+
+<body>
+    <%- include('./partials/navbar'); %>
+    <main>
+        <div class="jumbotron">
+            <div class="container rounded bg-white pl-5 pr-5 pt-3 pb-3">
+                <h1 class="mb-2">Register Pet</h1> <br />
+                <div class="d-flex flex-row justify-content-between">
+                    <div style="min-width: 50%">
+                        <form id="html_form" action="petOwner-pet" role="form" method="post">
+                            <div class="form-group w-75 mb-2">
+                                <label for="petname">Pet Name</label>
+                                <input type="text" class="form-control" id="petname" name="petname"
+                                    placeholder="Enter your pet name" required>
+                            </div>
+                            <div class="form-group w-75 mb-3">
+                                <label for="dateofbirth">Date of Birth</label>
+                                <input type="date" class="form-control" id="dateofbirth" name="dateofbirth"
+                                    required></input>
+                            </div>
+                            <div class="form-group w-75 mb-2">
+                                <label for="Gender">Gender</label>
+                                <div class="form-check">
+                                    <div class="radio">
+                                        <label class="form-check-label" for="male"><input class="form-check-input"
+                                                type="radio" id="male" value="M" name="gender" required>Male</label>
+                                    </div>
+                                    <div class="radio">
+                                        <label class="form-check-label" for="female"><input class="form-check-input"
+                                                type="radio" id="female" value="F" name="gender">Female</label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group w-75 mb-3">
+                                <label for="description">Description</label>
+                                <input type="text" class="form-control" id="description" name="description"
+                                    required></input>
+                            </div>
+                            <div class="form-group w-75 mb-3">
+                                <label for="specialreqs">Special Requirements</label>
+                                <input type="text" class="form-control" id="specialreqs" name="specialreqs">
+                                </input>
+                            </div>
+                            <div class="form-group w-75 mb-3">
+                                <label for="personality">Personality</label>
+                                <input type="text" class="form-control" id="personality" name="personality"
+                                    required></input>
+                            </div>
+                            <div class="form-group w-75 mb-3">
+                                <label for="category">Category</label>
+                                <select id="category" name="category" class="form-control" onfocus='this.size=5;'
+                                    onblur='this.size=1;' onchange='this.size=1; this.blur();'>
+                                    <% for (var i = 0; i < petcategories.length; i++) { %>
+                                    <option value=<%= petcategories[i].category %>>
+                                        <%= petcategories[i].category %>
+                                    </option>
+                                    <% } %>
+                                </select>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Register</button>
+
+                        </form>
+                    </div>
+
+                    <div class="d-flex align-items-center">
+                        <img style="width: 100%" src="../images/pets1.png" alt="pets1">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+    <script>
+        (function () {
+            window.addEventListener('load', function () {
+                var forms = [document.getElementById('html_form')];
+                var validation = Array.prototype.filter.call(forms, function (form) {
+                    form.addEventListener('submit', check, false);
+                });
+            }, false);
+        })();
+
+        onload = function () {
+            document.getElementById('cardnumber').oninput = function () {
+                this.value = cc_format(this.value)
+            }
+        }
+
+        function check(event) {
+            // Get Values
+            var dateofbirth = document.getElementById('dateofbirth').value.trim();
+            if (new Date(dateofbirth).getTime() <= today.getTime()) {
+                alert("Invalid Date Of Birth!");
+                event.preventDefault();
+                event.stopPropagation();
+                return false;
+            }
+        }
+    </script>
+</body>
+
+</html>

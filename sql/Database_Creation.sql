@@ -81,8 +81,8 @@ CREATE TABLE PartTimeIndicatesAvailability (
 
 CREATE TABLE PetOwnerRegistersCreditCard (
 	username VARCHAR(20),
-cardnumber VARCHAR(20) UNIQUE,
-nameoncard VARCHAR(100) NOT NULL,
+	cardnumber VARCHAR(20) UNIQUE,
+	nameoncard VARCHAR(100) NOT NULL,
 	cvv VARCHAR(20) NOT NULL,
 	expirydate DATE NOT NULL,
 	PRIMARY KEY(username, cardnumber),
@@ -90,6 +90,15 @@ nameoncard VARCHAR(100) NOT NULL,
 );
 
 /*----------------------------------------------------*/
+
+CREATE TABLE CareTakerCatersPetCategory (
+	username VARCHAR(20),
+	category VARCHAR(20),
+	/* price NUMERIC(31,2) NOT NULL,*/
+	PRIMARY KEY(username, category),
+	FOREIGN KEY(username) REFERENCES CareTaker(username),
+	FOREIGN KEY(category) REFERENCES PetCategory(category)	
+);
 
 CREATE TABLE PetCategory (
 	category VARCHAR(20),
@@ -105,8 +114,10 @@ CREATE TABLE Pet (
 	description VARCHAR(100) NOT NULL,
 	specialreqs VARCHAR(100),
 	personality VARCHAR(100) NOT NULL,
+	category VARCHAR(20) NOT NULL,
 	PRIMARY KEY(username, name),
-	FOREIGN KEY(username) REFERENCES AppUser(username)	
+	FOREIGN KEY(username) REFERENCES AppUser(username),	
+	FOREIGN KEY(category) REFERENCES PetCategory(category)	
 );
 
 /*----------------------------------------------------*/
