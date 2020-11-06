@@ -153,11 +153,22 @@ CREATE TABLE Job (
 CREATE OR REPLACE FUNCTION update_avg_rating()
   RETURNS TRIGGER AS
 $$
+DECLARE 
+    newavgrating NUMERIC(2,1);
 BEGIN
-  UPDATE caretaker
-  SET avgrating = (SELECT AVG(rating) FROM job WHERE ctusername = OLD.ctusername)
-  WHERE username = OLD.ctusername;
-  RETURN NEW;
+  newavgrating = (SELECT AVG(NULLIF(rating,0)) FROM job WHERE ctusername = OLD.ctusername);
+
+  IF newavgrating IS NULL THEN
+	UPDATE caretaker
+    SET avgrating = 0
+	WHERE username = OLD.ctusername;
+    RETURN NEW;
+    ELSE
+	UPDATE caretaker
+	SET avgrating = newavgrating
+	WHERE username = OLD.ctusername;
+    RETURN NEW;
+  END IF;
 END
 $$
 LANGUAGE 'plpgsql';
@@ -304,24 +315,24 @@ EXECUTE PROCEDURE update_baseprice();
 /*----------------------------------------------------*/
 
 CREATE OR REPLACE FUNCTION limit_leaves()
-  RETURNS TRIGGER AS
+    RETURNS TRIGGER AS
 $$
 DECLARE
   prevdate fulltimeappliesleaves%rowtype;
-  prevprevdate DATE;
-  lastdate DATE;
-  consecdays integer := 0;
+    prevprevdate DATE;
+    lastdate DATE;
+    consecdays integer := 0;
 BEGIN
-  FOR prevdate IN SELECT * FROM fulltimeappliesleaves 
-  					WHERE username = new.username 
-					AND date_part('year', leavedate) = date_part('year', CURRENT_DATE) 
-					ORDER BY leavedate DESC LOOP
+    FOR prevdate IN SELECT * FROM fulltimeappliesleaves 
+        WHERE username = new.username 
+          AND date_part('year', leavedate) = date_part('year', CURRENT_DATE) 
+          ORDER BY leavedate DESC LOOP
 
     prevprevdate = (SELECT * FROM fulltimeappliesleaves 
-					WHERE username = new.username 
-					AND leavedate < prevdate.leavedate 
-					LIMIT 1
-					ORDER BY leavedate DESC);
+      WHERE username = new.username 
+        AND leavedate < prevdate.leavedate 
+        ORDER BY leavedate DESC
+        LIMIT 1)
     IF new.leavedate < CURRENT_DATE THEN
       RAISE EXCEPTION 'Please select a future date';
     ELSE
@@ -330,12 +341,12 @@ BEGIN
       END IF;
     END IF;
 
-  END LOOP;
+    END LOOP;
 
   lastdate = (SELECT * FROM fulltimeappliesleaves 
-  			 WHERE username = new.username 
-			 AND leavedate < CURRENT_DATE 
-			 ORDER BY leavedate DESC LIMIT 1);
+      WHERE username = new.username 
+        AND leavedate < CURRENT_DATE 
+        ORDER BY leavedate DESC LIMIT 1);
   IF CURRENT_DATE - lastdate >= 150 THEN
     consecdays := consecdays + 1;
   END IF;

@@ -46,8 +46,8 @@ function initRouter(app) {
 	app.get("/admin-job", passport.authMiddleware(), passport.verifyAdmin(), adminJob);
 	app.get("/admin-profiles", passport.authMiddleware(), passport.verifyAdmin(), adminProfiles);
 
-	app.get("/petOwner-creditCard", passport.authMiddleware(), passport.verifyNotAdmin(), function (req, res, next) {
-		res.render("petOwner-creditCard", {
+	app.get("/petOwner-addCreditCard", passport.authMiddleware(), passport.verifyNotAdmin(), function (req, res, next) {
+		res.render("petOwner-addCreditCard", {
 			title: "Register Credit Card",
 			isSignedIn: req.isAuthenticated(),
 			isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false,
@@ -55,12 +55,12 @@ function initRouter(app) {
 		});
 	});
 
-	app.get("/petOwner-pet", passport.authMiddleware(), passport.verifyNotAdmin(), function (req, res, next) {
+	app.get("/petOwner-addPet", passport.authMiddleware(), passport.verifyNotAdmin(), function (req, res, next) {
 		pool.query(sql_query.query.all_pet_categories, (err, petcategories) => {
 			if (err) {
 				console.error(err);
 			}
-			res.render("petOwner-pet", {
+			res.render("petOwner-addPet", {
 				title: "Register Pet",
 				petcategories: petcategories.rows,
 				isSignedIn: req.isAuthenticated(),
@@ -70,13 +70,28 @@ function initRouter(app) {
 		});
 	});
 
+	app.get("/petOwner-deletePet", passport.authMiddleware(), passport.verifyNotAdmin(), function (req, res, next) {
+		// pool.query(sql_query.query.all_pet_categories, (err, petcategories) => {
+		// 	if (err) {
+		// 		console.error(err);
+		// 	}
+			res.render("petOwner-deletePet", {
+				title: "Delete Pet",
+				isSignedIn: req.isAuthenticated(),
+				isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false,
+				isCaretaker: req.isAuthenticated() ? req.user.isCaretaker : false
+			});
+		// });
+	});
+
 	/* POST */
 	app.post("/search", searchCaretaker);
 	app.post("/caretaker-details", caretakerDetails);
 
 	/* AUTHENTICATED POST */
-	app.post("/petOwner-creditCard", passport.authMiddleware(), passport.verifyNotAdmin(), registerCreditCard); // REGISTER CREDIT CARD
-	app.post("/petOwner-pet", passport.authMiddleware(), passport.verifyNotAdmin(), registerPet); // REGISTER PET
+	app.post("/petOwner-addCreditCard", passport.authMiddleware(), passport.verifyNotAdmin(), registerCreditCard); // REGISTER CREDIT CARD
+	app.post("/petOwner-addPet", passport.authMiddleware(), passport.verifyNotAdmin(), registerPet); // REGISTER PET
+	app.post("/petOwner-deletePet", passport.authMiddleware(), passport.verifyNotAdmin(), removePet); // REMOVE PET
 
 	app.post("/editAdmin", passport.authMiddleware(), passport.verifyAdmin(), editAdmin);
 
@@ -463,8 +478,16 @@ function registerPet(req, res, next) {
 	const personality = req.body.personality;
 	const category = req.body.category;
 
-	console.log(category);
 	pool.query(sql_query.query.register_pet, [username, petname, dateofbirth, gender, description, specialreqs, personality, category], (err, data) => {
+		res.redirect("/petOwner-profile");
+	});
+}
+
+function removePet(req, res, next) {
+	const username = req.user.username;
+	const petname = req.body.petname;
+
+	pool.query(sql_query.query.remove_pet, [username, petname], (err, data) => {
 		res.redirect("/petOwner-profile");
 	});
 }

@@ -103,6 +103,9 @@ sql.query = {
 	// Register pet
 	register_pet: "INSERT INTO pet VALUES ($1,$2,$3,$4,$5,$6,$7,$8)",
 
+	// Remove pet
+	remove_pet: "DELETE FROM pet WHERE username = $1 AND name = $2",
+
 	search_caretaker: `SELECT *
 		FROM fulltime f JOIN appuser u ON f.username = u.username AND f.username <> $3
 		JOIN caretaker c ON f.username = c.username
