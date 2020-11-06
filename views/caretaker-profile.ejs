@@ -89,7 +89,7 @@
 				<% for (var i = 0; i < review.length; i++) { %>
 				<tr>
 					<td scope="col" data-title="Care Taker">
-						<%= review[i].pousername %>
+            <%= review[i].pousername %>
 					</td>
 					<td scope="col" data-title="Pet Name">
 						<%= review[i].petname %>
@@ -105,9 +105,9 @@
 						review[i].startdate.getFullYear() %>
 					</td>
 					<td scope="col" data-title="End Date">
-						<%= reviews[i].enddate.getDate() %>-<%=
-						reviews[i].enddate.getMonth() %>-<%=
-						reviews[i].enddate.getFullYear() %>
+						<%= review[i].enddate.getDate() %>-<%=
+						review[i].enddate.getMonth() %>-<%=
+						review[i].enddate.getFullYear() %>
 					</td>
 					<td scope="col" data-title="Status"><%= review[i].status %></td>
 					<td scope="col" data-title="Status"><%= review[i].rating %></td>
