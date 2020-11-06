@@ -55,11 +55,10 @@
 						<th scope="col">Category</th>
 					</tr>
 				</thead>
-				<% for (var i = 0; i < category.length; i++) { %>
+				<% for (var i = 0; i < pets.length; i++) { %>
 				<tr>
 					<td scope="row" data-title="Category"><%= pets[i].category %></td>
-						<%= pets[i].getCategory()-<%= pets[i].getCategory().getBasePrice %> %>
-					</td>
+						<td><%= pets[i].category %></td>
 				</tr>
 				<% } %>
 			</table>

@@ -854,15 +854,15 @@ function caretakerProfile(req, res, next) {
 	pool.query(sql_query.query.get_user, [username], (err, details) => {
 		if (err) {
 			console.error(err);
-		}
+    }
 		pool.query(sql_query.query.caretaker_petType, [username], (err, pets) => {
 			if (err) {
 				console.error(err);
-			}
+      }
 			pool.query(sql_query.query.caretaker_review, [username], (err, review) => {
 				if (err) {
 					console.error(err);
-				}
+        }
 				pool.query(sql_query.query.caretaker_rating, [username], (err, rating) => {
 					if (err) {
 						console.error(err);
@@ -937,7 +937,7 @@ function caretakerFTLeaves(req, res, next) {
 			if (err) {
 				console.error(err);
 			}
-			res.render("caretaker-leaves", {
+			res.render("caretaker-ft-leaves", {
 				title: "FT Care Taker leaves",
 				details: details.rows,
 				leaves: leaves.rows,
@@ -959,7 +959,7 @@ function caretakerPTAvailable(req, res, next) {
 			if (err) {
 				console.error(err);
 			}
-			res.render("caretaker-leaves", {
+			res.render("caretaker-pt-availability", {
 				title: "FT Care Taker leaves",
 				details: details.rows,
 				available: available.rows,
