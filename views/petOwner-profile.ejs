@@ -19,7 +19,7 @@
 				<tr>
 					<td scope="row"><b>DOB:</b>
 						<%= details[0].dateofbirth.getDate() %>-
-						<%=	details[0].dateofbirth.getMonth() %>-
+						<%=	("0" + (details[0].dateofbirth.getMonth() + 1)).slice(-2) %>-
 						<%=	details[0].dateofbirth.getFullYear() %>
 					</td>
 				</tr>
@@ -31,9 +31,9 @@
 				</tr>
 				<tr>
 					<td scope="row"><b>Join Date:</b>
-						<%= details[0].joindate.getDate() %>-
-						<%= details[0].joindate.getMonth() %>-
-						<%= details[0].joindate.getFullYear() %>
+						<%= details[0].joindate.getDate() %>-<%= 
+								("0" + (details[0].joindate.getMonth() + 1)).slice(-2) %>-<%= 
+								details[0].joindate.getFullYear() %>
 					</td>
 				</tr>
 			</table>
@@ -51,11 +51,16 @@
 				</thead>
 				<% for (var i = 0; i < creditcard.length; i++) { %>
 				<tr>
-					<td scope="row" data-title="Card Number"><%= creditcard[i].cardnumber %></td>
-					<td scope="row" data-title="Name"><%= creditcard[i].name %></td>
+					<td scope="row" data-title="Card Number">
+						XXXX XXXX <%= creditcard[i].cardnumber.substring(8,12) %>
+						<%= creditcard[i].cardnumber.substring(12,16) %>
+					</td>
+					<td scope="row" data-title="Name"><%= creditcard[i].nameoncard %></td>
 					<td scope="row" data-title="CVV"><%= creditcard[i].cvv %></td>
 					<td scope="row" data-title="Expiry Date" date-type="date">
-						<%= creditcard[i].expirydate.getDate() %>-<%= creditcard[i].expirydate.getMonth() %>-<%= creditcard[i].expirydate.getFullYear() %>
+						<%= creditcard[i].expirydate.getDate() %>-<%= 
+								("0" + (creditcard[i].expirydate.getMonth() + 1)).slice(-2) %>-<%= 
+								creditcard[i].expirydate.getFullYear() %>
 					</td>
 					<td>
 						<!-- <a class="btn"
@@ -67,7 +72,7 @@
 				<% } %>
 			</table>
 			<a class="btn btn-primary btn-lg" style="background-color: rgb(29, 28, 28); border-color: rgb(29, 28, 28);"
-				href="/petOwner-creditCard" role="button">
+				href="/petOwner-addCreditCard" role="button">
 				Add Credit Card
 			</a>
 
@@ -88,9 +93,9 @@
 				<tr>
 					<td scope="row" data-title="Pet Name"><%= pets[i].name %></td>
 					<td scope="row" data-title="Date of Birth" date-type="date">
-						<%= pets[i].dateofbirth.getDate() %>-<%=
-								pets[i].dateofbirth.getMonth() %>-<%=
-								pets[i].dateofbirth.getFullYear() %>
+						<%= pets[i].dateofbirth.getDate() %>-<%= 
+							("0" + (pets[i].dateofbirth.getMonth() + 1)).slice(-2) %>-<%= 
+							pets[i].dateofbirth.getFullYear() %>
 					</td>
 					<td scope="row" data-title="Gender"><%= pets[i].gender %></td>
 					<td scope="row" data-title="Description"><%= pets[i].description %></td>
@@ -102,8 +107,12 @@
 				<% } %>
 			</table>
 			<a class="btn btn-primary btn-lg" style="background-color: rgb(29, 28, 28); border-color: rgb(29, 28, 28);"
-				href="/petOwner-pet" role="button">
+				href="/petOwner-addPet" role="button">
 				Add Pet
+			</a>	
+			<a class="btn btn-primary btn-lg" style="background-color: rgb(29, 28, 28); border-color: rgb(29, 28, 28);"
+				href="/petOwner-deletePet" role="button">
+				Delete Pet
 			</a>
 
 			<br /><br /><br />
@@ -131,34 +140,40 @@
 					</td>
 					<td scope="col" data-title="Pet Name">
 						<%= reservations[i].petname %>
-					</td>
+					</td>					
 					<td scope="col" data-title="Request Date">
 						<%= reservations[i].requestdate.getDate() %>-<%=
-								reservations[i].requestdate.getMonth() %>-<%=
+								("0" + (reservations[i].requestdate.getMonth() + 1)).slice(-2) %>-<%=
 								reservations[i].requestdate.getFullYear() %>
-					</td>
+					</td>					
 					<td scope="col" data-title="Start Date">
 						<%= reservations[i].startdate.getDate() %>-<%=
-								reservations[i].startdate.getMonth() %>-<%=
+						("0" + (reservations[i].startdate.getMonth() + 1)).slice(-2) %>-<%=
 								reservations[i].startdate.getFullYear() %>
 					</td>
 					<td scope="col" data-title="End Date">
 						<%= reservations[i].enddate.getDate() %>-<%=
-								reservations[i].enddate.getMonth() %>-<%=
+						("0" + (reservations[i].enddate.getMonth() + 1)).slice(-2) %>-<%=
 								reservations[i].enddate.getFullYear() %>
 					</td>
-					<td scope="col" data-title="Status"><%= reservations[i].status %></td>
-					<td scope="col" data-title="Status"><%= reservations[i].rating %></td>
 					<td scope="col" data-title="Status">
+						<%= reservations[i].status %>
+					</td>
+					<td scope="col" data-title="Rating">
+						<%= reservations[i].rating %>
+					</td>
+					<td scope="col" data-title="Payment Type">
 						<%= reservations[i].paymenttype %>
 					</td>
-					<td scope="col" data-title="Status">
+					<td scope="col" data-title="Delivery Type">
 						<%= reservations[i].deliverytype %>
 					</td>
-					<td scope="col" data-title="Status">
+					<td scope="col" data-title="Amount Paid">
 						<%= reservations[i].amountpaid %>
 					</td>
-					<td scope="col" data-title="Status"><%= reservations[i].review %></td>
+					<td scope="col" data-title="Review">
+						<%= reservations[i].review %>
+					</td>
 				</tr>
 				<% } %>
 			</table>

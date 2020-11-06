@@ -36,6 +36,7 @@ CREATE TABLE AppUser (
 
 CREATE TABLE CareTaker (
 	username VARCHAR(20),
+	avgrating NUMERIC(2,1) NOT NULL,
 	PRIMARY KEY(username),
 	FOREIGN KEY(username) REFERENCES AppUser(username)
 );
@@ -91,19 +92,19 @@ CREATE TABLE PetOwnerRegistersCreditCard (
 
 /*----------------------------------------------------*/
 
-CREATE TABLE CareTakerCatersPetCategory (
-	username VARCHAR(20),
-	category VARCHAR(20),
-	/* price NUMERIC(31,2) NOT NULL,*/
-	PRIMARY KEY(username, category),
-	FOREIGN KEY(username) REFERENCES CareTaker(username),
-	FOREIGN KEY(category) REFERENCES PetCategory(category)	
-);
-
 CREATE TABLE PetCategory (
 	category VARCHAR(20),
 	baseprice NUMERIC(31,2) NOT NULL,
 	PRIMARY KEY(category)
+);
+
+CREATE TABLE CareTakerCatersPetCategory (
+	username VARCHAR(20) NOT NULL,
+	category VARCHAR(20) NOT NULL,
+	price NUMERIC(31,2) NOT NULL,
+	PRIMARY KEY(username, category),
+	FOREIGN KEY(username) REFERENCES CareTaker(username),
+	FOREIGN KEY(category) REFERENCES PetCategory(category)	
 );
 
 CREATE TABLE Pet (
@@ -123,8 +124,8 @@ CREATE TABLE Pet (
 /*----------------------------------------------------*/
 
 CREATE TABLE Job (
-	pousername VARCHAR(20),
 	ctusername VARCHAR(20),
+	pousername VARCHAR(20),	
 	petname VARCHAR(20),
 	startdate DATE,
 	enddate DATE NOT NULL,
@@ -138,10 +139,236 @@ CREATE TABLE Job (
 	PRIMARY KEY(pousername, ctusername, petname, startdate),
 	FOREIGN KEY(pousername, petname) REFERENCES Pet(username, name),
 	FOREIGN KEY(ctusername) REFERENCES CareTaker(username),
-	CHECK(pousername != ctusername)
+	CHECK(pousername != ctusername),
+	CHECK(startdate < enddate),
+	CHECK(requestdate < enddate)
 );
 
 /* END OF DATABASE CREATION */
+
+/* START OF TRIGGERS */
+/* Update CareTaker.avgrating through Job */
+/*----------------------------------------------------*/
+
+CREATE OR REPLACE FUNCTION update_avg_rating()
+  RETURNS TRIGGER AS
+$$
+DECLARE 
+    newavgrating NUMERIC(2,1);
+BEGIN
+  newavgrating = (SELECT AVG(NULLIF(rating,0)) FROM job WHERE ctusername = OLD.ctusername);
+
+  IF newavgrating IS NULL THEN
+	UPDATE caretaker
+    SET avgrating = 0
+	WHERE username = OLD.ctusername;
+    RETURN NEW;
+    ELSE
+	UPDATE caretaker
+	SET avgrating = newavgrating
+	WHERE username = OLD.ctusername;
+    RETURN NEW;
+  END IF;
+END
+$$
+LANGUAGE 'plpgsql';
+
+CREATE TRIGGER update_avg_rating
+AFTER UPDATE
+ON job
+FOR EACH ROW
+EXECUTE PROCEDURE update_avg_rating();
+
+/* Create default Cater entry when new CareTaker created */
+/*----------------------------------------------------*/
+
+CREATE OR REPLACE FUNCTION create_petcat()
+  RETURNS TRIGGER AS
+$$
+BEGIN
+  INSERT INTO CareTakerCatersPetCategory(username, category, price)
+  VALUES(NEW.username, 'Dogs', (SELECT baseprice FROM petcategory where category = 'Dogs'));
+  RETURN NEW;
+END
+$$
+LANGUAGE 'plpgsql';
+
+CREATE TRIGGER create_petcat
+AFTER INSERT
+ON caretaker
+FOR EACH ROW
+EXECUTE PROCEDURE create_petcat();
+
+/* Caculate Job total price based on days and base price */
+/*----------------------------------------------------*/
+
+CREATE OR REPLACE FUNCTION calc_job_price()
+  RETURNS TRIGGER AS
+$$
+BEGIN
+  new.amountpaid := (date_part('day', new.enddate::timestamp - new.startdate::timestamp) 
+  					* (SELECT price FROM caretakercaterspetcategory WHERE username = new.ctusername AND category 
+					= (SELECT category FROM pet WHERE username = new.pousername AND name = new.petname)));
+  RETURN NEW;
+END
+$$
+LANGUAGE plpgsql;
+
+CREATE TRIGGER calc_job_price
+BEFORE INSERT
+ON job
+FOR EACH ROW
+EXECUTE PROCEDURE calc_job_price();
+
+/* Caculate base price with reference to rating when insert new pets caretaker can take */
+/*----------------------------------------------------*/
+
+CREATE OR REPLACE FUNCTION set_baseprice()
+  RETURNS TRIGGER AS
+$$
+DECLARE 
+    newavgrating NUMERIC(2,1);
+    currbaseprice NUMERIC(31,2);
+BEGIN
+    newavgrating = (SELECT avgrating FROM caretaker WHERE username = new.username);
+    currbaseprice = (SELECT baseprice FROM petcategory WHERE category = new.category);
+
+    IF newavgrating = 5.0 THEN
+    new.price := currbaseprice * 2;
+    RETURN NEW;
+    ELSEIF newavgrating < 5.0 AND newavgrating >= 4.5 THEN
+    new.price := currbaseprice * 1.75;
+    RETURN NEW;
+    ELSEIF newavgrating < 4.5 AND newavgrating >= 4.0 THEN
+    new.price := currbaseprice * 1.5;
+    RETURN NEW;
+    ELSEIF newavgrating < 4.0 AND newavgrating >= 3.5 THEN
+    new.price := currbaseprice * 1.25;
+    RETURN NEW;
+    ELSE
+    new.price := currbaseprice;
+    RETURN NEW;
+  END IF;
+END
+$$
+LANGUAGE plpgsql;
+
+CREATE TRIGGER set_baseprice
+BEFORE INSERT
+ON CareTakerCatersPetCategory
+FOR EACH ROW
+EXECUTE PROCEDURE set_baseprice();
+
+/* Caculate base price with reference to rating on update */
+/*----------------------------------------------------*/
+
+CREATE OR REPLACE FUNCTION update_baseprice()
+  RETURNS TRIGGER AS
+$$
+DECLARE
+    currbaseprice NUMERIC(31,2);
+  newprice NUMERIC(31,2);
+  cater CareTakerCatersPetCategory%rowtype;
+BEGIN
+
+  FOR cater IN SELECT * FROM CareTakerCatersPetCategory WHERE username = new.username LOOP
+    currbaseprice = (SELECT baseprice FROM petcategory WHERE category = cater.category);
+
+    IF new.avgrating = 5.0 THEN
+      UPDATE CareTakerCatersPetCategory
+      SET price = currbaseprice * 2 
+      WHERE username = new.username AND category = cater.category;
+      RETURN NEW;
+    ELSEIF new.avgrating < 5.0 AND new.avgrating >= 4.5 THEN
+      UPDATE CareTakerCatersPetCategory
+      SET price = currbaseprice * 1.75
+      WHERE username = new.username AND category = cater.category;
+      RETURN NEW;
+    ELSEIF new.avgrating < 4.5 AND new.avgrating >= 4.0 THEN
+      UPDATE CareTakerCatersPetCategory
+      SET price = currbaseprice * 1.5
+      WHERE username = new.username AND category = cater.category;
+      RETURN NEW;
+    ELSEIF new.avgrating < 4.0 AND new.avgrating >= 3.5 THEN
+      UPDATE CareTakerCatersPetCategory
+      SET price = currbaseprice * 1.25
+      WHERE username = new.username AND category = cater.category;
+      RETURN NEW;
+    ELSE
+      UPDATE CareTakerCatersPetCategory
+      SET price = currbaseprice
+      WHERE username = new.username AND category = cater.category;
+      RETURN NEW;
+      
+    END IF;
+  END LOOP;
+END
+$$
+LANGUAGE plpgsql;
+
+CREATE TRIGGER update_baseprice
+AFTER UPDATE
+ON caretaker
+FOR EACH ROW
+EXECUTE PROCEDURE update_baseprice();
+
+/*----------------------------------------------------*/
+
+CREATE OR REPLACE FUNCTION limit_leaves()
+    RETURNS TRIGGER AS
+$$
+DECLARE
+  prevdate fulltimeappliesleaves%rowtype;
+    prevprevdate DATE;
+    lastdate DATE;
+    consecdays integer := 0;
+BEGIN
+    FOR prevdate IN SELECT * FROM fulltimeappliesleaves 
+        WHERE username = new.username 
+          AND date_part('year', leavedate) = date_part('year', CURRENT_DATE) 
+          ORDER BY leavedate DESC LOOP
+
+    prevprevdate = (SELECT * FROM fulltimeappliesleaves 
+      WHERE username = new.username 
+        AND leavedate < prevdate.leavedate 
+        ORDER BY leavedate DESC
+        LIMIT 1)
+    IF new.leavedate < CURRENT_DATE THEN
+      RAISE EXCEPTION 'Please select a future date';
+    ELSE
+      IF prevdate.leavedate - prevprevdate >= 150 THEN
+        consecdays := consecdays + 1;
+      END IF;
+    END IF;
+
+    END LOOP;
+
+  lastdate = (SELECT * FROM fulltimeappliesleaves 
+      WHERE username = new.username 
+        AND leavedate < CURRENT_DATE 
+        ORDER BY leavedate DESC LIMIT 1);
+  IF CURRENT_DATE - lastdate >= 150 THEN
+    consecdays := consecdays + 1;
+  END IF;
+
+  IF consecdays < 2 THEN
+    RAISE EXCEPTION 'Invalid date, you need to work for at least 2x150 consecutive days a year.';
+  END IF;
+  
+  RETURN NEW;
+END
+$$
+LANGUAGE plpgsql;
+
+CREATE TRIGGER limit_leaves
+BEFORE INSERT
+ON fulltimeappliesleaves
+FOR EACH ROW
+EXECUTE PROCEDURE limit_leaves();
+
+/*----------------------------------------------------*/
+
+/* END OF TRIGGERS */
 
 /* START OF DATA INITIALISATION */
 /* Administrator 10*/
@@ -1160,507 +1387,530 @@ INSERT INTO AppUser VALUES ('Holly', 'Chip', 'cdimbleby19@ca.gov', '9JA9aS6Q', '
 INSERT INTO AppUser VALUES ('Patrica', 'Wally', 'wbaline1a@sun.com', '7B8mQsRI', '2012-06-03', 'false', 'F', '88 Delaware Hill', '1994-07-22');
 
 /*----------------------------------------------------*/
+/* PetCategory 100*/
+INSERT INTO PetCategory VALUES ('Koi', '70.00');
+INSERT INTO PetCategory VALUES ('Rodents', '90.00');
+INSERT INTO PetCategory VALUES ('Ferrets', '110.00');
+INSERT INTO PetCategory VALUES ('Mosquitofish', '120.00');
+INSERT INTO PetCategory VALUES ('Columbines', '180.00');
+INSERT INTO PetCategory VALUES ('Chinchillas', '60.00');
+INSERT INTO PetCategory VALUES ('Guppy', '100.00');
+INSERT INTO PetCategory VALUES ('Sheep', '90.00');
+INSERT INTO PetCategory VALUES ('Fowl', '140.00');
+INSERT INTO PetCategory VALUES ('Goldfish', '50.00');
+INSERT INTO PetCategory VALUES ('Rabbits', '130.00');
+INSERT INTO PetCategory VALUES ('Alpacas', '60.00');
+INSERT INTO PetCategory VALUES ('Goats', '60.00');
+INSERT INTO PetCategory VALUES ('Barb', '160.00');
+INSERT INTO PetCategory VALUES ('Cattle', '90.00');
+INSERT INTO PetCategory VALUES ('Dogs', '70.00');
+INSERT INTO PetCategory VALUES ('Hedgehogs', '160.00');
+INSERT INTO PetCategory VALUES ('Horses', '120.00');
+INSERT INTO PetCategory VALUES ('Cats', '150.00');
+INSERT INTO PetCategory VALUES ('Pigs', '70.00');
+
+/*----------------------------------------------------*/
 /* CareTaker 500*/
-INSERT INTO CareTaker VALUES ('Clemens');
-INSERT INTO CareTaker VALUES ('Georgetta');
-INSERT INTO CareTaker VALUES ('Tabor');
-INSERT INTO CareTaker VALUES ('Fern');
-INSERT INTO CareTaker VALUES ('Abby');
-INSERT INTO CareTaker VALUES ('Aron');
-INSERT INTO CareTaker VALUES ('Clementius');
-INSERT INTO CareTaker VALUES ('Gare');
-INSERT INTO CareTaker VALUES ('Cybil');
-INSERT INTO CareTaker VALUES ('Brendon');
-INSERT INTO CareTaker VALUES ('Petr');
-INSERT INTO CareTaker VALUES ('Frederica');
-INSERT INTO CareTaker VALUES ('Gwenni');
-INSERT INTO CareTaker VALUES ('Wood');
-INSERT INTO CareTaker VALUES ('Von');
-INSERT INTO CareTaker VALUES ('Eba');
-INSERT INTO CareTaker VALUES ('Avram');
-INSERT INTO CareTaker VALUES ('Nilson');
-INSERT INTO CareTaker VALUES ('Gran');
-INSERT INTO CareTaker VALUES ('Janos');
-INSERT INTO CareTaker VALUES ('Dion');
-INSERT INTO CareTaker VALUES ('Dalton');
-INSERT INTO CareTaker VALUES ('Eilis');
-INSERT INTO CareTaker VALUES ('Earle');
-INSERT INTO CareTaker VALUES ('Irma');
-INSERT INTO CareTaker VALUES ('Joseito');
-INSERT INTO CareTaker VALUES ('Frannie');
-INSERT INTO CareTaker VALUES ('Steven');
-INSERT INTO CareTaker VALUES ('Donia');
-INSERT INTO CareTaker VALUES ('Grant');
-INSERT INTO CareTaker VALUES ('Pepe');
-INSERT INTO CareTaker VALUES ('Elsa');
-INSERT INTO CareTaker VALUES ('Shelagh');
-INSERT INTO CareTaker VALUES ('Mahmoud');
-INSERT INTO CareTaker VALUES ('Bastian');
-INSERT INTO CareTaker VALUES ('Erin');
-INSERT INTO CareTaker VALUES ('Cordelia');
-INSERT INTO CareTaker VALUES ('Herbert');
-INSERT INTO CareTaker VALUES ('Hedy');
-INSERT INTO CareTaker VALUES ('Raven');
-INSERT INTO CareTaker VALUES ('Berenice');
-INSERT INTO CareTaker VALUES ('Giorgia');
-INSERT INTO CareTaker VALUES ('Courtenay');
-INSERT INTO CareTaker VALUES ('Lulita');
-INSERT INTO CareTaker VALUES ('Nataniel');
-INSERT INTO CareTaker VALUES ('Hayley');
-INSERT INTO CareTaker VALUES ('Maisey');
-INSERT INTO CareTaker VALUES ('Ruthanne');
-INSERT INTO CareTaker VALUES ('Giuditta');
-INSERT INTO CareTaker VALUES ('Garth');
-INSERT INTO CareTaker VALUES ('Dierdre');
-INSERT INTO CareTaker VALUES ('Clyde');
-INSERT INTO CareTaker VALUES ('Hymie');
-INSERT INTO CareTaker VALUES ('Timmie');
-INSERT INTO CareTaker VALUES ('Eulalie');
-INSERT INTO CareTaker VALUES ('Spike');
-INSERT INTO CareTaker VALUES ('Conant');
-INSERT INTO CareTaker VALUES ('Walker');
-INSERT INTO CareTaker VALUES ('Norby');
-INSERT INTO CareTaker VALUES ('Debbi');
-INSERT INTO CareTaker VALUES ('Uta');
-INSERT INTO CareTaker VALUES ('Briano');
-INSERT INTO CareTaker VALUES ('Flem');
-INSERT INTO CareTaker VALUES ('Dalt');
-INSERT INTO CareTaker VALUES ('Lorilyn');
-INSERT INTO CareTaker VALUES ('Tremaine');
-INSERT INTO CareTaker VALUES ('Dalston');
-INSERT INTO CareTaker VALUES ('Janina');
-INSERT INTO CareTaker VALUES ('Baron');
-INSERT INTO CareTaker VALUES ('Cirilo');
-INSERT INTO CareTaker VALUES ('Rafaello');
-INSERT INTO CareTaker VALUES ('Rossy');
-INSERT INTO CareTaker VALUES ('Allyson');
-INSERT INTO CareTaker VALUES ('Burke');
-INSERT INTO CareTaker VALUES ('Townie');
-INSERT INTO CareTaker VALUES ('Bax');
-INSERT INTO CareTaker VALUES ('Arel');
-INSERT INTO CareTaker VALUES ('Antoni');
-INSERT INTO CareTaker VALUES ('Clementine');
-INSERT INTO CareTaker VALUES ('Bernardina');
-INSERT INTO CareTaker VALUES ('Cass');
-INSERT INTO CareTaker VALUES ('Dacie');
-INSERT INTO CareTaker VALUES ('Bernetta');
-INSERT INTO CareTaker VALUES ('Ursola');
-INSERT INTO CareTaker VALUES ('Melvyn');
-INSERT INTO CareTaker VALUES ('Cary');
-INSERT INTO CareTaker VALUES ('Ellswerth');
-INSERT INTO CareTaker VALUES ('Binnie');
-INSERT INTO CareTaker VALUES ('Danie');
-INSERT INTO CareTaker VALUES ('Malcolm');
-INSERT INTO CareTaker VALUES ('Napoleon');
-INSERT INTO CareTaker VALUES ('Phineas');
-INSERT INTO CareTaker VALUES ('Farah');
-INSERT INTO CareTaker VALUES ('Loise');
-INSERT INTO CareTaker VALUES ('Tore');
-INSERT INTO CareTaker VALUES ('Fayre');
-INSERT INTO CareTaker VALUES ('Kylie');
-INSERT INTO CareTaker VALUES ('Natty');
-INSERT INTO CareTaker VALUES ('Cece');
-INSERT INTO CareTaker VALUES ('Kali');
-INSERT INTO CareTaker VALUES ('Waverley');
-INSERT INTO CareTaker VALUES ('Diena');
-INSERT INTO CareTaker VALUES ('Hunter');
-INSERT INTO CareTaker VALUES ('Darnell');
-INSERT INTO CareTaker VALUES ('Idaline');
-INSERT INTO CareTaker VALUES ('Kimberley');
-INSERT INTO CareTaker VALUES ('Jacobo');
-INSERT INTO CareTaker VALUES ('Lyle');
-INSERT INTO CareTaker VALUES ('Clea');
-INSERT INTO CareTaker VALUES ('Ram');
-INSERT INTO CareTaker VALUES ('Kordula');
-INSERT INTO CareTaker VALUES ('Bell');
-INSERT INTO CareTaker VALUES ('Freeland');
-INSERT INTO CareTaker VALUES ('Roderigo');
-INSERT INTO CareTaker VALUES ('Genny');
-INSERT INTO CareTaker VALUES ('Jordanna');
-INSERT INTO CareTaker VALUES ('Algernon');
-INSERT INTO CareTaker VALUES ('Tedd');
-INSERT INTO CareTaker VALUES ('Palm');
-INSERT INTO CareTaker VALUES ('Lorita');
-INSERT INTO CareTaker VALUES ('Hedwiga');
-INSERT INTO CareTaker VALUES ('Markos');
-INSERT INTO CareTaker VALUES ('Jerri');
-INSERT INTO CareTaker VALUES ('El');
-INSERT INTO CareTaker VALUES ('Konstance');
-INSERT INTO CareTaker VALUES ('Allin');
-INSERT INTO CareTaker VALUES ('Allen');
-INSERT INTO CareTaker VALUES ('Etienne');
-INSERT INTO CareTaker VALUES ('Adrian');
-INSERT INTO CareTaker VALUES ('Valencia');
-INSERT INTO CareTaker VALUES ('Waylen');
-INSERT INTO CareTaker VALUES ('Jere');
-INSERT INTO CareTaker VALUES ('Ephrayim');
-INSERT INTO CareTaker VALUES ('Barr');
-INSERT INTO CareTaker VALUES ('Issy');
-INSERT INTO CareTaker VALUES ('Christie');
-INSERT INTO CareTaker VALUES ('Cris');
-INSERT INTO CareTaker VALUES ('Lars');
-INSERT INTO CareTaker VALUES ('Salvador');
-INSERT INTO CareTaker VALUES ('Monika');
-INSERT INTO CareTaker VALUES ('Goldy');
-INSERT INTO CareTaker VALUES ('Lorry');
-INSERT INTO CareTaker VALUES ('Hannah');
-INSERT INTO CareTaker VALUES ('Adrienne');
-INSERT INTO CareTaker VALUES ('Bron');
-INSERT INTO CareTaker VALUES ('Kirby');
-INSERT INTO CareTaker VALUES ('Jonis');
-INSERT INTO CareTaker VALUES ('Oralie');
-INSERT INTO CareTaker VALUES ('Josefa');
-INSERT INTO CareTaker VALUES ('Adoree');
-INSERT INTO CareTaker VALUES ('Packston');
-INSERT INTO CareTaker VALUES ('Kane');
-INSERT INTO CareTaker VALUES ('Wade');
-INSERT INTO CareTaker VALUES ('Mae');
-INSERT INTO CareTaker VALUES ('Sigfrid');
-INSERT INTO CareTaker VALUES ('Rhys');
-INSERT INTO CareTaker VALUES ('Morris');
-INSERT INTO CareTaker VALUES ('Essy');
-INSERT INTO CareTaker VALUES ('Aubree');
-INSERT INTO CareTaker VALUES ('Sharia');
-INSERT INTO CareTaker VALUES ('Taber');
-INSERT INTO CareTaker VALUES ('Mortie');
-INSERT INTO CareTaker VALUES ('Amery');
-INSERT INTO CareTaker VALUES ('Reinwald');
-INSERT INTO CareTaker VALUES ('Gianna');
-INSERT INTO CareTaker VALUES ('Laurence');
-INSERT INTO CareTaker VALUES ('Alfie');
-INSERT INTO CareTaker VALUES ('Willow');
-INSERT INTO CareTaker VALUES ('Edythe');
-INSERT INTO CareTaker VALUES ('Micaela');
-INSERT INTO CareTaker VALUES ('Jemmie');
-INSERT INTO CareTaker VALUES ('Jami');
-INSERT INTO CareTaker VALUES ('Morly');
-INSERT INTO CareTaker VALUES ('Jacquetta');
-INSERT INTO CareTaker VALUES ('Freddy');
-INSERT INTO CareTaker VALUES ('Pauly');
-INSERT INTO CareTaker VALUES ('Bradan');
-INSERT INTO CareTaker VALUES ('Ansley');
-INSERT INTO CareTaker VALUES ('Celka');
-INSERT INTO CareTaker VALUES ('Alfredo');
-INSERT INTO CareTaker VALUES ('Rabbi');
-INSERT INTO CareTaker VALUES ('Maureene');
-INSERT INTO CareTaker VALUES ('Odo');
-INSERT INTO CareTaker VALUES ('Harlen');
-INSERT INTO CareTaker VALUES ('Maurizio');
-INSERT INTO CareTaker VALUES ('Dre');
-INSERT INTO CareTaker VALUES ('Emalee');
-INSERT INTO CareTaker VALUES ('Korey');
-INSERT INTO CareTaker VALUES ('Kay');
-INSERT INTO CareTaker VALUES ('Chrysa');
-INSERT INTO CareTaker VALUES ('Rudie');
-INSERT INTO CareTaker VALUES ('Mignon');
-INSERT INTO CareTaker VALUES ('Jemie');
-INSERT INTO CareTaker VALUES ('Ricki');
-INSERT INTO CareTaker VALUES ('Kinsley');
-INSERT INTO CareTaker VALUES ('Rodolfo');
-INSERT INTO CareTaker VALUES ('Marion');
-INSERT INTO CareTaker VALUES ('Zacharia');
-INSERT INTO CareTaker VALUES ('Ike');
-INSERT INTO CareTaker VALUES ('Tallia');
-INSERT INTO CareTaker VALUES ('Catharine');
-INSERT INTO CareTaker VALUES ('Inessa');
-INSERT INTO CareTaker VALUES ('Vittoria');
-INSERT INTO CareTaker VALUES ('Wilhelm');
-INSERT INTO CareTaker VALUES ('Abbott');
-INSERT INTO CareTaker VALUES ('Ofelia');
-INSERT INTO CareTaker VALUES ('Merrill');
-INSERT INTO CareTaker VALUES ('Paulina');
-INSERT INTO CareTaker VALUES ('Krissy');
-INSERT INTO CareTaker VALUES ('Judah');
-INSERT INTO CareTaker VALUES ('Sandra');
-INSERT INTO CareTaker VALUES ('Loralyn');
-INSERT INTO CareTaker VALUES ('Tyler');
-INSERT INTO CareTaker VALUES ('Suzi');
-INSERT INTO CareTaker VALUES ('Mychal');
-INSERT INTO CareTaker VALUES ('Eddie');
-INSERT INTO CareTaker VALUES ('Hilarius');
-INSERT INTO CareTaker VALUES ('Caroljean');
-INSERT INTO CareTaker VALUES ('Ernesta');
-INSERT INTO CareTaker VALUES ('Clarita');
-INSERT INTO CareTaker VALUES ('Loree');
-INSERT INTO CareTaker VALUES ('Fonz');
-INSERT INTO CareTaker VALUES ('Duff');
-INSERT INTO CareTaker VALUES ('Carlynne');
-INSERT INTO CareTaker VALUES ('Dina');
-INSERT INTO CareTaker VALUES ('Rasla');
-INSERT INTO CareTaker VALUES ('Nickie');
-INSERT INTO CareTaker VALUES ('Lexie');
-INSERT INTO CareTaker VALUES ('Wilbert');
-INSERT INTO CareTaker VALUES ('Aurie');
-INSERT INTO CareTaker VALUES ('Belita');
-INSERT INTO CareTaker VALUES ('Cristobal');
-INSERT INTO CareTaker VALUES ('Alta');
-INSERT INTO CareTaker VALUES ('Earlie');
-INSERT INTO CareTaker VALUES ('Tatum');
-INSERT INTO CareTaker VALUES ('Decca');
-INSERT INTO CareTaker VALUES ('Thorstein');
-INSERT INTO CareTaker VALUES ('Carlin');
-INSERT INTO CareTaker VALUES ('Rodina');
-INSERT INTO CareTaker VALUES ('Byrom');
-INSERT INTO CareTaker VALUES ('Phillie');
-INSERT INTO CareTaker VALUES ('Bernete');
-INSERT INTO CareTaker VALUES ('Rachael');
-INSERT INTO CareTaker VALUES ('Maurice');
-INSERT INTO CareTaker VALUES ('Carmina');
-INSERT INTO CareTaker VALUES ('Margi');
-INSERT INTO CareTaker VALUES ('Francklin');
-INSERT INTO CareTaker VALUES ('Leonanie');
-INSERT INTO CareTaker VALUES ('Doralynn');
-INSERT INTO CareTaker VALUES ('Wells');
-INSERT INTO CareTaker VALUES ('Bill');
-INSERT INTO CareTaker VALUES ('Peg');
-INSERT INTO CareTaker VALUES ('Dorthy');
-INSERT INTO CareTaker VALUES ('Cobbie');
-INSERT INTO CareTaker VALUES ('Tyson');
-INSERT INTO CareTaker VALUES ('Rosana');
-INSERT INTO CareTaker VALUES ('Pip');
-INSERT INTO CareTaker VALUES ('Nadine');
-INSERT INTO CareTaker VALUES ('Brana');
-INSERT INTO CareTaker VALUES ('Eberhard');
-INSERT INTO CareTaker VALUES ('Annice');
-INSERT INTO CareTaker VALUES ('Tiffy');
-INSERT INTO CareTaker VALUES ('Edin');
-INSERT INTO CareTaker VALUES ('Nicky');
-INSERT INTO CareTaker VALUES ('Emerson');
-INSERT INTO CareTaker VALUES ('Reina');
-INSERT INTO CareTaker VALUES ('Blake');
-INSERT INTO CareTaker VALUES ('Pepito');
-INSERT INTO CareTaker VALUES ('Car');
-INSERT INTO CareTaker VALUES ('Alisha');
-INSERT INTO CareTaker VALUES ('Chiarra');
-INSERT INTO CareTaker VALUES ('Richmond');
-INSERT INTO CareTaker VALUES ('Nerti');
-INSERT INTO CareTaker VALUES ('Cleve');
-INSERT INTO CareTaker VALUES ('Hubey');
-INSERT INTO CareTaker VALUES ('Alisun');
-INSERT INTO CareTaker VALUES ('Andonis');
-INSERT INTO CareTaker VALUES ('Harry');
-INSERT INTO CareTaker VALUES ('Rebekah');
-INSERT INTO CareTaker VALUES ('Alfonse');
-INSERT INTO CareTaker VALUES ('Reggis');
-INSERT INTO CareTaker VALUES ('Norah');
-INSERT INTO CareTaker VALUES ('Hulda');
-INSERT INTO CareTaker VALUES ('Bette-ann');
-INSERT INTO CareTaker VALUES ('Hart');
-INSERT INTO CareTaker VALUES ('Raleigh');
-INSERT INTO CareTaker VALUES ('Pietra');
-INSERT INTO CareTaker VALUES ('Odey');
-INSERT INTO CareTaker VALUES ('Queenie');
-INSERT INTO CareTaker VALUES ('Peyton');
-INSERT INTO CareTaker VALUES ('Adam');
-INSERT INTO CareTaker VALUES ('Paulie');
-INSERT INTO CareTaker VALUES ('Lucky');
-INSERT INTO CareTaker VALUES ('Gwendolin');
-INSERT INTO CareTaker VALUES ('Sloan');
-INSERT INTO CareTaker VALUES ('Frankie');
-INSERT INTO CareTaker VALUES ('Randie');
-INSERT INTO CareTaker VALUES ('Ulberto');
-INSERT INTO CareTaker VALUES ('Carmel');
-INSERT INTO CareTaker VALUES ('Cathy');
-INSERT INTO CareTaker VALUES ('Homer');
-INSERT INTO CareTaker VALUES ('Yolanthe');
-INSERT INTO CareTaker VALUES ('Axel');
-INSERT INTO CareTaker VALUES ('Lilllie');
-INSERT INTO CareTaker VALUES ('Richart');
-INSERT INTO CareTaker VALUES ('Felicio');
-INSERT INTO CareTaker VALUES ('Harriett');
-INSERT INTO CareTaker VALUES ('Kitti');
-INSERT INTO CareTaker VALUES ('Jerry');
-INSERT INTO CareTaker VALUES ('Rebe');
-INSERT INTO CareTaker VALUES ('Leelah');
-INSERT INTO CareTaker VALUES ('Ethe');
-INSERT INTO CareTaker VALUES ('Sol');
-INSERT INTO CareTaker VALUES ('Toby');
-INSERT INTO CareTaker VALUES ('Maddalena');
-INSERT INTO CareTaker VALUES ('Kare');
-INSERT INTO CareTaker VALUES ('Huntley');
-INSERT INTO CareTaker VALUES ('Trudy');
-INSERT INTO CareTaker VALUES ('Janey');
-INSERT INTO CareTaker VALUES ('Janek');
-INSERT INTO CareTaker VALUES ('Blondelle');
-INSERT INTO CareTaker VALUES ('Dannie');
-INSERT INTO CareTaker VALUES ('Alejandra');
-INSERT INTO CareTaker VALUES ('Yolane');
-INSERT INTO CareTaker VALUES ('Ad');
-INSERT INTO CareTaker VALUES ('Tully');
-INSERT INTO CareTaker VALUES ('Florina');
-INSERT INTO CareTaker VALUES ('Wit');
-INSERT INTO CareTaker VALUES ('Zelma');
-INSERT INTO CareTaker VALUES ('Merrielle');
-INSERT INTO CareTaker VALUES ('Rubin');
-INSERT INTO CareTaker VALUES ('Arlyne');
-INSERT INTO CareTaker VALUES ('Jocelyn');
-INSERT INTO CareTaker VALUES ('Quincey');
-INSERT INTO CareTaker VALUES ('Virgil');
-INSERT INTO CareTaker VALUES ('Morissa');
-INSERT INTO CareTaker VALUES ('Ame');
-INSERT INTO CareTaker VALUES ('Consuelo');
-INSERT INTO CareTaker VALUES ('Alisander');
-INSERT INTO CareTaker VALUES ('Avrit');
-INSERT INTO CareTaker VALUES ('Reed');
-INSERT INTO CareTaker VALUES ('Vita');
-INSERT INTO CareTaker VALUES ('Afton');
-INSERT INTO CareTaker VALUES ('Welsh');
-INSERT INTO CareTaker VALUES ('Isidoro');
-INSERT INTO CareTaker VALUES ('Cammi');
-INSERT INTO CareTaker VALUES ('Jeannie');
-INSERT INTO CareTaker VALUES ('Essa');
-INSERT INTO CareTaker VALUES ('Elroy');
-INSERT INTO CareTaker VALUES ('Nomi');
-INSERT INTO CareTaker VALUES ('Crystie');
-INSERT INTO CareTaker VALUES ('Dulsea');
-INSERT INTO CareTaker VALUES ('Arlin');
-INSERT INTO CareTaker VALUES ('Hiram');
-INSERT INTO CareTaker VALUES ('Stafford');
-INSERT INTO CareTaker VALUES ('Richard');
-INSERT INTO CareTaker VALUES ('Cele');
-INSERT INTO CareTaker VALUES ('Welbie');
-INSERT INTO CareTaker VALUES ('Albertine');
-INSERT INTO CareTaker VALUES ('Amata');
-INSERT INTO CareTaker VALUES ('Cher');
-INSERT INTO CareTaker VALUES ('Arturo');
-INSERT INTO CareTaker VALUES ('Chick');
-INSERT INTO CareTaker VALUES ('Germana');
-INSERT INTO CareTaker VALUES ('Hillyer');
-INSERT INTO CareTaker VALUES ('Galvan');
-INSERT INTO CareTaker VALUES ('Rayna');
-INSERT INTO CareTaker VALUES ('Manuel');
-INSERT INTO CareTaker VALUES ('Saxon');
-INSERT INTO CareTaker VALUES ('Lettie');
-INSERT INTO CareTaker VALUES ('Eamon');
-INSERT INTO CareTaker VALUES ('Hillard');
-INSERT INTO CareTaker VALUES ('Marlene');
-INSERT INTO CareTaker VALUES ('Jason');
-INSERT INTO CareTaker VALUES ('Anabelle');
-INSERT INTO CareTaker VALUES ('Brit');
-INSERT INTO CareTaker VALUES ('Florian');
-INSERT INTO CareTaker VALUES ('Mal');
-INSERT INTO CareTaker VALUES ('Rudolph');
-INSERT INTO CareTaker VALUES ('Melisa');
-INSERT INTO CareTaker VALUES ('Heall');
-INSERT INTO CareTaker VALUES ('Wiley');
-INSERT INTO CareTaker VALUES ('Fernande');
-INSERT INTO CareTaker VALUES ('Berty');
-INSERT INTO CareTaker VALUES ('Yule');
-INSERT INTO CareTaker VALUES ('Dukie');
-INSERT INTO CareTaker VALUES ('Karlens');
-INSERT INTO CareTaker VALUES ('Elle');
-INSERT INTO CareTaker VALUES ('Vaughan');
-INSERT INTO CareTaker VALUES ('Basile');
-INSERT INTO CareTaker VALUES ('Tonya');
-INSERT INTO CareTaker VALUES ('Nichols');
-INSERT INTO CareTaker VALUES ('Brody');
-INSERT INTO CareTaker VALUES ('Philis');
-INSERT INTO CareTaker VALUES ('Bertie');
-INSERT INTO CareTaker VALUES ('Issi');
-INSERT INTO CareTaker VALUES ('Florentia');
-INSERT INTO CareTaker VALUES ('Ludovika');
-INSERT INTO CareTaker VALUES ('Collen');
-INSERT INTO CareTaker VALUES ('Worden');
-INSERT INTO CareTaker VALUES ('Louella');
-INSERT INTO CareTaker VALUES ('Gregorius');
-INSERT INTO CareTaker VALUES ('Wesley');
-INSERT INTO CareTaker VALUES ('Merill');
-INSERT INTO CareTaker VALUES ('Dynah');
-INSERT INTO CareTaker VALUES ('Shari');
-INSERT INTO CareTaker VALUES ('Lamont');
-INSERT INTO CareTaker VALUES ('Hildagard');
-INSERT INTO CareTaker VALUES ('Arline');
-INSERT INTO CareTaker VALUES ('Malinde');
-INSERT INTO CareTaker VALUES ('Bob');
-INSERT INTO CareTaker VALUES ('Hedvig');
-INSERT INTO CareTaker VALUES ('Babbette');
-INSERT INTO CareTaker VALUES ('Giacopo');
-INSERT INTO CareTaker VALUES ('Brett');
-INSERT INTO CareTaker VALUES ('Jonah');
-INSERT INTO CareTaker VALUES ('Theda');
-INSERT INTO CareTaker VALUES ('Evita');
-INSERT INTO CareTaker VALUES ('Erinn');
-INSERT INTO CareTaker VALUES ('Emmi');
-INSERT INTO CareTaker VALUES ('Gloriane');
-INSERT INTO CareTaker VALUES ('Burton');
-INSERT INTO CareTaker VALUES ('Mendel');
-INSERT INTO CareTaker VALUES ('Horace');
-INSERT INTO CareTaker VALUES ('Kyla');
-INSERT INTO CareTaker VALUES ('Winna');
-INSERT INTO CareTaker VALUES ('Zebulen');
-INSERT INTO CareTaker VALUES ('Durand');
-INSERT INTO CareTaker VALUES ('Malia');
-INSERT INTO CareTaker VALUES ('Osmond');
-INSERT INTO CareTaker VALUES ('Falito');
-INSERT INTO CareTaker VALUES ('Lorelle');
-INSERT INTO CareTaker VALUES ('Grady');
-INSERT INTO CareTaker VALUES ('Trudie');
-INSERT INTO CareTaker VALUES ('Trish');
-INSERT INTO CareTaker VALUES ('Delly');
-INSERT INTO CareTaker VALUES ('Barney');
-INSERT INTO CareTaker VALUES ('Val');
-INSERT INTO CareTaker VALUES ('Anallise');
-INSERT INTO CareTaker VALUES ('Marshall');
-INSERT INTO CareTaker VALUES ('Myrilla');
-INSERT INTO CareTaker VALUES ('Leonora');
-INSERT INTO CareTaker VALUES ('Dannel');
-INSERT INTO CareTaker VALUES ('Carolyn');
-INSERT INTO CareTaker VALUES ('Samuele');
-INSERT INTO CareTaker VALUES ('Oswell');
-INSERT INTO CareTaker VALUES ('Amalita');
-INSERT INTO CareTaker VALUES ('Culley');
-INSERT INTO CareTaker VALUES ('Nikolas');
-INSERT INTO CareTaker VALUES ('Ritchie');
-INSERT INTO CareTaker VALUES ('Donielle');
-INSERT INTO CareTaker VALUES ('Maxi');
-INSERT INTO CareTaker VALUES ('Doralynne');
-INSERT INTO CareTaker VALUES ('Daren');
-INSERT INTO CareTaker VALUES ('Giffie');
-INSERT INTO CareTaker VALUES ('Rozelle');
-INSERT INTO CareTaker VALUES ('Pascal');
-INSERT INTO CareTaker VALUES ('Heinrick');
-INSERT INTO CareTaker VALUES ('Teodoor');
-INSERT INTO CareTaker VALUES ('Sasha');
-INSERT INTO CareTaker VALUES ('Clive');
-INSERT INTO CareTaker VALUES ('Morten');
-INSERT INTO CareTaker VALUES ('Agna');
-INSERT INTO CareTaker VALUES ('Torr');
-INSERT INTO CareTaker VALUES ('Liesa');
-INSERT INTO CareTaker VALUES ('Lammond');
-INSERT INTO CareTaker VALUES ('Laney');
-INSERT INTO CareTaker VALUES ('Karoly');
-INSERT INTO CareTaker VALUES ('Yank');
-INSERT INTO CareTaker VALUES ('Willdon');
-INSERT INTO CareTaker VALUES ('Dewitt');
-INSERT INTO CareTaker VALUES ('Beryle');
-INSERT INTO CareTaker VALUES ('Dorian');
-INSERT INTO CareTaker VALUES ('Lowell');
-INSERT INTO CareTaker VALUES ('Ezequiel');
-INSERT INTO CareTaker VALUES ('Nick');
-INSERT INTO CareTaker VALUES ('Armando');
-INSERT INTO CareTaker VALUES ('Carry');
-INSERT INTO CareTaker VALUES ('Antons');
-INSERT INTO CareTaker VALUES ('Dorisa');
-INSERT INTO CareTaker VALUES ('Redd');
-INSERT INTO CareTaker VALUES ('Rouvin');
-INSERT INTO CareTaker VALUES ('Wynny');
-INSERT INTO CareTaker VALUES ('Elka');
-INSERT INTO CareTaker VALUES ('Beatriz');
-INSERT INTO CareTaker VALUES ('Othelia');
-INSERT INTO CareTaker VALUES ('Sheila');
-INSERT INTO CareTaker VALUES ('Misti');
-INSERT INTO CareTaker VALUES ('Darryl');
-INSERT INTO CareTaker VALUES ('Lyda');
-INSERT INTO CareTaker VALUES ('Doralin');
-INSERT INTO CareTaker VALUES ('Cristiano');
-INSERT INTO CareTaker VALUES ('Aggy');
-INSERT INTO CareTaker VALUES ('Iseabal');
-INSERT INTO CareTaker VALUES ('Alejandrina');
-INSERT INTO CareTaker VALUES ('Alfred');
-INSERT INTO CareTaker VALUES ('Sheela');
-INSERT INTO CareTaker VALUES ('Andie');
-INSERT INTO CareTaker VALUES ('Humfrid');
-INSERT INTO CareTaker VALUES ('Humbert');
+INSERT INTO CareTaker VALUES ('Clemens', '0');
+INSERT INTO CareTaker VALUES ('Georgetta', '0');
+INSERT INTO CareTaker VALUES ('Tabor', '0');
+INSERT INTO CareTaker VALUES ('Fern', '0');
+INSERT INTO CareTaker VALUES ('Abby', '0');
+INSERT INTO CareTaker VALUES ('Aron', '0');
+INSERT INTO CareTaker VALUES ('Clementius', '0');
+INSERT INTO CareTaker VALUES ('Gare', '0');
+INSERT INTO CareTaker VALUES ('Cybil', '0');
+INSERT INTO CareTaker VALUES ('Brendon', '0');
+INSERT INTO CareTaker VALUES ('Petr', '0');
+INSERT INTO CareTaker VALUES ('Frederica', '0');
+INSERT INTO CareTaker VALUES ('Gwenni', '0');
+INSERT INTO CareTaker VALUES ('Wood', '0');
+INSERT INTO CareTaker VALUES ('Von', '0');
+INSERT INTO CareTaker VALUES ('Eba', '0');
+INSERT INTO CareTaker VALUES ('Avram', '0');
+INSERT INTO CareTaker VALUES ('Nilson', '0');
+INSERT INTO CareTaker VALUES ('Gran', '0');
+INSERT INTO CareTaker VALUES ('Janos', '0');
+INSERT INTO CareTaker VALUES ('Dion', '0');
+INSERT INTO CareTaker VALUES ('Dalton', '0');
+INSERT INTO CareTaker VALUES ('Eilis', '0');
+INSERT INTO CareTaker VALUES ('Earle', '0');
+INSERT INTO CareTaker VALUES ('Irma', '0');
+INSERT INTO CareTaker VALUES ('Joseito', '0');
+INSERT INTO CareTaker VALUES ('Frannie', '0');
+INSERT INTO CareTaker VALUES ('Steven', '0');
+INSERT INTO CareTaker VALUES ('Donia', '0');
+INSERT INTO CareTaker VALUES ('Grant', '0');
+INSERT INTO CareTaker VALUES ('Pepe', '0');
+INSERT INTO CareTaker VALUES ('Elsa', '0');
+INSERT INTO CareTaker VALUES ('Shelagh', '0');
+INSERT INTO CareTaker VALUES ('Mahmoud', '0');
+INSERT INTO CareTaker VALUES ('Bastian', '0');
+INSERT INTO CareTaker VALUES ('Erin', '0');
+INSERT INTO CareTaker VALUES ('Cordelia', '0');
+INSERT INTO CareTaker VALUES ('Herbert', '0');
+INSERT INTO CareTaker VALUES ('Hedy', '0');
+INSERT INTO CareTaker VALUES ('Raven', '0');
+INSERT INTO CareTaker VALUES ('Berenice', '0');
+INSERT INTO CareTaker VALUES ('Giorgia', '0');
+INSERT INTO CareTaker VALUES ('Courtenay', '0');
+INSERT INTO CareTaker VALUES ('Lulita', '0');
+INSERT INTO CareTaker VALUES ('Nataniel', '0');
+INSERT INTO CareTaker VALUES ('Hayley', '0');
+INSERT INTO CareTaker VALUES ('Maisey', '0');
+INSERT INTO CareTaker VALUES ('Ruthanne', '0');
+INSERT INTO CareTaker VALUES ('Giuditta', '0');
+INSERT INTO CareTaker VALUES ('Garth', '0');
+INSERT INTO CareTaker VALUES ('Dierdre', '0');
+INSERT INTO CareTaker VALUES ('Clyde', '0');
+INSERT INTO CareTaker VALUES ('Hymie', '0');
+INSERT INTO CareTaker VALUES ('Timmie', '0');
+INSERT INTO CareTaker VALUES ('Eulalie', '0');
+INSERT INTO CareTaker VALUES ('Spike', '0');
+INSERT INTO CareTaker VALUES ('Conant', '0');
+INSERT INTO CareTaker VALUES ('Walker', '0');
+INSERT INTO CareTaker VALUES ('Norby', '0');
+INSERT INTO CareTaker VALUES ('Debbi', '0');
+INSERT INTO CareTaker VALUES ('Uta', '0');
+INSERT INTO CareTaker VALUES ('Briano', '0');
+INSERT INTO CareTaker VALUES ('Flem', '0');
+INSERT INTO CareTaker VALUES ('Dalt', '0');
+INSERT INTO CareTaker VALUES ('Lorilyn', '0');
+INSERT INTO CareTaker VALUES ('Tremaine', '0');
+INSERT INTO CareTaker VALUES ('Dalston', '0');
+INSERT INTO CareTaker VALUES ('Janina', '0');
+INSERT INTO CareTaker VALUES ('Baron', '0');
+INSERT INTO CareTaker VALUES ('Cirilo', '0');
+INSERT INTO CareTaker VALUES ('Rafaello', '0');
+INSERT INTO CareTaker VALUES ('Rossy', '0');
+INSERT INTO CareTaker VALUES ('Allyson', '0');
+INSERT INTO CareTaker VALUES ('Burke', '0');
+INSERT INTO CareTaker VALUES ('Townie', '0');
+INSERT INTO CareTaker VALUES ('Bax', '0');
+INSERT INTO CareTaker VALUES ('Arel', '0');
+INSERT INTO CareTaker VALUES ('Antoni', '0');
+INSERT INTO CareTaker VALUES ('Clementine', '0');
+INSERT INTO CareTaker VALUES ('Bernardina', '0');
+INSERT INTO CareTaker VALUES ('Cass', '0');
+INSERT INTO CareTaker VALUES ('Dacie', '0');
+INSERT INTO CareTaker VALUES ('Bernetta', '0');
+INSERT INTO CareTaker VALUES ('Ursola', '0');
+INSERT INTO CareTaker VALUES ('Melvyn', '0');
+INSERT INTO CareTaker VALUES ('Cary', '0');
+INSERT INTO CareTaker VALUES ('Ellswerth', '0');
+INSERT INTO CareTaker VALUES ('Binnie', '0');
+INSERT INTO CareTaker VALUES ('Danie', '0');
+INSERT INTO CareTaker VALUES ('Malcolm', '0');
+INSERT INTO CareTaker VALUES ('Napoleon', '0');
+INSERT INTO CareTaker VALUES ('Phineas', '0');
+INSERT INTO CareTaker VALUES ('Farah', '0');
+INSERT INTO CareTaker VALUES ('Loise', '0');
+INSERT INTO CareTaker VALUES ('Tore', '0');
+INSERT INTO CareTaker VALUES ('Fayre', '0');
+INSERT INTO CareTaker VALUES ('Kylie', '0');
+INSERT INTO CareTaker VALUES ('Natty', '0');
+INSERT INTO CareTaker VALUES ('Cece', '0');
+INSERT INTO CareTaker VALUES ('Kali', '0');
+INSERT INTO CareTaker VALUES ('Waverley', '0');
+INSERT INTO CareTaker VALUES ('Diena', '0');
+INSERT INTO CareTaker VALUES ('Hunter', '0');
+INSERT INTO CareTaker VALUES ('Darnell', '0');
+INSERT INTO CareTaker VALUES ('Idaline', '0');
+INSERT INTO CareTaker VALUES ('Kimberley', '0');
+INSERT INTO CareTaker VALUES ('Jacobo', '0');
+INSERT INTO CareTaker VALUES ('Lyle', '0');
+INSERT INTO CareTaker VALUES ('Clea', '0');
+INSERT INTO CareTaker VALUES ('Ram', '0');
+INSERT INTO CareTaker VALUES ('Kordula', '0');
+INSERT INTO CareTaker VALUES ('Bell', '0');
+INSERT INTO CareTaker VALUES ('Freeland', '0');
+INSERT INTO CareTaker VALUES ('Roderigo', '0');
+INSERT INTO CareTaker VALUES ('Genny', '0');
+INSERT INTO CareTaker VALUES ('Jordanna', '0');
+INSERT INTO CareTaker VALUES ('Algernon', '0');
+INSERT INTO CareTaker VALUES ('Tedd', '0');
+INSERT INTO CareTaker VALUES ('Palm', '0');
+INSERT INTO CareTaker VALUES ('Lorita', '0');
+INSERT INTO CareTaker VALUES ('Hedwiga', '0');
+INSERT INTO CareTaker VALUES ('Markos', '0');
+INSERT INTO CareTaker VALUES ('Jerri', '0');
+INSERT INTO CareTaker VALUES ('El', '0');
+INSERT INTO CareTaker VALUES ('Konstance', '0');
+INSERT INTO CareTaker VALUES ('Allin', '0');
+INSERT INTO CareTaker VALUES ('Allen', '0');
+INSERT INTO CareTaker VALUES ('Etienne', '0');
+INSERT INTO CareTaker VALUES ('Adrian', '0');
+INSERT INTO CareTaker VALUES ('Valencia', '0');
+INSERT INTO CareTaker VALUES ('Waylen', '0');
+INSERT INTO CareTaker VALUES ('Jere', '0');
+INSERT INTO CareTaker VALUES ('Ephrayim', '0');
+INSERT INTO CareTaker VALUES ('Barr', '0');
+INSERT INTO CareTaker VALUES ('Issy', '0');
+INSERT INTO CareTaker VALUES ('Christie', '0');
+INSERT INTO CareTaker VALUES ('Cris', '0');
+INSERT INTO CareTaker VALUES ('Lars', '0');
+INSERT INTO CareTaker VALUES ('Salvador', '0');
+INSERT INTO CareTaker VALUES ('Monika', '0');
+INSERT INTO CareTaker VALUES ('Goldy', '0');
+INSERT INTO CareTaker VALUES ('Lorry', '0');
+INSERT INTO CareTaker VALUES ('Hannah', '0');
+INSERT INTO CareTaker VALUES ('Adrienne', '0');
+INSERT INTO CareTaker VALUES ('Bron', '0');
+INSERT INTO CareTaker VALUES ('Kirby', '0');
+INSERT INTO CareTaker VALUES ('Jonis', '0');
+INSERT INTO CareTaker VALUES ('Oralie', '0');
+INSERT INTO CareTaker VALUES ('Josefa', '0');
+INSERT INTO CareTaker VALUES ('Adoree', '0');
+INSERT INTO CareTaker VALUES ('Packston', '0');
+INSERT INTO CareTaker VALUES ('Kane', '0');
+INSERT INTO CareTaker VALUES ('Wade', '0');
+INSERT INTO CareTaker VALUES ('Mae', '0');
+INSERT INTO CareTaker VALUES ('Sigfrid', '0');
+INSERT INTO CareTaker VALUES ('Rhys', '0');
+INSERT INTO CareTaker VALUES ('Morris', '0');
+INSERT INTO CareTaker VALUES ('Essy', '0');
+INSERT INTO CareTaker VALUES ('Aubree', '0');
+INSERT INTO CareTaker VALUES ('Sharia', '0');
+INSERT INTO CareTaker VALUES ('Taber', '0');
+INSERT INTO CareTaker VALUES ('Mortie', '0');
+INSERT INTO CareTaker VALUES ('Amery', '0');
+INSERT INTO CareTaker VALUES ('Reinwald', '0');
+INSERT INTO CareTaker VALUES ('Gianna', '0');
+INSERT INTO CareTaker VALUES ('Laurence', '0');
+INSERT INTO CareTaker VALUES ('Alfie', '0');
+INSERT INTO CareTaker VALUES ('Willow', '0');
+INSERT INTO CareTaker VALUES ('Edythe', '0');
+INSERT INTO CareTaker VALUES ('Micaela', '0');
+INSERT INTO CareTaker VALUES ('Jemmie', '0');
+INSERT INTO CareTaker VALUES ('Jami', '0');
+INSERT INTO CareTaker VALUES ('Morly', '0');
+INSERT INTO CareTaker VALUES ('Jacquetta', '0');
+INSERT INTO CareTaker VALUES ('Freddy', '0');
+INSERT INTO CareTaker VALUES ('Pauly', '0');
+INSERT INTO CareTaker VALUES ('Bradan', '0');
+INSERT INTO CareTaker VALUES ('Ansley', '0');
+INSERT INTO CareTaker VALUES ('Celka', '0');
+INSERT INTO CareTaker VALUES ('Alfredo', '0');
+INSERT INTO CareTaker VALUES ('Rabbi', '0');
+INSERT INTO CareTaker VALUES ('Maureene', '0');
+INSERT INTO CareTaker VALUES ('Odo', '0');
+INSERT INTO CareTaker VALUES ('Harlen', '0');
+INSERT INTO CareTaker VALUES ('Maurizio', '0');
+INSERT INTO CareTaker VALUES ('Dre', '0');
+INSERT INTO CareTaker VALUES ('Emalee', '0');
+INSERT INTO CareTaker VALUES ('Korey', '0');
+INSERT INTO CareTaker VALUES ('Kay', '0');
+INSERT INTO CareTaker VALUES ('Chrysa', '0');
+INSERT INTO CareTaker VALUES ('Rudie', '0');
+INSERT INTO CareTaker VALUES ('Mignon', '0');
+INSERT INTO CareTaker VALUES ('Jemie', '0');
+INSERT INTO CareTaker VALUES ('Ricki', '0');
+INSERT INTO CareTaker VALUES ('Kinsley', '0');
+INSERT INTO CareTaker VALUES ('Rodolfo', '0');
+INSERT INTO CareTaker VALUES ('Marion', '0');
+INSERT INTO CareTaker VALUES ('Zacharia', '0');
+INSERT INTO CareTaker VALUES ('Ike', '0');
+INSERT INTO CareTaker VALUES ('Tallia', '0');
+INSERT INTO CareTaker VALUES ('Catharine', '0');
+INSERT INTO CareTaker VALUES ('Inessa', '0');
+INSERT INTO CareTaker VALUES ('Vittoria', '0');
+INSERT INTO CareTaker VALUES ('Wilhelm', '0');
+INSERT INTO CareTaker VALUES ('Abbott', '0');
+INSERT INTO CareTaker VALUES ('Ofelia', '0');
+INSERT INTO CareTaker VALUES ('Merrill', '0');
+INSERT INTO CareTaker VALUES ('Paulina', '0');
+INSERT INTO CareTaker VALUES ('Krissy', '0');
+INSERT INTO CareTaker VALUES ('Judah', '0');
+INSERT INTO CareTaker VALUES ('Sandra', '0');
+INSERT INTO CareTaker VALUES ('Loralyn', '0');
+INSERT INTO CareTaker VALUES ('Tyler', '0');
+INSERT INTO CareTaker VALUES ('Suzi', '0');
+INSERT INTO CareTaker VALUES ('Mychal', '0');
+INSERT INTO CareTaker VALUES ('Eddie', '0');
+INSERT INTO CareTaker VALUES ('Hilarius', '0');
+INSERT INTO CareTaker VALUES ('Caroljean', '0');
+INSERT INTO CareTaker VALUES ('Ernesta', '0');
+INSERT INTO CareTaker VALUES ('Clarita', '0');
+INSERT INTO CareTaker VALUES ('Loree', '0');
+INSERT INTO CareTaker VALUES ('Fonz', '0');
+INSERT INTO CareTaker VALUES ('Duff', '0');
+INSERT INTO CareTaker VALUES ('Carlynne', '0');
+INSERT INTO CareTaker VALUES ('Dina', '0');
+INSERT INTO CareTaker VALUES ('Rasla', '0');
+INSERT INTO CareTaker VALUES ('Nickie', '0');
+INSERT INTO CareTaker VALUES ('Lexie', '0');
+INSERT INTO CareTaker VALUES ('Wilbert', '0');
+INSERT INTO CareTaker VALUES ('Aurie', '0');
+INSERT INTO CareTaker VALUES ('Belita', '0');
+INSERT INTO CareTaker VALUES ('Cristobal', '0');
+INSERT INTO CareTaker VALUES ('Alta', '0');
+INSERT INTO CareTaker VALUES ('Earlie', '0');
+INSERT INTO CareTaker VALUES ('Tatum', '0');
+INSERT INTO CareTaker VALUES ('Decca', '0');
+INSERT INTO CareTaker VALUES ('Thorstein', '0');
+INSERT INTO CareTaker VALUES ('Carlin', '0');
+INSERT INTO CareTaker VALUES ('Rodina', '0');
+INSERT INTO CareTaker VALUES ('Byrom', '0');
+INSERT INTO CareTaker VALUES ('Phillie', '0');
+INSERT INTO CareTaker VALUES ('Bernete', '0');
+INSERT INTO CareTaker VALUES ('Rachael', '0');
+INSERT INTO CareTaker VALUES ('Maurice', '0');
+INSERT INTO CareTaker VALUES ('Carmina', '0');
+INSERT INTO CareTaker VALUES ('Margi', '0');
+INSERT INTO CareTaker VALUES ('Francklin', '0');
+INSERT INTO CareTaker VALUES ('Leonanie', '0');
+INSERT INTO CareTaker VALUES ('Doralynn', '0');
+INSERT INTO CareTaker VALUES ('Wells', '0');
+INSERT INTO CareTaker VALUES ('Bill', '0');
+INSERT INTO CareTaker VALUES ('Peg', '0');
+INSERT INTO CareTaker VALUES ('Dorthy', '0');
+INSERT INTO CareTaker VALUES ('Cobbie', '0');
+INSERT INTO CareTaker VALUES ('Tyson', '0');
+INSERT INTO CareTaker VALUES ('Rosana', '0');
+INSERT INTO CareTaker VALUES ('Pip', '0');
+INSERT INTO CareTaker VALUES ('Nadine', '0');
+INSERT INTO CareTaker VALUES ('Brana', '0');
+INSERT INTO CareTaker VALUES ('Eberhard', '0');
+INSERT INTO CareTaker VALUES ('Annice', '0');
+INSERT INTO CareTaker VALUES ('Tiffy', '0');
+INSERT INTO CareTaker VALUES ('Edin', '0');
+INSERT INTO CareTaker VALUES ('Nicky', '0');
+INSERT INTO CareTaker VALUES ('Emerson', '0');
+INSERT INTO CareTaker VALUES ('Reina', '0');
+INSERT INTO CareTaker VALUES ('Blake', '0');
+INSERT INTO CareTaker VALUES ('Pepito', '0');
+INSERT INTO CareTaker VALUES ('Car', '0');
+INSERT INTO CareTaker VALUES ('Alisha', '0');
+INSERT INTO CareTaker VALUES ('Chiarra', '0');
+INSERT INTO CareTaker VALUES ('Richmond', '0');
+INSERT INTO CareTaker VALUES ('Nerti', '0');
+INSERT INTO CareTaker VALUES ('Cleve', '0');
+INSERT INTO CareTaker VALUES ('Hubey', '0');
+INSERT INTO CareTaker VALUES ('Alisun', '0');
+INSERT INTO CareTaker VALUES ('Andonis', '0');
+INSERT INTO CareTaker VALUES ('Harry', '0');
+INSERT INTO CareTaker VALUES ('Rebekah', '0');
+INSERT INTO CareTaker VALUES ('Alfonse', '0');
+INSERT INTO CareTaker VALUES ('Reggis', '0');
+INSERT INTO CareTaker VALUES ('Norah', '0');
+INSERT INTO CareTaker VALUES ('Hulda', '0');
+INSERT INTO CareTaker VALUES ('Bette-ann', '0');
+INSERT INTO CareTaker VALUES ('Hart', '0');
+INSERT INTO CareTaker VALUES ('Raleigh', '0');
+INSERT INTO CareTaker VALUES ('Pietra', '0');
+INSERT INTO CareTaker VALUES ('Odey', '0');
+INSERT INTO CareTaker VALUES ('Queenie', '0');
+INSERT INTO CareTaker VALUES ('Peyton', '0');
+INSERT INTO CareTaker VALUES ('Adam', '0');
+INSERT INTO CareTaker VALUES ('Paulie', '0');
+INSERT INTO CareTaker VALUES ('Lucky', '0');
+INSERT INTO CareTaker VALUES ('Gwendolin', '0');
+INSERT INTO CareTaker VALUES ('Sloan', '0');
+INSERT INTO CareTaker VALUES ('Frankie', '0');
+INSERT INTO CareTaker VALUES ('Randie', '0');
+INSERT INTO CareTaker VALUES ('Ulberto', '0');
+INSERT INTO CareTaker VALUES ('Carmel', '0');
+INSERT INTO CareTaker VALUES ('Cathy', '0');
+INSERT INTO CareTaker VALUES ('Homer', '0');
+INSERT INTO CareTaker VALUES ('Yolanthe', '0');
+INSERT INTO CareTaker VALUES ('Axel', '0');
+INSERT INTO CareTaker VALUES ('Lilllie', '0');
+INSERT INTO CareTaker VALUES ('Richart', '0');
+INSERT INTO CareTaker VALUES ('Felicio', '0');
+INSERT INTO CareTaker VALUES ('Harriett', '0');
+INSERT INTO CareTaker VALUES ('Kitti', '0');
+INSERT INTO CareTaker VALUES ('Jerry', '0');
+INSERT INTO CareTaker VALUES ('Rebe', '0');
+INSERT INTO CareTaker VALUES ('Leelah', '0');
+INSERT INTO CareTaker VALUES ('Ethe', '0');
+INSERT INTO CareTaker VALUES ('Sol', '0');
+INSERT INTO CareTaker VALUES ('Toby', '0');
+INSERT INTO CareTaker VALUES ('Maddalena', '0');
+INSERT INTO CareTaker VALUES ('Kare', '0');
+INSERT INTO CareTaker VALUES ('Huntley', '0');
+INSERT INTO CareTaker VALUES ('Trudy', '0');
+INSERT INTO CareTaker VALUES ('Janey', '0');
+INSERT INTO CareTaker VALUES ('Janek', '0');
+INSERT INTO CareTaker VALUES ('Blondelle', '0');
+INSERT INTO CareTaker VALUES ('Dannie', '0');
+INSERT INTO CareTaker VALUES ('Alejandra', '0');
+INSERT INTO CareTaker VALUES ('Yolane', '0');
+INSERT INTO CareTaker VALUES ('Ad', '0');
+INSERT INTO CareTaker VALUES ('Tully', '0');
+INSERT INTO CareTaker VALUES ('Florina', '0');
+INSERT INTO CareTaker VALUES ('Wit', '0');
+INSERT INTO CareTaker VALUES ('Zelma', '0');
+INSERT INTO CareTaker VALUES ('Merrielle', '0');
+INSERT INTO CareTaker VALUES ('Rubin', '0');
+INSERT INTO CareTaker VALUES ('Arlyne', '0');
+INSERT INTO CareTaker VALUES ('Jocelyn', '0');
+INSERT INTO CareTaker VALUES ('Quincey', '0');
+INSERT INTO CareTaker VALUES ('Virgil', '0');
+INSERT INTO CareTaker VALUES ('Morissa', '0');
+INSERT INTO CareTaker VALUES ('Ame', '0');
+INSERT INTO CareTaker VALUES ('Consuelo', '0');
+INSERT INTO CareTaker VALUES ('Alisander', '0');
+INSERT INTO CareTaker VALUES ('Avrit', '0');
+INSERT INTO CareTaker VALUES ('Reed', '0');
+INSERT INTO CareTaker VALUES ('Vita', '0');
+INSERT INTO CareTaker VALUES ('Afton', '0');
+INSERT INTO CareTaker VALUES ('Welsh', '0');
+INSERT INTO CareTaker VALUES ('Isidoro', '0');
+INSERT INTO CareTaker VALUES ('Cammi', '0');
+INSERT INTO CareTaker VALUES ('Jeannie', '0');
+INSERT INTO CareTaker VALUES ('Essa', '0');
+INSERT INTO CareTaker VALUES ('Elroy', '0');
+INSERT INTO CareTaker VALUES ('Nomi', '0');
+INSERT INTO CareTaker VALUES ('Crystie', '0');
+INSERT INTO CareTaker VALUES ('Dulsea', '0');
+INSERT INTO CareTaker VALUES ('Arlin', '0');
+INSERT INTO CareTaker VALUES ('Hiram', '0');
+INSERT INTO CareTaker VALUES ('Stafford', '0');
+INSERT INTO CareTaker VALUES ('Richard', '0');
+INSERT INTO CareTaker VALUES ('Cele', '0');
+INSERT INTO CareTaker VALUES ('Welbie', '0');
+INSERT INTO CareTaker VALUES ('Albertine', '0');
+INSERT INTO CareTaker VALUES ('Amata', '0');
+INSERT INTO CareTaker VALUES ('Cher', '0');
+INSERT INTO CareTaker VALUES ('Arturo', '0');
+INSERT INTO CareTaker VALUES ('Chick', '0');
+INSERT INTO CareTaker VALUES ('Germana', '0');
+INSERT INTO CareTaker VALUES ('Hillyer', '0');
+INSERT INTO CareTaker VALUES ('Galvan', '0');
+INSERT INTO CareTaker VALUES ('Rayna', '0');
+INSERT INTO CareTaker VALUES ('Manuel', '0');
+INSERT INTO CareTaker VALUES ('Saxon', '0');
+INSERT INTO CareTaker VALUES ('Lettie', '0');
+INSERT INTO CareTaker VALUES ('Eamon', '0');
+INSERT INTO CareTaker VALUES ('Hillard', '0');
+INSERT INTO CareTaker VALUES ('Marlene', '0');
+INSERT INTO CareTaker VALUES ('Jason', '0');
+INSERT INTO CareTaker VALUES ('Anabelle', '0');
+INSERT INTO CareTaker VALUES ('Brit', '0');
+INSERT INTO CareTaker VALUES ('Florian', '0');
+INSERT INTO CareTaker VALUES ('Mal', '0');
+INSERT INTO CareTaker VALUES ('Rudolph', '0');
+INSERT INTO CareTaker VALUES ('Melisa', '0');
+INSERT INTO CareTaker VALUES ('Heall', '0');
+INSERT INTO CareTaker VALUES ('Wiley', '0');
+INSERT INTO CareTaker VALUES ('Fernande', '0');
+INSERT INTO CareTaker VALUES ('Berty', '0');
+INSERT INTO CareTaker VALUES ('Yule', '0');
+INSERT INTO CareTaker VALUES ('Dukie', '0');
+INSERT INTO CareTaker VALUES ('Karlens', '0');
+INSERT INTO CareTaker VALUES ('Elle', '0');
+INSERT INTO CareTaker VALUES ('Vaughan', '0');
+INSERT INTO CareTaker VALUES ('Basile', '0');
+INSERT INTO CareTaker VALUES ('Tonya', '0');
+INSERT INTO CareTaker VALUES ('Nichols', '0');
+INSERT INTO CareTaker VALUES ('Brody', '0');
+INSERT INTO CareTaker VALUES ('Philis', '0');
+INSERT INTO CareTaker VALUES ('Bertie', '0');
+INSERT INTO CareTaker VALUES ('Issi', '0');
+INSERT INTO CareTaker VALUES ('Florentia', '0');
+INSERT INTO CareTaker VALUES ('Ludovika', '0');
+INSERT INTO CareTaker VALUES ('Collen', '0');
+INSERT INTO CareTaker VALUES ('Worden', '0');
+INSERT INTO CareTaker VALUES ('Louella', '0');
+INSERT INTO CareTaker VALUES ('Gregorius', '0');
+INSERT INTO CareTaker VALUES ('Wesley', '0');
+INSERT INTO CareTaker VALUES ('Merill', '0');
+INSERT INTO CareTaker VALUES ('Dynah', '0');
+INSERT INTO CareTaker VALUES ('Shari', '0');
+INSERT INTO CareTaker VALUES ('Lamont', '0');
+INSERT INTO CareTaker VALUES ('Hildagard', '0');
+INSERT INTO CareTaker VALUES ('Arline', '0');
+INSERT INTO CareTaker VALUES ('Malinde', '0');
+INSERT INTO CareTaker VALUES ('Bob', '0');
+INSERT INTO CareTaker VALUES ('Hedvig', '0');
+INSERT INTO CareTaker VALUES ('Babbette', '0');
+INSERT INTO CareTaker VALUES ('Giacopo', '0');
+INSERT INTO CareTaker VALUES ('Brett', '0');
+INSERT INTO CareTaker VALUES ('Jonah', '0');
+INSERT INTO CareTaker VALUES ('Theda', '0');
+INSERT INTO CareTaker VALUES ('Evita', '0');
+INSERT INTO CareTaker VALUES ('Erinn', '0');
+INSERT INTO CareTaker VALUES ('Emmi', '0');
+INSERT INTO CareTaker VALUES ('Gloriane', '0');
+INSERT INTO CareTaker VALUES ('Burton', '0');
+INSERT INTO CareTaker VALUES ('Mendel', '0');
+INSERT INTO CareTaker VALUES ('Horace', '0');
+INSERT INTO CareTaker VALUES ('Kyla', '0');
+INSERT INTO CareTaker VALUES ('Winna', '0');
+INSERT INTO CareTaker VALUES ('Zebulen', '0');
+INSERT INTO CareTaker VALUES ('Durand', '0');
+INSERT INTO CareTaker VALUES ('Malia', '0');
+INSERT INTO CareTaker VALUES ('Osmond', '0');
+INSERT INTO CareTaker VALUES ('Falito', '0');
+INSERT INTO CareTaker VALUES ('Lorelle', '0');
+INSERT INTO CareTaker VALUES ('Grady', '0');
+INSERT INTO CareTaker VALUES ('Trudie', '0');
+INSERT INTO CareTaker VALUES ('Trish', '0');
+INSERT INTO CareTaker VALUES ('Delly', '0');
+INSERT INTO CareTaker VALUES ('Barney', '0');
+INSERT INTO CareTaker VALUES ('Val', '0');
+INSERT INTO CareTaker VALUES ('Anallise', '0');
+INSERT INTO CareTaker VALUES ('Marshall', '0');
+INSERT INTO CareTaker VALUES ('Myrilla', '0');
+INSERT INTO CareTaker VALUES ('Leonora', '0');
+INSERT INTO CareTaker VALUES ('Dannel', '0');
+INSERT INTO CareTaker VALUES ('Carolyn', '0');
+INSERT INTO CareTaker VALUES ('Samuele', '0');
+INSERT INTO CareTaker VALUES ('Oswell', '0');
+INSERT INTO CareTaker VALUES ('Amalita', '0');
+INSERT INTO CareTaker VALUES ('Culley', '0');
+INSERT INTO CareTaker VALUES ('Nikolas', '0');
+INSERT INTO CareTaker VALUES ('Ritchie', '0');
+INSERT INTO CareTaker VALUES ('Donielle', '0');
+INSERT INTO CareTaker VALUES ('Maxi', '0');
+INSERT INTO CareTaker VALUES ('Doralynne', '0');
+INSERT INTO CareTaker VALUES ('Daren', '0');
+INSERT INTO CareTaker VALUES ('Giffie', '0');
+INSERT INTO CareTaker VALUES ('Rozelle', '0');
+INSERT INTO CareTaker VALUES ('Pascal', '0');
+INSERT INTO CareTaker VALUES ('Heinrick', '0');
+INSERT INTO CareTaker VALUES ('Teodoor', '0');
+INSERT INTO CareTaker VALUES ('Sasha', '0');
+INSERT INTO CareTaker VALUES ('Clive', '0');
+INSERT INTO CareTaker VALUES ('Morten', '0');
+INSERT INTO CareTaker VALUES ('Agna', '0');
+INSERT INTO CareTaker VALUES ('Torr', '0');
+INSERT INTO CareTaker VALUES ('Liesa', '0');
+INSERT INTO CareTaker VALUES ('Lammond', '0');
+INSERT INTO CareTaker VALUES ('Laney', '0');
+INSERT INTO CareTaker VALUES ('Karoly', '0');
+INSERT INTO CareTaker VALUES ('Yank', '0');
+INSERT INTO CareTaker VALUES ('Willdon', '0');
+INSERT INTO CareTaker VALUES ('Dewitt', '0');
+INSERT INTO CareTaker VALUES ('Beryle', '0');
+INSERT INTO CareTaker VALUES ('Dorian', '0');
+INSERT INTO CareTaker VALUES ('Lowell', '0');
+INSERT INTO CareTaker VALUES ('Ezequiel', '0');
+INSERT INTO CareTaker VALUES ('Nick', '0');
+INSERT INTO CareTaker VALUES ('Armando', '0');
+INSERT INTO CareTaker VALUES ('Carry', '0');
+INSERT INTO CareTaker VALUES ('Antons', '0');
+INSERT INTO CareTaker VALUES ('Dorisa', '0');
+INSERT INTO CareTaker VALUES ('Redd', '0');
+INSERT INTO CareTaker VALUES ('Rouvin', '0');
+INSERT INTO CareTaker VALUES ('Wynny', '0');
+INSERT INTO CareTaker VALUES ('Elka', '0');
+INSERT INTO CareTaker VALUES ('Beatriz', '0');
+INSERT INTO CareTaker VALUES ('Othelia', '0');
+INSERT INTO CareTaker VALUES ('Sheila', '0');
+INSERT INTO CareTaker VALUES ('Misti', '0');
+INSERT INTO CareTaker VALUES ('Darryl', '0');
+INSERT INTO CareTaker VALUES ('Lyda', '0');
+INSERT INTO CareTaker VALUES ('Doralin', '0');
+INSERT INTO CareTaker VALUES ('Cristiano', '0');
+INSERT INTO CareTaker VALUES ('Aggy', '0');
+INSERT INTO CareTaker VALUES ('Iseabal', '0');
+INSERT INTO CareTaker VALUES ('Alejandrina', '0');
+INSERT INTO CareTaker VALUES ('Alfred', '0');
+INSERT INTO CareTaker VALUES ('Sheela', '0');
+INSERT INTO CareTaker VALUES ('Andie', '0');
+INSERT INTO CareTaker VALUES ('Humfrid', '0');
+INSERT INTO CareTaker VALUES ('Humbert', '0');
 
 /*----------------------------------------------------*/
 /* CareTakerEarnsSalary 100*/
@@ -1766,7 +2016,7 @@ INSERT INTO CareTakerEarnsSalary VALUES ('Dorian', '2020-11-07', '6271.00');
 INSERT INTO CareTakerEarnsSalary VALUES ('Timmie', '2010-10-25', '4204.00');
 
 /*----------------------------------------------------*/
-/* FullTime 100*/
+/* FullTime 250*/
 INSERT INTO FullTime VALUES ('Clemens');
 INSERT INTO FullTime VALUES ('Georgetta');
 INSERT INTO FullTime VALUES ('Tabor');
@@ -1867,6 +2117,156 @@ INSERT INTO FullTime VALUES ('Kylie');
 INSERT INTO FullTime VALUES ('Natty');
 INSERT INTO FullTime VALUES ('Cece');
 INSERT INTO FullTime VALUES ('Kali');
+INSERT INTO FullTime VALUES ('Harlen');
+INSERT INTO FullTime VALUES ('Blake');
+INSERT INTO FullTime VALUES ('Carolyn');
+INSERT INTO FullTime VALUES ('Hilarius');
+INSERT INTO FullTime VALUES ('Barr');
+INSERT INTO FullTime VALUES ('Adrian');
+INSERT INTO FullTime VALUES ('Jami');
+INSERT INTO FullTime VALUES ('Jemie');
+INSERT INTO FullTime VALUES ('Dina');
+INSERT INTO FullTime VALUES ('Inessa');
+INSERT INTO FullTime VALUES ('Freeland');
+INSERT INTO FullTime VALUES ('Emalee');
+INSERT INTO FullTime VALUES ('Earlie');
+INSERT INTO FullTime VALUES ('Lexie');
+INSERT INTO FullTime VALUES ('Doralynn');
+INSERT INTO FullTime VALUES ('Karlens');
+INSERT INTO FullTime VALUES ('Belita');
+INSERT INTO FullTime VALUES ('Maurice');
+INSERT INTO FullTime VALUES ('Christie');
+INSERT INTO FullTime VALUES ('Issi');
+INSERT INTO FullTime VALUES ('Dorian');
+INSERT INTO FullTime VALUES ('Kordula');
+INSERT INTO FullTime VALUES ('Humfrid');
+INSERT INTO FullTime VALUES ('Rudolph');
+INSERT INTO FullTime VALUES ('Leonanie');
+INSERT INTO FullTime VALUES ('Morris');
+INSERT INTO FullTime VALUES ('Nadine');
+INSERT INTO FullTime VALUES ('Heinrick');
+INSERT INTO FullTime VALUES ('Sheela');
+INSERT INTO FullTime VALUES ('Korey');
+INSERT INTO FullTime VALUES ('Amalita');
+INSERT INTO FullTime VALUES ('Jonis');
+INSERT INTO FullTime VALUES ('Saxon');
+INSERT INTO FullTime VALUES ('Misti');
+INSERT INTO FullTime VALUES ('Rosana');
+INSERT INTO FullTime VALUES ('Pauly');
+INSERT INTO FullTime VALUES ('Giffie');
+INSERT INTO FullTime VALUES ('Paulina');
+INSERT INTO FullTime VALUES ('Taber');
+INSERT INTO FullTime VALUES ('Tedd');
+INSERT INTO FullTime VALUES ('Yule');
+INSERT INTO FullTime VALUES ('Myrilla');
+INSERT INTO FullTime VALUES ('Philis');
+INSERT INTO FullTime VALUES ('Mendel');
+INSERT INTO FullTime VALUES ('Darryl');
+INSERT INTO FullTime VALUES ('Aubree');
+INSERT INTO FullTime VALUES ('Hannah');
+INSERT INTO FullTime VALUES ('Doralin');
+INSERT INTO FullTime VALUES ('Leonora');
+INSERT INTO FullTime VALUES ('Elle');
+INSERT INTO FullTime VALUES ('Dukie');
+INSERT INTO FullTime VALUES ('Chrysa');
+INSERT INTO FullTime VALUES ('Mortie');
+INSERT INTO FullTime VALUES ('Fernande');
+INSERT INTO FullTime VALUES ('Hildagard');
+INSERT INTO FullTime VALUES ('Carlynne');
+INSERT INTO FullTime VALUES ('Jacquetta');
+INSERT INTO FullTime VALUES ('Malinde');
+INSERT INTO FullTime VALUES ('Alisha');
+INSERT INTO FullTime VALUES ('Judah');
+INSERT INTO FullTime VALUES ('Richard');
+INSERT INTO FullTime VALUES ('Sasha');
+INSERT INTO FullTime VALUES ('Maxi');
+INSERT INTO FullTime VALUES ('Chick');
+INSERT INTO FullTime VALUES ('Dorthy');
+INSERT INTO FullTime VALUES ('Issy');
+INSERT INTO FullTime VALUES ('Lettie');
+INSERT INTO FullTime VALUES ('Rodina');
+INSERT INTO FullTime VALUES ('Brett');
+INSERT INTO FullTime VALUES ('Car');
+INSERT INTO FullTime VALUES ('Eddie');
+INSERT INTO FullTime VALUES ('Dorisa');
+INSERT INTO FullTime VALUES ('Nickie');
+INSERT INTO FullTime VALUES ('Mal');
+INSERT INTO FullTime VALUES ('Alfredo');
+INSERT INTO FullTime VALUES ('Byrom');
+INSERT INTO FullTime VALUES ('Suzi');
+INSERT INTO FullTime VALUES ('Dewitt');
+INSERT INTO FullTime VALUES ('Dynah');
+INSERT INTO FullTime VALUES ('Brana');
+INSERT INTO FullTime VALUES ('Vaughan');
+INSERT INTO FullTime VALUES ('Rozelle');
+INSERT INTO FullTime VALUES ('Abbott');
+INSERT INTO FullTime VALUES ('Josefa');
+INSERT INTO FullTime VALUES ('Wilbert');
+INSERT INTO FullTime VALUES ('Bell');
+INSERT INTO FullTime VALUES ('Amery');
+INSERT INTO FullTime VALUES ('Jacobo');
+INSERT INTO FullTime VALUES ('Konstance');
+INSERT INTO FullTime VALUES ('Sandra');
+INSERT INTO FullTime VALUES ('Aggy');
+INSERT INTO FullTime VALUES ('Nicky');
+INSERT INTO FullTime VALUES ('Hillyer');
+INSERT INTO FullTime VALUES ('Agna');
+INSERT INTO FullTime VALUES ('Berty');
+INSERT INTO FullTime VALUES ('Brit');
+INSERT INTO FullTime VALUES ('Marlene');
+INSERT INTO FullTime VALUES ('Gianna');
+INSERT INTO FullTime VALUES ('Decca');
+INSERT INTO FullTime VALUES ('Markos');
+INSERT INTO FullTime VALUES ('Pip');
+INSERT INTO FullTime VALUES ('Kyla');
+INSERT INTO FullTime VALUES ('Cele');
+INSERT INTO FullTime VALUES ('Jemmie');
+INSERT INTO FullTime VALUES ('Jordanna');
+INSERT INTO FullTime VALUES ('Idaline');
+INSERT INTO FullTime VALUES ('Essy');
+INSERT INTO FullTime VALUES ('Alta');
+INSERT INTO FullTime VALUES ('Bob');
+INSERT INTO FullTime VALUES ('Hillard');
+INSERT INTO FullTime VALUES ('Lammond');
+INSERT INTO FullTime VALUES ('Pepito');
+INSERT INTO FullTime VALUES ('Edin');
+INSERT INTO FullTime VALUES ('Giacopo');
+INSERT INTO FullTime VALUES ('Maurizio');
+INSERT INTO FullTime VALUES ('Thorstein');
+INSERT INTO FullTime VALUES ('Allen');
+INSERT INTO FullTime VALUES ('Merrill');
+INSERT INTO FullTime VALUES ('Bradan');
+INSERT INTO FullTime VALUES ('Basile');
+INSERT INTO FullTime VALUES ('Evita');
+INSERT INTO FullTime VALUES ('Pascal');
+INSERT INTO FullTime VALUES ('Beryle');
+INSERT INTO FullTime VALUES ('Yank');
+INSERT INTO FullTime VALUES ('Wilhelm');
+INSERT INTO FullTime VALUES ('Marion');
+INSERT INTO FullTime VALUES ('Worden');
+INSERT INTO FullTime VALUES ('Phillie');
+INSERT INTO FullTime VALUES ('Jason');
+INSERT INTO FullTime VALUES ('Shari');
+INSERT INTO FullTime VALUES ('Willow');
+INSERT INTO FullTime VALUES ('Ezequiel');
+INSERT INTO FullTime VALUES ('Ritchie');
+INSERT INTO FullTime VALUES ('Kane');
+INSERT INTO FullTime VALUES ('Florentia');
+INSERT INTO FullTime VALUES ('Ike');
+INSERT INTO FullTime VALUES ('Kirby');
+INSERT INTO FullTime VALUES ('Ephrayim');
+INSERT INTO FullTime VALUES ('Sheila');
+INSERT INTO FullTime VALUES ('Antons');
+INSERT INTO FullTime VALUES ('Nikolas');
+INSERT INTO FullTime VALUES ('Iseabal');
+INSERT INTO FullTime VALUES ('Erinn');
+INSERT INTO FullTime VALUES ('Allin');
+INSERT INTO FullTime VALUES ('Margi');
+INSERT INTO FullTime VALUES ('Tonya');
+INSERT INTO FullTime VALUES ('Cher');
+INSERT INTO FullTime VALUES ('Catharine');
+INSERT INTO FullTime VALUES ('Louella');
+INSERT INTO FullTime VALUES ('Amata');
 
 /*----------------------------------------------------*/
 /* FullTimeAppliesLeaves 50*/
@@ -1922,7 +2322,7 @@ INSERT INTO FullTimeAppliesLeaves VALUES ('Mahmoud', '2020-04-01');
 INSERT INTO FullTimeAppliesLeaves VALUES ('Bastian', '2019-12-20');
 
 /*----------------------------------------------------*/
-/* PartTime 50*/
+/* PartTime 250*/
 INSERT INTO PartTime VALUES ('Chiarra');
 INSERT INTO PartTime VALUES ('Richmond');
 INSERT INTO PartTime VALUES ('Nerti');
@@ -2023,6 +2423,156 @@ INSERT INTO PartTime VALUES ('Barney');
 INSERT INTO PartTime VALUES ('Val');
 INSERT INTO PartTime VALUES ('Anallise');
 INSERT INTO PartTime VALUES ('Marshall');
+INSERT INTO PartTime VALUES ('Harlen');
+INSERT INTO PartTime VALUES ('Blake');
+INSERT INTO PartTime VALUES ('Carolyn');
+INSERT INTO PartTime VALUES ('Hilarius');
+INSERT INTO PartTime VALUES ('Barr');
+INSERT INTO PartTime VALUES ('Adrian');
+INSERT INTO PartTime VALUES ('Jami');
+INSERT INTO PartTime VALUES ('Jemie');
+INSERT INTO PartTime VALUES ('Dina');
+INSERT INTO PartTime VALUES ('Inessa');
+INSERT INTO PartTime VALUES ('Freeland');
+INSERT INTO PartTime VALUES ('Emalee');
+INSERT INTO PartTime VALUES ('Earlie');
+INSERT INTO PartTime VALUES ('Lexie');
+INSERT INTO PartTime VALUES ('Doralynn');
+INSERT INTO PartTime VALUES ('Karlens');
+INSERT INTO PartTime VALUES ('Belita');
+INSERT INTO PartTime VALUES ('Maurice');
+INSERT INTO PartTime VALUES ('Christie');
+INSERT INTO PartTime VALUES ('Issi');
+INSERT INTO PartTime VALUES ('Dorian');
+INSERT INTO PartTime VALUES ('Kordula');
+INSERT INTO PartTime VALUES ('Humfrid');
+INSERT INTO PartTime VALUES ('Rudolph');
+INSERT INTO PartTime VALUES ('Leonanie');
+INSERT INTO PartTime VALUES ('Morris');
+INSERT INTO PartTime VALUES ('Nadine');
+INSERT INTO PartTime VALUES ('Heinrick');
+INSERT INTO PartTime VALUES ('Sheela');
+INSERT INTO PartTime VALUES ('Korey');
+INSERT INTO PartTime VALUES ('Amalita');
+INSERT INTO PartTime VALUES ('Jonis');
+INSERT INTO PartTime VALUES ('Saxon');
+INSERT INTO PartTime VALUES ('Misti');
+INSERT INTO PartTime VALUES ('Rosana');
+INSERT INTO PartTime VALUES ('Pauly');
+INSERT INTO PartTime VALUES ('Giffie');
+INSERT INTO PartTime VALUES ('Paulina');
+INSERT INTO PartTime VALUES ('Taber');
+INSERT INTO PartTime VALUES ('Tedd');
+INSERT INTO PartTime VALUES ('Yule');
+INSERT INTO PartTime VALUES ('Myrilla');
+INSERT INTO PartTime VALUES ('Philis');
+INSERT INTO PartTime VALUES ('Mendel');
+INSERT INTO PartTime VALUES ('Darryl');
+INSERT INTO PartTime VALUES ('Aubree');
+INSERT INTO PartTime VALUES ('Hannah');
+INSERT INTO PartTime VALUES ('Doralin');
+INSERT INTO PartTime VALUES ('Leonora');
+INSERT INTO PartTime VALUES ('Elle');
+INSERT INTO PartTime VALUES ('Dukie');
+INSERT INTO PartTime VALUES ('Chrysa');
+INSERT INTO PartTime VALUES ('Mortie');
+INSERT INTO PartTime VALUES ('Fernande');
+INSERT INTO PartTime VALUES ('Hildagard');
+INSERT INTO PartTime VALUES ('Carlynne');
+INSERT INTO PartTime VALUES ('Jacquetta');
+INSERT INTO PartTime VALUES ('Malinde');
+INSERT INTO PartTime VALUES ('Alisha');
+INSERT INTO PartTime VALUES ('Judah');
+INSERT INTO PartTime VALUES ('Richard');
+INSERT INTO PartTime VALUES ('Sasha');
+INSERT INTO PartTime VALUES ('Maxi');
+INSERT INTO PartTime VALUES ('Chick');
+INSERT INTO PartTime VALUES ('Dorthy');
+INSERT INTO PartTime VALUES ('Issy');
+INSERT INTO PartTime VALUES ('Lettie');
+INSERT INTO PartTime VALUES ('Rodina');
+INSERT INTO PartTime VALUES ('Brett');
+INSERT INTO PartTime VALUES ('Car');
+INSERT INTO PartTime VALUES ('Eddie');
+INSERT INTO PartTime VALUES ('Dorisa');
+INSERT INTO PartTime VALUES ('Nickie');
+INSERT INTO PartTime VALUES ('Mal');
+INSERT INTO PartTime VALUES ('Alfredo');
+INSERT INTO PartTime VALUES ('Byrom');
+INSERT INTO PartTime VALUES ('Suzi');
+INSERT INTO PartTime VALUES ('Dewitt');
+INSERT INTO PartTime VALUES ('Dynah');
+INSERT INTO PartTime VALUES ('Brana');
+INSERT INTO PartTime VALUES ('Vaughan');
+INSERT INTO PartTime VALUES ('Rozelle');
+INSERT INTO PartTime VALUES ('Abbott');
+INSERT INTO PartTime VALUES ('Josefa');
+INSERT INTO PartTime VALUES ('Wilbert');
+INSERT INTO PartTime VALUES ('Bell');
+INSERT INTO PartTime VALUES ('Amery');
+INSERT INTO PartTime VALUES ('Jacobo');
+INSERT INTO PartTime VALUES ('Konstance');
+INSERT INTO PartTime VALUES ('Sandra');
+INSERT INTO PartTime VALUES ('Aggy');
+INSERT INTO PartTime VALUES ('Nicky');
+INSERT INTO PartTime VALUES ('Hillyer');
+INSERT INTO PartTime VALUES ('Agna');
+INSERT INTO PartTime VALUES ('Berty');
+INSERT INTO PartTime VALUES ('Brit');
+INSERT INTO PartTime VALUES ('Marlene');
+INSERT INTO PartTime VALUES ('Gianna');
+INSERT INTO PartTime VALUES ('Decca');
+INSERT INTO PartTime VALUES ('Markos');
+INSERT INTO PartTime VALUES ('Pip');
+INSERT INTO PartTime VALUES ('Kyla');
+INSERT INTO PartTime VALUES ('Cele');
+INSERT INTO PartTime VALUES ('Jemmie');
+INSERT INTO PartTime VALUES ('Jordanna');
+INSERT INTO PartTime VALUES ('Idaline');
+INSERT INTO PartTime VALUES ('Essy');
+INSERT INTO PartTime VALUES ('Alta');
+INSERT INTO PartTime VALUES ('Bob');
+INSERT INTO PartTime VALUES ('Hillard');
+INSERT INTO PartTime VALUES ('Lammond');
+INSERT INTO PartTime VALUES ('Pepito');
+INSERT INTO PartTime VALUES ('Edin');
+INSERT INTO PartTime VALUES ('Giacopo');
+INSERT INTO PartTime VALUES ('Maurizio');
+INSERT INTO PartTime VALUES ('Thorstein');
+INSERT INTO PartTime VALUES ('Allen');
+INSERT INTO PartTime VALUES ('Merrill');
+INSERT INTO PartTime VALUES ('Bradan');
+INSERT INTO PartTime VALUES ('Basile');
+INSERT INTO PartTime VALUES ('Evita');
+INSERT INTO PartTime VALUES ('Pascal');
+INSERT INTO PartTime VALUES ('Beryle');
+INSERT INTO PartTime VALUES ('Yank');
+INSERT INTO PartTime VALUES ('Wilhelm');
+INSERT INTO PartTime VALUES ('Marion');
+INSERT INTO PartTime VALUES ('Worden');
+INSERT INTO PartTime VALUES ('Phillie');
+INSERT INTO PartTime VALUES ('Jason');
+INSERT INTO PartTime VALUES ('Shari');
+INSERT INTO PartTime VALUES ('Willow');
+INSERT INTO PartTime VALUES ('Ezequiel');
+INSERT INTO PartTime VALUES ('Ritchie');
+INSERT INTO PartTime VALUES ('Kane');
+INSERT INTO PartTime VALUES ('Florentia');
+INSERT INTO PartTime VALUES ('Ike');
+INSERT INTO PartTime VALUES ('Kirby');
+INSERT INTO PartTime VALUES ('Ephrayim');
+INSERT INTO PartTime VALUES ('Sheila');
+INSERT INTO PartTime VALUES ('Antons');
+INSERT INTO PartTime VALUES ('Nikolas');
+INSERT INTO PartTime VALUES ('Iseabal');
+INSERT INTO PartTime VALUES ('Erinn');
+INSERT INTO PartTime VALUES ('Allin');
+INSERT INTO PartTime VALUES ('Margi');
+INSERT INTO PartTime VALUES ('Tonya');
+INSERT INTO PartTime VALUES ('Cher');
+INSERT INTO PartTime VALUES ('Catharine');
+INSERT INTO PartTime VALUES ('Louella');
+INSERT INTO PartTime VALUES ('Amata');
 
 /*----------------------------------------------------*/
 /* PartTimeIndicatesAvailability 100*/
@@ -2085,7 +2635,7 @@ INSERT INTO PetOwnerRegistersCreditCard VALUES ('Lyda', '1444301753777758', 'Lyd
 INSERT INTO PetOwnerRegistersCreditCard VALUES ('Frank', '4555992176730890', 'Frank Twinn', '904', '2024-10-18');
 INSERT INTO PetOwnerRegistersCreditCard VALUES ('Odelia', '2131232759043528', 'Odelia Gianetti', '896', '2029-05-29');
 INSERT INTO PetOwnerRegistersCreditCard VALUES ('Frasco', '9227892197399263', 'Frasco Sone', '375', '2025-07-19');
-INSERT INTO PetOwnerRegistersCreditCard VALUES ('Etan', '5464106104537353', 'Etan Shulem', '159', '2026-04-27');
+INSERT INTO PetOwnerRegistersCreditCard VALUES ('Belita', '5464106104537353', 'Catriona Shulem', '159', '2026-04-27');
 INSERT INTO PetOwnerRegistersCreditCard VALUES ('Suzi', '3665857157582010', 'Suzi Corbridge', '760', '2028-01-23');
 INSERT INTO PetOwnerRegistersCreditCard VALUES ('Julianna', '5567795071118172', 'Julianna Shiliton', '162', '2030-07-31');
 INSERT INTO PetOwnerRegistersCreditCard VALUES ('Ansley', '4605609522185523', 'Ansley Bodman', '555', '2029-12-06');
@@ -2181,30 +2731,507 @@ INSERT INTO PetOwnerRegistersCreditCard VALUES ('Feodor', '5973579425795187', 'F
 INSERT INTO PetOwnerRegistersCreditCard VALUES ('Constantino', '5765214651003066', 'Constantino Beininck', '683', '2024-04-27');
 
 /*----------------------------------------------------*/
-/* PetCategory 100*/
-INSERT INTO PetCategory VALUES ('Koi', '70.00');
-INSERT INTO PetCategory VALUES ('Rodents', '90.00');
-INSERT INTO PetCategory VALUES ('Ferrets', '110.00');
-INSERT INTO PetCategory VALUES ('Mosquitofish', '120.00');
-INSERT INTO PetCategory VALUES ('Columbines', '180.00');
-INSERT INTO PetCategory VALUES ('Chinchillas', '60.00');
-INSERT INTO PetCategory VALUES ('Guppy', '100.00');
-INSERT INTO PetCategory VALUES ('Sheep', '90.00');
-INSERT INTO PetCategory VALUES ('Fowl', '140.00');
-INSERT INTO PetCategory VALUES ('Goldfish', '50.00');
-INSERT INTO PetCategory VALUES ('Rabbits', '130.00');
-INSERT INTO PetCategory VALUES ('Alpacas', '60.00');
-INSERT INTO PetCategory VALUES ('Goats', '60.00');
-INSERT INTO PetCategory VALUES ('Barb', '160.00');
-INSERT INTO PetCategory VALUES ('Cattle', '90.00');
-INSERT INTO PetCategory VALUES ('Dogs', '70.00');
-INSERT INTO PetCategory VALUES ('Hedgehogs', '160.00');
-INSERT INTO PetCategory VALUES ('Horses', '120.00');
-INSERT INTO PetCategory VALUES ('Cats', '150.00');
-INSERT INTO PetCategory VALUES ('Pigs', '70.00');
-
-/*----------------------------------------------------*/
-/* CareTakerCatersPetCategory 100*/
+/* CareTakerCatersPetCategory 500*/
+INSERT INTO CareTakerCatersPetCategory VALUES ('Clemens', 'Barb', '160.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Georgetta', 'Goats', '60.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Tabor', 'Horses', '120.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Fern', 'Goats', '60.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Abby', 'Rodents', '90.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Aron', 'Sheep', '90.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Clementius', 'Cattle', '90.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Gare', 'Mosquitofish', '120.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Cybil', 'Cats', '150.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Brendon', 'Sheep', '90.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Petr', 'Mosquitofish', '120.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Frederica', 'Goldfish', '50.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Gwenni', 'Rabbits', '130.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Wood', 'Guppy', '100.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Von', 'Columbines', '180.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Eba', 'Rodents', '90.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Avram', 'Rabbits', '130.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Nilson', 'Goats', '60.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Gran', 'Goats', '60.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Janos', 'Rodents', '90.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Dion', 'Chinchillas', '60.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Dalton', 'Rodents', '90.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Eilis', 'Goldfish', '50.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Earle', 'Horses', '120.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Irma', 'Pigs', '70.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Joseito', 'Cats', '150.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Frannie', 'Cattle', '90.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Steven', 'Rabbits', '130.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Donia', 'Horses', '120.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Grant', 'Chinchillas', '60.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Pepe', 'Rabbits', '130.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Elsa', 'Horses', '120.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Shelagh', 'Hedgehogs', '160.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Mahmoud', 'Horses', '120.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Bastian', 'Columbines', '180.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Erin', 'Goldfish', '50.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Cordelia', 'Rabbits', '130.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Herbert', 'Fowl', '140.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Hedy', 'Cattle', '90.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Raven', 'Goldfish', '50.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Berenice', 'Hedgehogs', '160.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Giorgia', 'Hedgehogs', '160.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Courtenay', 'Hedgehogs', '160.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Lulita', 'Fowl', '140.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Nataniel', 'Fowl', '140.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Hayley', 'Horses', '120.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Maisey', 'Rodents', '90.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Ruthanne', 'Rabbits', '130.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Giuditta', 'Columbines', '180.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Garth', 'Rabbits', '130.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Dierdre', 'Cattle', '90.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Clyde', 'Pigs', '70.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Hymie', 'Mosquitofish', '120.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Timmie', 'Pigs', '70.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Eulalie', 'Goats', '60.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Spike', 'Hedgehogs', '160.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Conant', 'Ferrets', '110.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Walker', 'Alpacas', '60.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Norby', 'Goats', '60.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Debbi', 'Goats', '60.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Uta', 'Pigs', '70.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Briano', 'Ferrets', '110.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Flem', 'Cats', '150.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Dalt', 'Sheep', '90.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Lorilyn', 'Rodents', '90.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Tremaine', 'Alpacas', '60.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Dalston', 'Rodents', '90.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Janina', 'Rodents', '90.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Baron', 'Mosquitofish', '120.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Cirilo', 'Alpacas', '60.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Rafaello', 'Cattle', '90.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Rossy', 'Horses', '120.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Allyson', 'Alpacas', '60.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Burke', 'Koi', '70.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Townie', 'Rabbits', '130.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Bax', 'Cattle', '90.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Arel', 'Sheep', '90.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Antoni', 'Cats', '150.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Clementine', 'Columbines', '180.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Bernardina', 'Pigs', '70.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Cass', 'Goldfish', '50.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Dacie', 'Sheep', '90.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Bernetta', 'Rabbits', '130.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Ursola', 'Barb', '160.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Melvyn', 'Horses', '120.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Cary', 'Columbines', '180.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Ellswerth', 'Rabbits', '130.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Binnie', 'Cattle', '90.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Danie', 'Guppy', '100.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Malcolm', 'Ferrets', '110.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Napoleon', 'Cats', '150.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Phineas', 'Alpacas', '60.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Farah', 'Goats', '60.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Loise', 'Guppy', '100.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Tore', 'Guppy', '100.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Fayre', 'Barb', '160.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Kylie', 'Pigs', '70.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Natty', 'Hedgehogs', '160.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Cece', 'Ferrets', '110.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Kali', 'Rodents', '90.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Waverley', 'Pigs', '70.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Diena', 'Goldfish', '50.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Hunter', 'Koi', '70.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Darnell', 'Goats', '60.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Idaline', 'Cats', '150.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Kimberley', 'Rodents', '90.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Jacobo', 'Pigs', '70.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Lyle', 'Sheep', '90.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Clea', 'Cats', '150.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Ram', 'Koi', '70.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Kordula', 'Ferrets', '110.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Bell', 'Mosquitofish', '120.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Freeland', 'Barb', '160.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Roderigo', 'Guppy', '100.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Genny', 'Pigs', '70.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Jordanna', 'Barb', '160.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Algernon', 'Cats', '150.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Tedd', 'Chinchillas', '60.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Palm', 'Hedgehogs', '160.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Lorita', 'Cats', '150.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Hedwiga', 'Sheep', '90.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Markos', 'Columbines', '180.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Jerri', 'Rabbits', '130.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('El', 'Rabbits', '130.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Konstance', 'Alpacas', '60.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Allin', 'Columbines', '180.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Allen', 'Chinchillas', '60.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Etienne', 'Ferrets', '110.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Adrian', 'Goldfish', '50.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Valencia', 'Columbines', '180.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Waylen', 'Hedgehogs', '160.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Jere', 'Pigs', '70.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Ephrayim', 'Ferrets', '110.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Barr', 'Fowl', '140.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Issy', 'Fowl', '140.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Christie', 'Columbines', '180.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Cris', 'Sheep', '90.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Lars', 'Fowl', '140.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Salvador', 'Fowl', '140.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Monika', 'Guppy', '100.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Goldy', 'Columbines', '180.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Lorry', 'Ferrets', '110.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Hannah', 'Pigs', '70.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Adrienne', 'Rabbits', '130.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Bron', 'Rabbits', '130.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Kirby', 'Rabbits', '130.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Jonis', 'Chinchillas', '60.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Oralie', 'Goldfish', '50.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Josefa', 'Pigs', '70.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Adoree', 'Guppy', '100.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Packston', 'Goldfish', '50.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Kane', 'Hedgehogs', '160.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Wade', 'Mosquitofish', '120.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Mae', 'Cattle', '90.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Sigfrid', 'Ferrets', '110.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Rhys', 'Rodents', '90.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Morris', 'Chinchillas', '60.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Essy', 'Columbines', '180.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Aubree', 'Cattle', '90.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Sharia', 'Fowl', '140.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Taber', 'Rodents', '90.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Mortie', 'Goldfish', '50.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Amery', 'Cats', '150.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Reinwald', 'Cattle', '90.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Gianna', 'Ferrets', '110.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Laurence', 'Columbines', '180.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Alfie', 'Mosquitofish', '120.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Willow', 'Horses', '120.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Edythe', 'Goats', '60.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Micaela', 'Sheep', '90.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Jemmie', 'Rodents', '90.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Jami', 'Goats', '60.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Morly', 'Rodents', '90.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Jacquetta', 'Cats', '150.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Freddy', 'Goats', '60.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Pauly', 'Rabbits', '130.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Bradan', 'Mosquitofish', '120.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Ansley', 'Ferrets', '110.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Celka', 'Cattle', '90.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Alfredo', 'Alpacas', '60.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Rabbi', 'Guppy', '100.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Maureene', 'Barb', '160.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Odo', 'Sheep', '90.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Harlen', 'Horses', '120.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Maurizio', 'Mosquitofish', '120.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Dre', 'Barb', '160.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Emalee', 'Ferrets', '110.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Korey', 'Hedgehogs', '160.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Kay', 'Hedgehogs', '160.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Chrysa', 'Mosquitofish', '120.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Rudie', 'Goldfish', '50.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Mignon', 'Cats', '150.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Jemie', 'Chinchillas', '60.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Ricki', 'Guppy', '100.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Kinsley', 'Goats', '60.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Rodolfo', 'Ferrets', '110.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Marion', 'Ferrets', '110.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Zacharia', 'Ferrets', '110.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Ike', 'Koi', '70.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Tallia', 'Sheep', '90.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Catharine', 'Alpacas', '60.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Inessa', 'Hedgehogs', '160.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Vittoria', 'Horses', '120.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Wilhelm', 'Rodents', '90.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Abbott', 'Goats', '60.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Ofelia', 'Rodents', '90.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Merrill', 'Alpacas', '60.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Paulina', 'Cats', '150.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Krissy', 'Horses', '120.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Judah', 'Alpacas', '60.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Sandra', 'Alpacas', '60.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Loralyn', 'Rodents', '90.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Tyler', 'Ferrets', '110.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Suzi', 'Mosquitofish', '120.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Mychal', 'Goldfish', '50.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Eddie', 'Goats', '60.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Hilarius', 'Cats', '150.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Caroljean', 'Pigs', '70.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Ernesta', 'Hedgehogs', '160.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Clarita', 'Koi', '70.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Loree', 'Goldfish', '50.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Fonz', 'Alpacas', '60.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Duff', 'Cats', '150.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Carlynne', 'Cats', '150.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Dina', 'Pigs', '70.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Rasla', 'Horses', '120.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Nickie', 'Ferrets', '110.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Lexie', 'Columbines', '180.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Wilbert', 'Rodents', '90.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Aurie', 'Cats', '150.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Belita', 'Koi', '70.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Cristobal', 'Barb', '160.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Alta', 'Goldfish', '50.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Earlie', 'Rabbits', '130.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Tatum', 'Hedgehogs', '160.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Decca', 'Chinchillas', '60.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Thorstein', 'Alpacas', '60.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Carlin', 'Barb', '160.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Rodina', 'Rabbits', '130.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Byrom', 'Rodents', '90.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Phillie', 'Alpacas', '60.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Bernete', 'Alpacas', '60.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Rachael', 'Rodents', '90.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Maurice', 'Horses', '120.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Carmina', 'Rabbits', '130.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Margi', 'Horses', '120.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Francklin', 'Mosquitofish', '120.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Leonanie', 'Pigs', '70.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Doralynn', 'Alpacas', '60.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Wells', 'Columbines', '180.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Bill', 'Rabbits', '130.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Peg', 'Ferrets', '110.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Dorthy', 'Fowl', '140.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Cobbie', 'Cats', '150.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Tyson', 'Rodents', '90.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Rosana', 'Rabbits', '130.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Pip', 'Sheep', '90.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Nadine', 'Rodents', '90.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Brana', 'Alpacas', '60.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Eberhard', 'Rodents', '90.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Annice', 'Columbines', '180.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Tiffy', 'Pigs', '70.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Edin', 'Cattle', '90.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Nicky', 'Barb', '160.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Emerson', 'Goldfish', '50.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Reina', 'Rabbits', '130.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Blake', 'Fowl', '140.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Pepito', 'Rabbits', '130.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Car', 'Rodents', '90.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Alisha', 'Sheep', '90.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Chiarra', 'Cattle', '90.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Richmond', 'Columbines', '180.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Nerti', 'Koi', '70.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Cleve', 'Goldfish', '50.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Hubey', 'Pigs', '70.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Alisun', 'Horses', '120.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Andonis', 'Fowl', '140.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Harry', 'Hedgehogs', '160.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Rebekah', 'Columbines', '180.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Alfonse', 'Hedgehogs', '160.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Reggis', 'Koi', '70.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Norah', 'Goats', '60.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Hulda', 'Ferrets', '110.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Bette-ann', 'Koi', '70.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Hart', 'Fowl', '140.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Raleigh', 'Cats', '150.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Pietra', 'Cattle', '90.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Odey', 'Chinchillas', '60.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Queenie', 'Mosquitofish', '120.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Peyton', 'Hedgehogs', '160.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Adam', 'Horses', '120.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Paulie', 'Mosquitofish', '120.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Lucky', 'Cattle', '90.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Gwendolin', 'Rabbits', '130.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Sloan', 'Pigs', '70.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Frankie', 'Goats', '60.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Randie', 'Ferrets', '110.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Ulberto', 'Cattle', '90.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Carmel', 'Guppy', '100.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Cathy', 'Hedgehogs', '160.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Homer', 'Pigs', '70.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Yolanthe', 'Ferrets', '110.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Axel', 'Cattle', '90.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Lilllie', 'Columbines', '180.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Richart', 'Rabbits', '130.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Felicio', 'Sheep', '90.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Harriett', 'Chinchillas', '60.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Kitti', 'Goats', '60.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Jerry', 'Pigs', '70.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Rebe', 'Guppy', '100.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Leelah', 'Barb', '160.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Ethe', 'Koi', '70.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Sol', 'Fowl', '140.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Toby', 'Chinchillas', '60.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Maddalena', 'Alpacas', '60.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Kare', 'Cats', '150.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Huntley', 'Chinchillas', '60.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Trudy', 'Sheep', '90.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Janey', 'Pigs', '70.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Janek', 'Mosquitofish', '120.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Blondelle', 'Rodents', '90.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Dannie', 'Columbines', '180.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Alejandra', 'Goats', '60.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Yolane', 'Hedgehogs', '160.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Ad', 'Fowl', '140.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Tully', 'Cats', '150.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Florina', 'Alpacas', '60.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Wit', 'Fowl', '140.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Zelma', 'Rodents', '90.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Merrielle', 'Guppy', '100.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Rubin', 'Pigs', '70.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Arlyne', 'Ferrets', '110.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Jocelyn', 'Goldfish', '50.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Quincey', 'Guppy', '100.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Virgil', 'Cats', '150.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Morissa', 'Goats', '60.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Ame', 'Guppy', '100.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Consuelo', 'Barb', '160.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Alisander', 'Sheep', '90.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Avrit', 'Chinchillas', '60.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Reed', 'Cattle', '90.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Vita', 'Hedgehogs', '160.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Afton', 'Columbines', '180.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Welsh', 'Chinchillas', '60.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Isidoro', 'Goldfish', '50.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Cammi', 'Barb', '160.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Jeannie', 'Koi', '70.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Essa', 'Goats', '60.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Elroy', 'Guppy', '100.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Nomi', 'Rabbits', '130.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Crystie', 'Cats', '150.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Dulsea', 'Fowl', '140.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Arlin', 'Cats', '150.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Hiram', 'Ferrets', '110.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Stafford', 'Goldfish', '50.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Richard', 'Ferrets', '110.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Cele', 'Horses', '120.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Welbie', 'Ferrets', '110.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Albertine', 'Sheep', '90.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Amata', 'Rodents', '90.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Cher', 'Pigs', '70.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Arturo', 'Alpacas', '60.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Chick', 'Pigs', '70.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Germana', 'Barb', '160.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Hillyer', 'Goldfish', '50.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Galvan', 'Rabbits', '130.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Rayna', 'Mosquitofish', '120.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Manuel', 'Guppy', '100.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Saxon', 'Columbines', '180.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Lettie', 'Barb', '160.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Eamon', 'Rodents', '90.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Hillard', 'Ferrets', '110.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Marlene', 'Chinchillas', '60.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Jason', 'Goldfish', '50.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Anabelle', 'Horses', '120.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Brit', 'Sheep', '90.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Florian', 'Koi', '70.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Mal', 'Cattle', '90.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Rudolph', 'Pigs', '70.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Melisa', 'Hedgehogs', '160.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Heall', 'Guppy', '100.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Wiley', 'Goldfish', '50.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Fernande', 'Sheep', '90.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Berty', 'Cattle', '90.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Yule', 'Pigs', '70.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Dukie', 'Mosquitofish', '120.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Karlens', 'Fowl', '140.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Elle', 'Mosquitofish', '120.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Vaughan', 'Hedgehogs', '160.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Basile', 'Rabbits', '130.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Tonya', 'Rabbits', '130.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Nichols', 'Cats', '150.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Brody', 'Chinchillas', '60.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Philis', 'Fowl', '140.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Bertie', 'Horses', '120.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Issi', 'Goldfish', '50.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Florentia', 'Koi', '70.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Ludovika', 'Goldfish', '50.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Collen', 'Cattle', '90.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Worden', 'Mosquitofish', '120.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Louella', 'Pigs', '70.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Gregorius', 'Mosquitofish', '120.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Wesley', 'Pigs', '70.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Merill', 'Horses', '120.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Dynah', 'Koi', '70.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Shari', 'Rabbits', '130.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Lamont', 'Alpacas', '60.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Hildagard', 'Hedgehogs', '160.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Arline', 'Mosquitofish', '120.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Malinde', 'Mosquitofish', '120.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Bob', 'Alpacas', '60.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Hedvig', 'Chinchillas', '60.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Babbette', 'Koi', '70.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Giacopo', 'Rodents', '90.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Brett', 'Hedgehogs', '160.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Jonah', 'Barb', '160.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Theda', 'Pigs', '70.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Evita', 'Alpacas', '60.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Erinn', 'Sheep', '90.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Emmi', 'Cats', '150.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Gloriane', 'Alpacas', '60.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Burton', 'Hedgehogs', '160.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Mendel', 'Sheep', '90.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Horace', 'Cattle', '90.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Kyla', 'Goldfish', '50.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Winna', 'Chinchillas', '60.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Zebulen', 'Horses', '120.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Durand', 'Mosquitofish', '120.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Malia', 'Goldfish', '50.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Osmond', 'Goats', '60.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Falito', 'Cats', '150.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Lorelle', 'Cattle', '90.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Grady', 'Chinchillas', '60.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Trudie', 'Hedgehogs', '160.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Trish', 'Columbines', '180.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Delly', 'Chinchillas', '60.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Barney', 'Pigs', '70.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Val', 'Horses', '120.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Anallise', 'Horses', '120.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Marshall', 'Barb', '160.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Myrilla', 'Hedgehogs', '160.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Leonora', 'Koi', '70.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Dannel', 'Fowl', '140.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Carolyn', 'Koi', '70.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Samuele', 'Columbines', '180.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Oswell', 'Goldfish', '50.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Amalita', 'Chinchillas', '60.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Culley', 'Alpacas', '60.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Nikolas', 'Guppy', '100.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Ritchie', 'Goldfish', '50.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Donielle', 'Ferrets', '110.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Maxi', 'Alpacas', '60.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Doralynne', 'Goldfish', '50.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Daren', 'Koi', '70.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Giffie', 'Cattle', '90.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Rozelle', 'Koi', '70.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Pascal', 'Mosquitofish', '120.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Heinrick', 'Goats', '60.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Teodoor', 'Alpacas', '60.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Sasha', 'Hedgehogs', '160.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Clive', 'Rodents', '90.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Morten', 'Columbines', '180.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Agna', 'Rodents', '90.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Torr', 'Fowl', '140.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Liesa', 'Horses', '120.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Lammond', 'Goldfish', '50.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Laney', 'Pigs', '70.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Karoly', 'Chinchillas', '60.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Yank', 'Cats', '150.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Willdon', 'Goldfish', '50.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Dewitt', 'Chinchillas', '60.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Beryle', 'Barb', '160.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Dorian', 'Ferrets', '110.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Lowell', 'Koi', '70.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Ezequiel', 'Fowl', '140.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Nick', 'Cats', '150.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Armando', 'Barb', '160.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Carry', 'Columbines', '180.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Antons', 'Hedgehogs', '160.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Dorisa', 'Barb', '160.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Redd', 'Cats', '150.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Rouvin', 'Goats', '60.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Wynny', 'Koi', '70.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Elka', 'Cattle', '90.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Beatriz', 'Ferrets', '110.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Othelia', 'Goats', '60.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Sheila', 'Goats', '60.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Misti', 'Hedgehogs', '160.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Darryl', 'Rodents', '90.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Lyda', 'Guppy', '100.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Doralin', 'Fowl', '140.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Cristiano', 'Cattle', '90.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Aggy', 'Chinchillas', '60.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Iseabal', 'Ferrets', '110.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Alejandrina', 'Ferrets', '110.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Alfred', 'Mosquitofish', '120.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Sheela', 'Cats', '150.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Andie', 'Koi', '70.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Humfrid', 'Rodents', '90.0');
+INSERT INTO CareTakerCatersPetCategory VALUES ('Humbert', 'Goats', '60.0');
 
 /*----------------------------------------------------*/
 /* Pet 100*/
@@ -2310,5 +3337,64 @@ INSERT INTO Pet VALUES ('Winny', 'Lissi', '2013-03-24', 'M', '24 hour', 'solutio
 INSERT INTO Pet VALUES ('Winny', 'Krissy', '2003-10-21', 'M', 'client-driven', 'access', 'value-added', 'Barb');
 
 /*----------------------------------------------------*/
-/* Job 50*/
+/* Job 40*/
+INSERT INTO Job VALUES ('Conant', 'Belita', 'Maure', '2020-11-06', '2021-01-22', '2020-09-24', 'DONE', '3.3', 'CREDITCARD', 'PTB', '0.0', 'Postural Control Treatment of Integu Body using Orthosis');
+INSERT INTO Job VALUES ('Clementine', 'Belita', 'Catina', '2020-10-02', '2021-01-05', '2020-09-25', 'DONE', '3.2', 'CASH', 'PTB', '0.0', 'Fluoroscopy of Spinal Arteries using High Osmolar Contrast');
+INSERT INTO Job VALUES ('Ursola', 'Winny', 'Krissy', '2020-10-27', '2020-12-30', '2020-09-15', 'DONE', '0.4', 'CASH', 'POD', '0.0', 'CT Scan of L Rib using Oth Contrast');
+INSERT INTO Job VALUES ('Tallia', 'Quincey', 'Dulcie', '2020-10-16', '2021-01-19', '2020-09-07', 'DONE', '1.5', 'CREDITCARD', 'POD', '0.0', 'Plain Radiography of Right Fallopian Tube using Oth Contrast');
+INSERT INTO Job VALUES ('Idaline', 'Tremaine', 'Jenilee', '2020-10-28', '2020-12-03', '2020-08-31', 'DONE', '0.8', 'CREDITCARD', 'PTB', '0.0', 'CT Scan of Bi Verteb Art using Oth Contrast');
+INSERT INTO Job VALUES ('Bell', 'Romola', 'Karry', '2020-11-17', '2021-01-10', '2020-09-21', 'DONE', '4.2', 'CREDITCARD', 'PTB', '0.0', 'Computerized Tomography (CT Scan) of Bi Pelvic Vein');
+INSERT INTO Job VALUES ('Valencia', 'Hilarius', 'Rebeca', '2020-11-23', '2020-12-02', '2020-09-27', 'DONE', '3.9', 'CREDITCARD', 'CTP', '0.0', 'Compression of Left Lower Leg using Pressure Dressing');
+INSERT INTO Job VALUES ('Mae', 'Gianna', 'Cacilie', '2020-11-11', '2021-01-26', '2020-09-15', 'DONE', '0.2', 'CASH', 'PTB', '0.0', 'Planar Nucl Med Imag Up Extrem Lymph w Oth Radionuclide');
+INSERT INTO Job VALUES ('Edythe', 'Hildagard', 'Jania', '2020-11-06', '2020-11-30', '2020-09-18', 'DONE', '0.8', 'CREDITCARD', 'POD', '0.0', 'Orofacial Myofunctional Treatment using AV Equipment');
+INSERT INTO Job VALUES ('Maureene', 'Winny', 'Lopez', '2020-10-08', '2020-12-26', '2020-09-09', 'DONE', '0.7', 'CREDITCARD', 'PTB', '0.0', 'Fluoroscopy of L Int Mamm Graft using Oth Contrast');
+INSERT INTO Job VALUES ('Korey', 'Holly', 'Arden', '2020-10-11', '2021-01-13', '2020-09-14', 'DONE', '0.5', 'CREDITCARD', 'CTP', '0.0', 'Planar Nucl Med Imag of Bi Low Extrem using Technetium 99m');
+INSERT INTO Job VALUES ('Mignon', 'Gianna', 'Theodosia', '2020-11-26', '2020-12-07', '2020-09-05', 'DONE', '3.5', 'CREDITCARD', 'PTB', '0.0', 'Tomo Nucl Med Imag of Low Extrem using Oth Radionuclide');
+INSERT INTO Job VALUES ('Freddy', 'Allin', 'Brewer', '2020-11-28', '2021-01-24', '2020-09-26', 'DONE', '3.5', 'CREDITCARD', 'PTB', '0.0', 'Plain Radiography of Left Lacrimal Duct using H Osm Contrast');
+INSERT INTO Job VALUES ('Odo', 'Quincey', 'Hendrika', '2020-10-09', '2021-01-16', '2020-09-12', 'DONE', '3.9', 'CASH', 'CTP', '0.0', 'Motor Functn Trmt Neuro Low Back/LE w Assist Equip');
+INSERT INTO Job VALUES ('Ansley', 'Akim', 'Charmion', '2020-11-24', '2021-01-21', '2020-09-16', 'DONE', '0.1', 'CREDITCARD', 'PTB', '0.0', 'Removal of Cast on Right Finger');
+INSERT INTO Job VALUES ('Freddy', 'Morissa', 'Imelda', '2020-11-28', '2021-01-03', '2020-09-26', 'DONE', '2.3', 'CREDITCARD', 'POD', '0.0', 'HDR Brachytherapy of Inguinal Lymph using Oth Isotope');
+INSERT INTO Job VALUES ('Jami', 'Morissa', 'Imelda', '2020-10-23', '2021-01-25', '2020-09-05', 'DONE', '3.3', 'CREDITCARD', 'POD', '0.0', 'CT Scan of Kidney Transplant using Oth Contrast');
+INSERT INTO Job VALUES ('Rabbi', 'Hilarius', 'Marissa', '2020-10-16', '2020-12-24', '2020-09-04', 'DONE', '3.2', 'CASH', 'PTB', '0.0', 'Sensorineural Acuity Assessment using Sound Field/Booth');
+INSERT INTO Job VALUES ('Edythe', 'Morissa', 'Imelda', '2020-10-12', '2020-12-19', '2020-09-12', 'DONE', '0.5', 'CASH', 'PTB', '0.0', 'Sensory/Processing Assess Integu Low Back/LE w Oth Equip');
+INSERT INTO Job VALUES ('Ike', 'Allin', 'Ernesta', '2020-10-29', '2020-12-10', '2020-09-25', 'DONE', '1.5', 'CASH', 'PTB', '0.0', 'Hyperthermia of Back Skin');
+INSERT INTO Job VALUES ('Ansley', 'Akim', 'Charmion', '2020-10-20', '2021-01-14', '2020-09-10', 'DONE', '1.6', 'CASH', 'POD', '0.0', 'Coord/Dexterity Trmt Integu Up Back/UE w Orthosis');
+INSERT INTO Job VALUES ('Inessa', 'Holly', 'Arden', '2020-11-11', '2020-12-09', '2020-09-14', 'DONE', '3.9', 'CREDITCARD', 'POD', '0.0', 'Fluoroscopy of Lumbar Facet Joint(s) using Other Contrast');
+INSERT INTO Job VALUES ('Peg', 'Akim', 'Charmion', '2020-10-19', '2021-01-26', '2020-09-28', 'DONE', '4.7', 'CASH', 'POD', '0.0', 'Fluoroscopy of Left Foot/Toe Joint using Other Contrast');
+INSERT INTO Job VALUES ('Dorthy', 'Romola', 'Sabine', '2020-10-18', '2021-01-23', '2020-09-23', 'DONE', '0.6', 'CREDITCARD', 'POD', '0.0', 'Wound Management Treatment of Musculosk Whole');
+INSERT INTO Job VALUES ('Hulda', 'Akim', 'Charmion', '2020-11-26', '2020-12-04', '2020-09-28', 'DONE', '2.2', 'CREDITCARD', 'POD', '0.0', 'CT Scan of L Tibia/Fibula using L Osm Contrast');
+INSERT INTO Job VALUES ('Felicio', 'Winny', 'Ashlan', '2020-10-26', '2020-12-30', '2020-09-24', 'DONE', '4.8', 'CREDITCARD', 'CTP', '0.0', 'Low Dose Rate (LDR) Brachytherapy of Testis using Iodine 125');
+INSERT INTO Job VALUES ('Sol', 'Romola', 'Sabine', '2020-10-03', '2020-12-07', '2020-08-31', 'DONE', '2.1', 'CREDITCARD', 'CTP', '0.0', 'MRI of Bi Low Extrem Vein using Oth Contrast');
+INSERT INTO Job VALUES ('Jocelyn', 'Gianna', 'Renata', '2020-10-21', '2020-12-05', '2020-09-17', 'DONE', '3.7', 'CASH', 'POD', '0.0', 'LDR Brachytherapy of Pancreas using Palladium 103');
+INSERT INTO Job VALUES ('Jeannie', 'Allin', 'Ernesta', '2020-10-30', '2020-12-08', '2020-08-31', 'DONE', '1.0', 'CASH', 'POD', '0.0', 'Beam Radiation of Soft Palate using Photons <1 MeV');
+INSERT INTO Job VALUES ('Hiram', 'Akim', 'Charmion', '2020-11-03', '2020-12-14', '2020-09-27', 'DONE', '4.7', 'CREDITCARD', 'POD', '0.0', 'Removal of Packing Material on Right Upper Arm');
+INSERT INTO Job VALUES ('Manuel', 'Hilarius', 'Marissa', '2020-11-06', '2021-01-12', '2020-09-23', 'DONE', '0.9', 'CREDITCARD', 'POD', '0.0', 'Computerized Tomography (CT Scan) of Bi Pelvic Vein');
+INSERT INTO Job VALUES ('Melisa', 'Holly', 'Arden', '2020-10-02', '2020-12-13', '2020-09-10', 'DONE', '2.7', 'CASH', 'CTP', '0.0', 'Beam Radiation of Leg Skin using Neutrons');
+INSERT INTO Job VALUES ('Vaughan', 'Holly', 'Arden', '2020-11-22', '2021-01-04', '2020-09-17', 'DONE', '4.6', 'CASH', 'CTP', '0.0', 'Wound Mgmt Trmt Musculosk Up Back/UE w Electrotherap Equip');
+INSERT INTO Job VALUES ('Osmond', 'Morissa', 'Imelda', '2020-11-23', '2020-11-30', '2020-09-05', 'DONE', '4.2', 'CREDITCARD', 'POD', '0.0', 'Removal of Bandage on Right Lower Leg');
+INSERT INTO Job VALUES ('Mendel', 'Quincey', 'Hendrika', '2020-11-17', '2020-12-23', '2020-09-03', 'DONE', '1.7', 'CREDITCARD', 'POD', '0.0', 'Removal of Splint on Left Lower Arm');
+INSERT INTO Job VALUES ('Brendon', 'Winny', 'Ashlan', '2020-11-11', '2021-01-17', '2020-09-21', 'DONE', '0.0', 'CASH', 'POD', '0.0', 'Planar Nucl Med Imag of R Breast using Oth Radionuclide');
+INSERT INTO Job VALUES ('Debbi', 'Hildagard', 'Jania', '2020-11-25', '2020-12-28', '2020-09-13', 'DONE', '1.5', 'CREDITCARD', 'CTP', '0.0', 'LDR Brachytherapy of Nose using Californium 252');
+INSERT INTO Job VALUES ('Norby', 'Hildagard', 'Jania', '2020-10-17', '2021-01-13', '2020-09-12', 'DONE', '3.9', 'CASH', 'PTB', '0.0', 'Fluoroscopy of Pancreatic Ducts using High Osmolar Contrast');
+INSERT INTO Job VALUES ('Flem', 'Tremaine', 'Jenilee', '2020-10-12', '2020-12-26', '2020-09-21', 'DONE', '2.4', 'CREDITCARD', 'POD', '0.0', 'Ultrasonography of Right Renal Artery');
+INSERT INTO Job VALUES ('Dalt', 'Quincey', 'Hendrika', '2020-11-28', '2020-12-30', '2020-09-14', 'DONE', '1.5', 'CREDITCARD', 'POD', '0.0', 'Beam Radiation of Duodenum using Electrons');
+
+UPDATE Job SET pousername = pousername;
 /* END OF DATA INITIALISATION */
+
+/* START OF DATA CHECK */
+SELECT COUNT(*) FROM administrator;
+SELECT COUNT(*) FROM appuser;
+SELECT COUNT(*) FROM caretaker;
+SELECT COUNT(*) FROM caretakercaterspetcategory;
+SELECT COUNT(*) FROM caretakerearnssalary;
+SELECT COUNT(*) FROM fulltime;
+SELECT COUNT(*) FROM fulltimeappliesleaves;
+SELECT COUNT(*) FROM job;
+SELECT COUNT(*) FROM parttime;
+SELECT COUNT(*) FROM parttimeindicatesavailability;
+SELECT COUNT(*) FROM pet;
+SELECT COUNT(*) FROM petcategory;
+SELECT COUNT(*) FROM petownerregisterscreditcard;
+/* END OF DATA CHECK */;
+

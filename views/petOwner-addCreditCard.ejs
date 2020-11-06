@@ -13,7 +13,7 @@
                 <h1 class="mb-2">Register Credit Card</h1> <br />
                 <div class="d-flex flex-row justify-content-between">
                     <div style="min-width: 50%">
-                        <form id="html_form" action="petOwner-creditCard" role="form" method="post">
+                        <form id="html_form" action="petOwner-addCreditCard" role="form" method="post">
                             <div class="form-group w-75 mb-2">
                                 <label for="cardnumber">Card Number</label>
                                 <input type="text" class="form-control" id="cardnumber" name="cardnumber"
@@ -31,8 +31,8 @@
                             </div>
                             <div class="form-group w-75 mb-3">
                                 <label for="expirydate">Expiry Date</label>
-                                <input type="date" class="form-control" id="expirydate" name="expirydate"
-                                    required></input>
+                                <input type="date" class="form-control" min="1900-01-01" max="2100-01-01"
+                                    id="expirydate" name="expirydate" required></input>
                             </div>
                             <button type="submit" class="btn btn-primary">Register</button>
                         </form>

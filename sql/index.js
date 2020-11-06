@@ -25,7 +25,13 @@ sql.query = {
 	petowner_creditCard: "SELECT * FROM petownerregisterscreditcard WHERE username = $1 ORDER BY expirydate ASC",
 
 	// Caretaker profile Queries
+
 	caretaker_petType: "SELECT c.category, pc.baseprice FROM caretakercaterspetcategory c JOIN petcategory pc WHERE c.username = $1",
+
+	caretaker_checkstatus: "SELECT * FROM caretaker WHERE username = $1",
+	caretaker_asAppUser: "SELECT * FROM caretaker NATURAL JOIN appuser WHERE username = $1",
+	caretaker_petType: "SELECT * FROM caretaker_petcategory WHERE username = $1",
+
 	caretaker_petLimit: "",
 	caretaker_review: "SELECT review FROM job WHERE ctusername = $1",
 	caretaker_jobview: "SELECT * FROM job WHERE ctusername = $1",
@@ -62,6 +68,9 @@ sql.query = {
 	monthly_job: `SELECT COUNT(*) FROM job 
 					WHERE date_part('month', startdate) = date_part('month', CURRENT_DATE) 
 						AND date_part('year', startdate) = date_part('year', CURRENT_DATE)`,
+	monthly_salary: `SELECT SUM(totalamount) FROM caretakerearnssalary 
+						WHERE date_part('month', salarydate) = date_part('month', CURRENT_DATE) 
+							AND date_part('year', salarydate) = date_part('year', CURRENT_DATE)`,
 	top_caretakers: `SELECT username, totalamount FROM caretakerearnssalary 
 						WHERE date_part('month', salarydate) = date_part('month', CURRENT_DATE) 
 							AND date_part('year', salarydate) = date_part('year', CURRENT_DATE)
@@ -98,11 +107,15 @@ sql.query = {
 	// Register credit card
 	register_credit_card: "INSERT INTO petownerregisterscreditcard VALUES ($1,$2,$3,$4,$5)",
 
-	// Register credit card
+	// Register pet
 	register_pet: "INSERT INTO pet VALUES ($1,$2,$3,$4,$5,$6,$7,$8)",
 
+	// Remove pet
+	remove_pet: "DELETE FROM pet WHERE username = $1 AND name = $2",
+
 	search_caretaker: `SELECT *
-		FROM fulltime f JOIN appuser u ON f.username = u.username
+		FROM fulltime f JOIN appuser u ON f.username = u.username AND f.username <> $3
+		JOIN caretaker c ON f.username = c.username
 		WHERE NOT EXISTS (
 			SELECT leavedate
 			FROM fulltimeappliesleaves

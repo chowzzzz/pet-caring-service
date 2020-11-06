@@ -3,7 +3,8 @@
 
 <head>
 	<%- include('./partials/head'); %>
-	<script src="javascripts/searchScript.js"></script>
+	<script src="javascripts/searchScript.js">
+	</script>
 </head>
 
 <body>
@@ -12,8 +13,8 @@
 		<div class="container rounded bg-white pl-5 pr-5 pt-3 pb-3">
 			<h1>Caretaker Search</h1>
 			<br>
-			<div class="d-flex flex-row justify-content-between ">
-				<form id="html_form" action="search" role="form" method="post">
+			<div class="d-flex flex-row justify-content-between">
+				<form id="form1" action="search" role="form" method="post">
 					<div class="d-flex flex-column">
 						<div class="d-flex flex-row w-50">
 							<span class="m-2">Dates:</span>
@@ -31,9 +32,10 @@
 					<div id="optional" style="display: none">
 						<div class="d-flex flex-row justify-content-between">
 							<span class="m-2">Username:</span>
-							<input type="text" class="form-control" placeholder="Enter username">
+							<input type="text" class="form-control" id="username" name="username"
+								placeholder="Enter username">
 							<span class="m-2">Name:</span>
-							<input type="text" class="form-control" placeholder="Enter name">
+							<input type="text" class="form-control" id="name" name="name" placeholder="Enter name">
 						</div>
 						<br>
 					</div>
@@ -43,19 +45,31 @@
 				</form>
 			</div>
 			<br>
+			<span> Found <%= data.length%> results </span>
 			<% for(var i=0; i<data.length; i++) { %>
-			<div class="d-flex flex-row justify-content-between rounded border p-3 mb-2">
-				<div>
-					<span> <b><%= data[i].name%></b></span> <br>
-					<span><%= data[i].username%></span>
+			<div class="row rounded border p-3 mb-2">
+				<div class="col-sm">
+					<span> <b><%= data[i].username%></b></span> <br>
+					<span><%= data[i].name%></span>
 				</div>
-				<div>
-					<button class="btn btn-primary btn-lg">Choose</button>
+				<div class="col-sm" align="left">
+					<span> Rating: <%= data[i].avgrating%></span> <br>
+				</div>
+				<div class="col-sm" align="right">
+					<% let url = "caretaker-details?username="+data[i].username%>
+					<form id="form2" action="<%= url %>" role="form" method="post" onsubmit="getDates()">
+						<button class="btn btn-primary btn-lg">Check details</button>
+					</form>
 				</div>
 			</div>
 			<% } %>
 		</div>
 	</main>
+	<script>
+		(function () {
+			window.addEventListener('load', setDefaultDates(), false);
+		})();
+	</script>
 </body>
 
 </html>

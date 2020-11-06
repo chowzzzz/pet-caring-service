@@ -16,7 +16,8 @@ function initRouter(app) {
 		res.render("index", {
 			title: "Express",
 			isSignedIn: req.isAuthenticated(),
-			isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false
+			isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false,
+			isCaretaker: req.isAuthenticated() ? req.user.isCaretaker : false
 		});
 	});
 
@@ -24,7 +25,8 @@ function initRouter(app) {
 		res.render("about", {
 			title: "About",
 			isSignedIn: req.isAuthenticated(),
-			isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false
+			isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false,
+			isCaretaker: req.isAuthenticated() ? req.user.isCaretaker : false
 		});
 	});
 
@@ -32,57 +34,82 @@ function initRouter(app) {
 
 	/* AUTHENTICATED GET */
 	app.get("/petOwner-profile", passport.authMiddleware(), passport.verifyNotAdmin(), petOwnerProfile);
+
+	app.get("/ct-home", passport.authMiddleware(), passport.verifyCaretaker(), caretakerHome);
+
 	app.get("/admin-profile", passport.authMiddleware(), passport.verifyAdmin(), adminProfile);
 	app.get("/admin-dashboard", passport.authMiddleware(), passport.verifyAdmin(), adminDashboard);
 
 	app.get("/admin-user-profiles", passport.authMiddleware(), passport.verifyAdmin(), adminUserProfiles);
 	app.get("/admin-user-profile", passport.authMiddleware(), passport.verifyAdmin(), adminUserProfile);
-	app.get("/admin-caretaker", passport.authMiddleware(), passport.verifyAdmin(), adminCaretaker);
-	app.get("/admin-petowner", passport.authMiddleware(), passport.verifyAdmin(), adminPetowner);
-	app.get("/admin-pet", passport.authMiddleware(), passport.verifyAdmin(), adminPet);
+	app.get("/admin-jobs", passport.authMiddleware(), passport.verifyAdmin(), adminJobs);
 	app.get("/admin-job", passport.authMiddleware(), passport.verifyAdmin(), adminJob);
 	app.get("/admin-profiles", passport.authMiddleware(), passport.verifyAdmin(), adminProfiles);
 
-	app.get("/petOwner-creditCard", passport.authMiddleware(), function (req, res, next) {
-		res.render("petOwner-creditCard", {
+	app.get("/petOwner-addCreditCard", passport.authMiddleware(), passport.verifyNotAdmin(), function (req, res, next) {
+		res.render("petOwner-addCreditCard", {
 			title: "Register Credit Card",
 			isSignedIn: req.isAuthenticated(),
-			isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false
+			isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false,
+			isCaretaker: req.isAuthenticated() ? req.user.isCaretaker : false
 		});
 	});
-	app.get("/petOwner-pet", passport.authMiddleware(), function (req, res, next) {
+
+	app.get("/petOwner-addPet", passport.authMiddleware(), passport.verifyNotAdmin(), function (req, res, next) {
 		pool.query(sql_query.query.all_pet_categories, (err, petcategories) => {
 			if (err) {
 				console.error(err);
 			}
-			res.render("petOwner-pet", {
+			res.render("petOwner-addPet", {
 				title: "Register Pet",
 				petcategories: petcategories.rows,
 				isSignedIn: req.isAuthenticated(),
-				isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false
+				isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false,
+				isCaretaker: req.isAuthenticated() ? req.user.isCaretaker : false
 			});
 		});
 	});
 
+
 	app.get("/caretaker-profile",passport.authMiddleware(),caretakerProfile);
 	app.get("/caretaker-Jobs",passport.authMiddleware(),caretakerJobs);
 	app.get("/caretaker-PetCategory",passport.authMiddleware(),caretakerPetCategory);
+  
+  
+	app.get("/petOwner-deletePet", passport.authMiddleware(), passport.verifyNotAdmin(), function (req, res, next) {
+		// pool.query(sql_query.query.all_pet_categories, (err, petcategories) => {
+		// 	if (err) {
+		// 		console.error(err);
+		// 	}
+			res.render("petOwner-deletePet", {
+				title: "Delete Pet",
+				isSignedIn: req.isAuthenticated(),
+				isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false,
+				isCaretaker: req.isAuthenticated() ? req.user.isCaretaker : false
+			});
+		// });
+	});
 
 	/* POST */
-	app.post("/search", passport.antiMiddleware(), searchCaretaker);
+	app.post("/search", searchCaretaker);
+	app.post("/caretaker-details", caretakerDetails);
 
 	/* AUTHENTICATED POST */
-	app.post("/petOwner-creditCard", passport.authMiddleware(), registerCreditCard); // REGISTER CREDIT CARD
-	app.post("/petOwner-pet", passport.authMiddleware(), registerPet); // REGISTER PET
+	app.post("/petOwner-addCreditCard", passport.authMiddleware(), passport.verifyNotAdmin(), registerCreditCard); // REGISTER CREDIT CARD
+	app.post("/petOwner-addPet", passport.authMiddleware(), passport.verifyNotAdmin(), registerPet); // REGISTER PET
+	app.post("/petOwner-deletePet", passport.authMiddleware(), passport.verifyNotAdmin(), removePet); // REMOVE PET
 
-	app.post("/editAdmin", passport.authMiddleware(), editAdmin);
+	app.post("/editAdmin", passport.authMiddleware(), passport.verifyAdmin(), editAdmin);
+
+	app.post("/caretaker-bidding", passport.authMiddleware(), passport.verifyNotAdmin(), caretakerBidding);
 
 	/* SIGNUP */
 	app.get("/signup", passport.antiMiddleware(), function (req, res, next) {
 		res.render("signup", {
 			title: "Sign Up",
 			isSignedIn: req.isAuthenticated(),
-			isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false
+			isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false,
+			isCaretaker: req.isAuthenticated() ? req.user.isCaretaker : false
 		});
 	});
 
@@ -93,14 +120,15 @@ function initRouter(app) {
 		res.render("signin", {
 			title: "Sign In",
 			isSignedIn: req.isAuthenticated(),
-			isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false
+			isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false,
+			isCaretaker: req.isAuthenticated() ? req.user.isCaretaker : false
 		});
 	});
 
 	app.post(
 		"/signin",
 		passport.authenticate("user-local", {
-			successRedirect: "/users",
+			successRedirect: "/",
 			failureRedirect: "/signin"
 		})
 	);
@@ -118,7 +146,8 @@ function initRouter(app) {
 		res.render("admin-signin", {
 			title: "Administrator Sign In",
 			isSignedIn: req.isAuthenticated(),
-			isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false
+			isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false,
+			isCaretaker: req.isAuthenticated() ? req.user.isCaretaker : false
 		});
 	});
 
@@ -135,7 +164,8 @@ function initRouter(app) {
 		res.render("adminCreateNew", {
 			title: "Create New Administrator",
 			isSignedIn: req.isAuthenticated(),
-			isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false
+			isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false,
+			isCaretaker: req.isAuthenticated() ? req.user.isCaretaker : false
 		});
 	});
 
@@ -144,24 +174,39 @@ function initRouter(app) {
 
 // Define functions to get your data + routes here if its too long in the intiRouter() function
 // GET
+function users(req, res, next) {
+	pool.query(sql_query.query.all_users, (err, data) => {
+		res.render("users", {
+			title: "Data",
+			data: data.rows,
+			isSignedIn: req.isAuthenticated(),
+			isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false,
+			isCaretaker: req.isAuthenticated() ? req.user.isCaretaker : false
+		});
+	});
+}
 
 function petOwnerProfile(req, res, next) {
 	const username = req.user.username;
 	pool.query(sql_query.query.get_user, [username], (err, details) => {
 		if (err) {
 			console.error(err);
+			return;
 		}
 		pool.query(sql_query.query.all_pets, [username], (err, pets) => {
 			if (err) {
 				console.error(err);
+				return;
 			}
 			pool.query(sql_query.query.petowner_job, [username], (err, reservations) => {
 				if (err) {
 					console.error(err);
+					return;
 				}
 				pool.query(sql_query.query.petowner_creditCard, [username], (err, creditcard) => {
 					if (err) {
 						console.error(err);
+						return;
 					}
 					res.render("petOwner-profile", {
 						title: "Pet Owner",
@@ -170,11 +215,21 @@ function petOwnerProfile(req, res, next) {
 						reservations: reservations.rows,
 						creditcard: creditcard.rows,
 						isSignedIn: req.isAuthenticated(),
-						isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false
+						isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false,
+						isCaretaker: req.isAuthenticated() ? req.user.isCaretaker : false
 					});
 				});
 			});
 		});
+	});
+}
+
+function caretakerHome(req, res, next) {
+	res.render("caretakerHome", {
+		title: "Caretaker Home",
+		isSignedIn: req.isAuthenticated(),
+		isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false,
+		isCaretaker: req.isAuthenticated() ? req.user.isCaretaker : false
 	});
 }
 
@@ -195,22 +250,29 @@ function adminDashboard(req, res, next) {
 					if (err) {
 						console.error(err);
 					}
-					let username = topCaretakers.rows.map((a) => a.username);
-					let totalAmount = topCaretakers.rows.map((a) => a.totalamount);
+					pool.query(sql_query.query.monthly_salary, (err, monthly_salary) => {
+						if (err) {
+							console.error(err);
+						}
+						let username = topCaretakers.rows.map((a) => a.username);
+						let totalAmount = topCaretakers.rows.map((a) => a.totalamount);
 
-					let month = jobPerformance.rows.map((a) => a.month);
-					let amountpaid = jobPerformance.rows.map((a) => a.amountpaid);
-					console.log(amountpaid);
-					res.render("adminDashboard", {
-						title: "Admin Dashboard",
-						monthly_job: monthlyJob.rows,
-						username: username,
-						totalAmount: totalAmount,
-						month: month,
-						amountpaid: amountpaid,
-						underperformingCt: underperformingCt.rows,
-						isSignedIn: req.isAuthenticated(),
-						isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false
+						let month = jobPerformance.rows.map((a) => a.month);
+						let amountpaid = jobPerformance.rows.map((a) => a.amountpaid);
+						console.log(amountpaid);
+						res.render("adminDashboard", {
+							title: "Admin Dashboard",
+							monthly_job: monthlyJob.rows,
+							monthly_salary: monthly_salary.rows,
+							username: username,
+							totalAmount: totalAmount,
+							month: month,
+							amountpaid: amountpaid,
+							underperformingCt: underperformingCt.rows,
+							isSignedIn: req.isAuthenticated(),
+							isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false,
+							isCaretaker: req.isAuthenticated() ? req.user.isCaretaker : false
+						});
 					});
 				});
 			});
@@ -224,7 +286,8 @@ function adminUserProfiles(req, res, next) {
 			title: "User Profiles",
 			data: data.rows,
 			isSignedIn: req.isAuthenticated(),
-			isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false
+			isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false,
+			isCaretaker: req.isAuthenticated() ? req.user.isCaretaker : false
 		});
 	});
 }
@@ -239,20 +302,28 @@ function adminUserProfile(req, res, next) {
 						pool.query(sql_query.query.caretaker_category, [username], (err, caretaker_category) => {
 							pool.query(sql_query.query.fulltime_leaves, [username], (err, caretaker_leaves) => {
 								pool.query(sql_query.query.yearly_petdays, [username], (err, yearly_petdays) => {
-									pool.query(sql_query.query.monthly_petdays, [username], (err, monthly_petdays) => {
+									pool.query(sql_query.query.monthly_petdays, [username], (err, monthly_stats) => {
 										pool.query(sql_query.query.caretaker_salary, [username], (err, caretaker_salary) => {
 											user = user ? user.rows : null;
 											pets = pets ? pets.rows : null;
 											caretaker_category = caretaker_category ? caretaker_category.rows : null;
-											caretaker_leaves = caretaker_leaves ? caretaker_leaves.rows : null;
-											yearly_petdays = yearly_petdays ? yearly_petdays.rows : null;
-											monthly_petdays = monthly_petdays ? monthly_petdays.rows : null;
-											caretaker_salary = caretaker_salary ? caretaker_salary.rows : null;
-
-											isCaretaker = caretaker ? true : false;
-											isPetowner = pets ? true : false;
-											isFulltime = fulltime ? true : false;
-											isParttime = parttime ? true : false;
+											caretaker_leaves =
+												caretaker_leaves.rows[0] && !caretaker_leaves.rows.length == 0 && caretaker_leaves.rows[0].leaves
+													? caretaker_leaves.rows[0].leaves
+													: 0;
+											yearly_petdays =
+												yearly_petdays.rows[0] && !yearly_petdays.rows.length == 0 && yearly_petdays.rows[0].petdays ? yearly_petdays.rows[0].petdays : 0;
+											let monthly_petdays =
+												monthly_stats.rows[0] && !monthly_stats.rows.length == 0 && monthly_stats.rows[0].petdays ? monthly_stats.rows[0].petdays : 0;
+											let monthly_amount =
+												monthly_stats.rows[0] && !monthly_stats.rows.length == 0 && monthly_stats.rows[0].amountearned
+													? monthly_stats.rows[0].amountearned
+													: 0;
+											caretaker_salary = caretaker_salary.rows[0] && !caretaker_salary.rows.length == 0 ? caretaker_salary.rows[0].totalamount : 0;
+											let isCaretaker = caretaker ? true : false;
+											let isPetowner = pets ? true : false;
+											let isFulltime = fulltime ? true : false;
+											let isParttime = parttime ? true : false;
 											res.render("adminUserProfile", {
 												title: "User Profile",
 												data: user,
@@ -261,13 +332,15 @@ function adminUserProfile(req, res, next) {
 												caretaker_leaves: caretaker_leaves,
 												yearly_petdays: yearly_petdays,
 												monthly_petdays: monthly_petdays,
+												monthly_amount: monthly_amount,
 												caretaker_salary: caretaker_salary,
 												isCaretaker: isCaretaker,
 												isPetowner: isPetowner,
 												isFulltime: isFulltime,
 												isParttime: isParttime,
 												isSignedIn: req.isAuthenticated(),
-												isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false
+												isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false,
+												isCaretaker: req.isAuthenticated() ? req.user.isCaretaker : false
 											});
 										});
 									});
@@ -281,35 +354,21 @@ function adminUserProfile(req, res, next) {
 	});
 }
 
-function adminCaretaker(req, res, next) {
-	res.render("adminCaretaker", {
-		title: "Caretakers",
+function adminJobs(req, res, next) {
+	res.render("adminJobs", {
+		title: "Jobs",
 		isSignedIn: req.isAuthenticated(),
-		isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false
-	});
-}
-
-function adminPetowner(req, res, next) {
-	res.render("adminPetowner", {
-		title: "Pet owners",
-		isSignedIn: req.isAuthenticated(),
-		isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false
-	});
-}
-
-function adminPet(req, res, next) {
-	res.render("adminPet", {
-		title: "Pets",
-		isSignedIn: req.isAuthenticated(),
-		isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false
+		isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false,
+		isCaretaker: req.isAuthenticated() ? req.user.isCaretaker : false
 	});
 }
 
 function adminJob(req, res, next) {
 	res.render("adminJob", {
-		title: "Jobs",
+		title: "Job",
 		isSignedIn: req.isAuthenticated(),
-		isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false
+		isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false,
+		isCaretaker: req.isAuthenticated() ? req.user.isCaretaker : false
 	});
 }
 
@@ -319,7 +378,8 @@ function adminProfiles(req, res, next) {
 			title: "Admin Profiles",
 			data: data.rows,
 			isSignedIn: req.isAuthenticated(),
-			isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false
+			isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false,
+			isCaretaker: req.isAuthenticated() ? req.user.isCaretaker : false
 		});
 	});
 }
@@ -327,11 +387,15 @@ function adminProfiles(req, res, next) {
 function adminProfile(req, res, next) {
 	const username = req.query.username ? req.query.username : req.user.username;
 	pool.query(sql_query.query.get_admin, [username], (err, data) => {
+		if (err) {
+			console.error(err);
+		}
 		res.render("adminProfile", {
 			title: "Admin Profile",
 			data: data.rows,
 			isSignedIn: req.isAuthenticated(),
-			isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false
+			isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false,
+			isCaretaker: req.isAuthenticated() ? req.user.isCaretaker : false
 		});
 	});
 }
@@ -348,23 +412,23 @@ function registerUser(req, res, next) {
 
 	pool.query(sql_query.query.register_user, [username, name, email, password, gender, address, dob], (err, data) => {
 		/* if (err) {
-        console.error("Error in adding user", err);
-        res.redirect("/signup?reg=fail");
-      } else {
-        req.login(
-          {
-            username: username,
-            password: password
-          },
-          function (err) {
-            if (err) {
-              return res.redirect("/signup?reg=fail");
-            } else {
-              return res.redirect("/users");
-            }
-          }
-        );
-      } */
+		console.error("Error in adding user", err);
+		res.redirect("/signup?reg=fail");
+	  } else {
+		req.login(
+		  {
+			username: username,
+			password: password
+		  },
+		  function (err) {
+			if (err) {
+			  return res.redirect("/signup?reg=fail");
+			} else {
+			  return res.redirect("/users");
+			}
+		  }
+		);
+	  } */
 		res.redirect("/petOwner-profile");
 	});
 }
@@ -377,23 +441,23 @@ function registerAdmin(req, res, next) {
 
 	pool.query(sql_query.query.register_admin, [username, name, email, password], (err, data) => {
 		/* if (err) {
-        console.error("Error in adding user", err);
-        res.redirect("/signup?reg=fail");
-      } else {
-        req.login(
-          {
-            username: username,
-            password: password
-          },
-          function (err) {
-            if (err) {
-              return res.redirect("/signup?reg=fail");
-            } else {
-              return res.redirect("/users");
-            }
-          }
-        );
-      } */
+		console.error("Error in adding user", err);
+		res.redirect("/signup?reg=fail");
+	  } else {
+		req.login(
+		  {
+			username: username,
+			password: password
+		  },
+		  function (err) {
+			if (err) {
+			  return res.redirect("/signup?reg=fail");
+			} else {
+			  return res.redirect("/users");
+			}
+		  }
+		);
+	  } */
 		res.redirect("/admin-dashboard");
 	});
 }
@@ -420,8 +484,16 @@ function registerPet(req, res, next) {
 	const personality = req.body.personality;
 	const category = req.body.category;
 
-	console.log(category);
 	pool.query(sql_query.query.register_pet, [username, petname, dateofbirth, gender, description, specialreqs, personality, category], (err, data) => {
+		res.redirect("/petOwner-profile");
+	});
+}
+
+function removePet(req, res, next) {
+	const username = req.user.username;
+	const petname = req.body.petname;
+
+	pool.query(sql_query.query.remove_pet, [username, petname], (err, data) => {
 		res.redirect("/petOwner-profile");
 	});
 }
@@ -452,19 +524,20 @@ function editAdmin(req, res, next) {
 }
 
 function search(req, res, next) {
-	pool.query(sql_query.query.all_users, (err, data) => {
-		res.render("search", {
-			title: "Data",
-			data: data.rows,
-			isSignedIn: req.isAuthenticated()
-		});
+	res.render("search", {
+		title: "Data",
+		data: {},
+		isSignedIn: req.isAuthenticated(),
+		isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false,
+		isCaretaker: req.isAuthenticated() ? req.user.isCaretaker : false
 	});
 }
 
 function searchCaretaker(req, res, next) {
+	const username = req.isAuthenticated() ? req.user.username : "";
 	const start = req.body.start;
 	const end = req.body.end;
-	pool.query(sql_query.query.search_caretaker, [start, end], (err, data) => {
+	pool.query(sql_query.query.search_caretaker, [start, end, username], (err, data) => {
 		if (err) {
 			console.log(err);
 			return;
@@ -473,7 +546,77 @@ function searchCaretaker(req, res, next) {
 		res.render("search", {
 			title: "Data",
 			data: data.rows,
-			isSignedIn: req.isAuthenticated()
+			isSignedIn: req.isAuthenticated(),
+			isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false,
+			isCaretaker: req.isAuthenticated() ? req.user.isCaretaker : false
+		});
+	});
+}
+
+function caretakerDetails(req, res, next) {
+	const username = req.query.username;
+	pool.query(sql_query.query.caretaker_asAppUser, [username], (err, details) => {
+		if (err) {
+			console.log(err);
+			return;
+		}
+		pool.query(sql_query.query.caretaker_category, [username], (err, petCategories) => {
+			if (err) {
+				console.error(err);
+				return;
+			}
+			pool.query(sql_query.query.caretaker_jobview, [username], (err, reservations) => {
+				if (err) {
+					console.error(err);
+					return;
+				}
+				res.render("caretaker-details", {
+					title: "Data",
+					username,
+					start: req.query.start,
+					end: req.query.end,
+					details: details.rows,
+					petCategories: petCategories.rows,
+					reservations: reservations.rows,
+					isSignedIn: req.isAuthenticated(),
+					isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false,
+					isCaretaker: req.isAuthenticated() ? req.user.isCaretaker : false
+				});
+			});
+		});
+	});
+}
+
+function caretakerBidding(req, res, next) {
+	const username = req.query.username;
+	pool.query(sql_query.query.caretaker_asAppUser, [username], (err, details) => {
+		if (err) {
+			console.log(err);
+			return;
+		}
+		pool.query(sql_query.query.petowner_creditCard, [username], (err, cards) => {
+			if (err) {
+				console.error(err);
+				return;
+			}
+			pool.query(sql_query.query.caretaker_jobview, [username], (err, reservations) => {
+				if (err) {
+					console.error(err);
+					return;
+				}
+				res.render("caretaker-bidding", {
+					title: "Data",
+					username,
+					start: req.query.start,
+					end: req.query.end,
+					details: details.rows,
+					cards: cards.rows,
+					reservations: reservations.rows,
+					isSignedIn: req.isAuthenticated(),
+					isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false,
+					isCaretaker: req.isAuthenticated() ? req.user.isCaretaker : false
+				});
+			});
 		});
 	});
 }

@@ -92,12 +92,12 @@
 					<tbody>
 						<tr>
 							<% if (isFulltime) { %>
-							<td><%= caretaker_leaves[0].leaves%></td>
+							<td><%= caretaker_leaves %></td>
 							<% } %>
-							<td><%= yearly_petdays[0].petdays%></td>
-							<td><%= monthly_petdays[0].petdays%></td>
-							<td>$<%= monthly_petdays[0].amountearned%></td>
-							<td>$<%= caretaker_salary[0].totalamount%></td>
+							<td><%= yearly_petdays%></td>
+							<td><%= monthly_petdays%></td>
+							<td>$<%= monthly_amount%></td>
+							<td>$<%= caretaker_salary%></td>
 						</tr>
 					</tbody>
 				</table>

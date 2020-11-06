@@ -1,9 +1,11 @@
 <!DOCTYPE html>
 <html>
+
 <head>
 	<%- include('./partials/head'); %>
 	<script src="javascripts/signupScript.js"></script>
 </head>
+
 <body>
 	<%- include('./partials/navbar'); %>
 	<main>
@@ -69,8 +71,8 @@
 			</div>
 	</main>
 	<script>
-		(function() {
-			window.addEventListener('load', function() {
+		(function () {
+			window.addEventListener('load', function () {
 				var forms = [document.getElementById('html_form')];
 				var validation = Array.prototype.filter.call(forms, function (form) {
 					form.addEventListener('submit', check, false);

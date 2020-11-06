@@ -8,6 +8,7 @@ var authMiddleware = require("./middleware");
 var antiMiddleware = require("./antimiddle");
 var verifyAdmin = require("./verifyadmin");
 var verifyNotAdmin = require("./verifynotadmin");
+var verifyCaretaker = require("./verifycaretaker");
 
 // Postgre SQL Connection
 const { Pool } = require("pg");
@@ -26,16 +27,34 @@ function findUser(username, callback) {
       console.error("User does not exist");
       return callback(null);
     } else if (data.rows.length == 1) {
-      return callback(null, {
-        userType: "User",
-        username: data.rows[0].username,
-        name: data.rows[0].name,
-        email: data.rows[0].email,
-        password: data.rows[0].password,
-        joindate: data.rows[0].joindate,
-        gender: data.rows[0].gender,
-        address: data.rows[0].address,
-        dateofbirth: data.rows[0].dateofbirth
+      pool.query(sql_query.query.caretaker_checkstatus, [username], (err, data2) => {
+        if(err || data2.rows.length == 0) {
+          return callback(null, {
+            userType: "User",
+            isCaretaker: false,
+            username: data.rows[0].username,
+            name: data.rows[0].name,
+            email: data.rows[0].email,
+            password: data.rows[0].password,
+            joindate: data.rows[0].joindate,
+            gender: data.rows[0].gender,
+            address: data.rows[0].address,
+            dateofbirth: data.rows[0].dateofbirth
+          });
+        }
+
+        return callback(null, {
+          userType: "User",
+          isCaretaker: true,
+          username: data.rows[0].username,
+          name: data.rows[0].name,
+          email: data.rows[0].email,
+          password: data.rows[0].password,
+          joindate: data.rows[0].joindate,
+          gender: data.rows[0].gender,
+          address: data.rows[0].address,
+          dateofbirth: data.rows[0].dateofbirth
+        });
       });
     } else {
       console.error("Duplicate users");
@@ -57,6 +76,7 @@ function findAdmin(username, callback) {
     } else if (data.rows.length == 1) {
       return callback(null, {
         userType: "Admin",
+        isCaretaker: false,
         username: data.rows[0].username,
         name: data.rows[0].name,
         email: data.rows[0].email,
@@ -153,10 +173,11 @@ function initPassport() {
 
   passport.authMiddleware = authMiddleware;
   passport.antiMiddleware = antiMiddleware;
-  passport.verifyAdmin = verifyAdmin;
-  passport.verifyNotAdmin = verifyNotAdmin;
   passport.findUser = findUser;
   passport.findAdmin = findAdmin;
+  passport.verifyAdmin = verifyAdmin;
+  passport.verifyNotAdmin = verifyNotAdmin;
+  passport.verifyCaretaker = verifyCaretaker;
 }
 
 module.exports = initPassport;
