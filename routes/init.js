@@ -879,7 +879,7 @@ function caretakerProfile(req, res, next) {
 				if (err) {
 					console.error(err);
 				}
-				pool.query(sql_query.query.caretaker_rating, [username], (err, rating => {
+				pool.query(sql_query.query.caretaker_rating, [username], (err, rating) => {
 					if (err) {
 						console.error(err);
 					}
