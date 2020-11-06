@@ -248,7 +248,7 @@ ON CareTakerCatersPetCategory
 FOR EACH ROW
 EXECUTE PROCEDURE set_baseprice();
 
-
+/* Caculate base price with reference to rating on update */
 /*----------------------------------------------------*/
 
 CREATE OR REPLACE FUNCTION update_baseprice()
@@ -300,6 +300,60 @@ AFTER UPDATE
 ON caretaker
 FOR EACH ROW
 EXECUTE PROCEDURE update_baseprice();
+
+/*----------------------------------------------------*/
+
+CREATE OR REPLACE FUNCTION limit_leaves()
+  RETURNS TRIGGER AS
+$$
+DECLARE
+  prevdate fulltimeappliesleaves%rowtype;
+  prevprevdate DATE;
+  lastdate DATE;
+  consecdays integer := 0;
+BEGIN
+  FOR prevdate IN SELECT * FROM fulltimeappliesleaves 
+  					WHERE username = new.username 
+					AND date_part('year', leavedate) = date_part('year', CURRENT_DATE) 
+					ORDER BY leavedate DESC LOOP
+
+    prevprevdate = (SELECT * FROM fulltimeappliesleaves 
+					WHERE username = new.username 
+					AND leavedate < prevdate.leavedate 
+					LIMIT 1
+					ORDER BY leavedate DESC);
+    IF new.leavedate < CURRENT_DATE THEN
+      RAISE EXCEPTION 'Please select a future date';
+    ELSE
+      IF prevdate.leavedate - prevprevdate >= 150 THEN
+        consecdays := consecdays + 1;
+      END IF;
+    END IF;
+
+  END LOOP;
+
+  lastdate = (SELECT * FROM fulltimeappliesleaves 
+  			 WHERE username = new.username 
+			 AND leavedate < CURRENT_DATE 
+			 ORDER BY leavedate DESC LIMIT 1);
+  IF CURRENT_DATE - lastdate >= 150 THEN
+    consecdays := consecdays + 1;
+  END IF;
+
+  IF consecdays < 2 THEN
+    RAISE EXCEPTION 'Invalid date, you need to work for at least 2x150 consecutive days a year.';
+  END IF;
+  
+  RETURN NEW;
+END
+$$
+LANGUAGE plpgsql;
+
+CREATE TRIGGER limit_leaves
+BEFORE INSERT
+ON fulltimeappliesleaves
+FOR EACH ROW
+EXECUTE PROCEDURE limit_leaves();
 
 /*----------------------------------------------------*/
 
