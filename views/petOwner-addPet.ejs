@@ -13,7 +13,7 @@
                 <h1 class="mb-2">Register Pet</h1> <br />
                 <div class="d-flex flex-row justify-content-between">
                     <div style="min-width: 50%">
-                        <form id="html_form" action="petOwner-pet" role="form" method="post">
+                        <form id="html_form" action="petOwner-addPet" role="form" method="post">
                             <div class="form-group w-75 mb-2">
                                 <label for="petname">Pet Name</label>
                                 <input type="text" class="form-control" id="petname" name="petname"
@@ -21,7 +21,7 @@
                             </div>
                             <div class="form-group w-75 mb-3">
                                 <label for="dateofbirth">Date of Birth</label>
-                                <input type="date" class="form-control" id="dateofbirth" name="dateofbirth"
+                                <input type="date" class="form-control" min="1900-01-01" max="` + today + `" id="dateofbirth" name="dateofbirth"
                                     required></input>
                             </div>
                             <div class="form-group w-75 mb-2">
@@ -85,22 +85,24 @@
             }, false);
         })();
 
-        onload = function () {
-            document.getElementById('cardnumber').oninput = function () {
-                this.value = cc_format(this.value)
-            }
-        }
-
         function check(event) {
             // Get Values
             var dateofbirth = document.getElementById('dateofbirth').value.trim();
-            if (new Date(dateofbirth).getTime() <= today.getTime()) {
+            if (new Date(dateofbirth).getTime() >= Date.now()) {
                 alert("Invalid Date Of Birth!");
                 event.preventDefault();
                 event.stopPropagation();
                 return false;
             }
         }
+
+        var today = new Date();
+
+        var dd = String(today.getDate()).padStart(2, '0');
+        var mm = String(today.getMonth() + 1).padStart(2, '0');
+        var yyyy = today.getFullYear();
+
+        today = yyyy + '-' + mm + '-' + dd;
     </script>
 </body>
 
