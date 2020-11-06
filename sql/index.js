@@ -12,7 +12,7 @@ sql.query = {
 					FROM appuser u JOIN caretaker ct ON u.username = ct.username
 					WHERE u.isactive = 't'
 					ORDER BY u.username`,
-	get_caretaker: "SELECT username FROM caretaker WHERE username = $1",
+	get_caretaker: "SELECT * FROM caretaker WHERE username = $1",
 
 	// Pet
 	all_pets: "SELECT * FROM pet WHERE username = $1",
@@ -24,9 +24,8 @@ sql.query = {
 	petowner_job: "SELECT * FROM job WHERE pousername = $1",
 	petowner_creditCard: "SELECT * FROM petownerregisterscreditcard WHERE username = $1 ORDER BY expirydate ASC",
 
-  // Caretaker profile Queries
-  caretaker_checkstatus: "SELECT * FROM caretaker WHERE username = $1",
-	caretaker_petType: "SELECT * FROM caretaker_petcategory WHERE username = $1",
+	// Caretaker profile Queries
+	caretaker_checkstatus: "SELECT * FROM caretaker WHERE username = $1",
 	caretaker_petLimit: "",
 	caretaker_review: "SELECT review FROM job WHERE ctusername = $1",
 	caretaker_jobview: "SELECT * FROM job WHERE ctusername = $1",
@@ -45,6 +44,9 @@ sql.query = {
 				WHERE date_part('month',salarydate) = date_part('month', CURRENT_DATE)
 					AND date_part('year',salarydate) = date_part('year', CURRENT_DATE)
 					AND username = $1`,
+	get_reviews: "SELECT pousername, petname, enddate, rating, review FROM job WHERE ctusername = $1;",
+	get_salary: "SELECT * FROM caretakerearnssalary WHERE username = $1 ORDER BY salarydate DESC;",
+	get_salaries: "SELECT * FROM caretakerearnssalary ORDER BY salarydate DESC",
 
 	// Caretaker Availability Queries
 	// full time
@@ -74,11 +76,11 @@ sql.query = {
 							AND date_part('month', job.startdate) = m.month
 						GROUP BY m.month
 						ORDER BY m.month`,
-	underperforming_ct: `SELECT ctusername AS username, SUM(date_part('day', enddate::timestamp - startdate::timestamp)) AS petdays, ROUND(AVG(CAST(rating AS numeric)), 2) AS rating, SUM(amountpaid) AS amountearned
-							FROM job
-							WHERE date_part('month',startdate) = date_part('month', CURRENT_DATE)
-								AND date_part('year',startdate) = date_part('year', CURRENT_DATE)
-							GROUP BY ctusername
+	underperforming_ct: `SELECT job.ctusername AS username, SUM(date_part('day', job.enddate::timestamp - job.startdate::timestamp)) AS petdays, SUM(job.amountpaid) AS amountearned, c.avgrating AS rating
+							FROM job INNER JOIN caretaker c ON job.ctusername = c.username
+							WHERE date_part('month',job.startdate) = date_part('month', CURRENT_DATE)
+								AND date_part('year',job.startdate) = date_part('year', CURRENT_DATE)
+							GROUP BY job.ctusername, c.avgrating
 							ORDER BY petdays ASC
 							LIMIT 10;`,
 	get_admins: "SELECT * FROM administrator WHERE isactive = 't' ORDER BY username ASC",
@@ -86,7 +88,12 @@ sql.query = {
 	edit_admin: "UPDATE administrator SET name = $1, email = $2, password = $3 WHERE username = $4",
 	delete_admin: "UPDATE administrator SET isactive = $1 WHERE username = $2",
 
-	//Sign In
+	// Jobs
+	get_jobs: "SELECT * FROM job ORDER BY startdate DESC",
+	get_filtered_jobs: "SELECT * FROM job WHERE status = $1 ORDER BY startdate DESC",
+	get_job: "SELECT * FROM job WHERE ctusername = $1 AND pousername = $2 AND petname = $3 AND startdate = $4::date;",
+
+	// Sign In
 	signin_query: "SELECT * FROM appuser WHERE username = $1",
 	adminsignin_query: "SELECT * FROM administrator WHERE username = $1",
 
