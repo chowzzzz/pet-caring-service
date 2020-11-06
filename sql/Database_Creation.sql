@@ -206,10 +206,16 @@ CREATE OR REPLACE FUNCTION calc_job_price()
   RETURNS TRIGGER AS
 $$
 BEGIN
+  IF new.status = 'PENDING' THEN 
+  new.amountpaid := 0.0;
+  ELSEIF new.status = 'CANCELLED' THEN
+  new.amountpaid := 0.0;
+  ELSE 
   new.amountpaid := (date_part('day', new.enddate::timestamp - new.startdate::timestamp) 
   					* (SELECT price FROM caretakercaterspetcategory WHERE username = new.ctusername AND category 
 					= (SELECT category FROM pet WHERE username = new.pousername AND name = new.petname)));
-  RETURN NEW;
+  END IF;
+  RETURN NEW;  
 END
 $$
 LANGUAGE plpgsql;

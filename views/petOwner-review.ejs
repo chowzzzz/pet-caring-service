@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <%- include('./partials/head'); %>
+</head>
+
+<body>
+    <%- include('./partials/navbar'); %>
+    <main>
+        <div class="jumbotron">
+            <div class="container rounded bg-white pl-5 pr-5 pt-3 pb-3">
+                <h1 class="mb-2">Review</h1> <br />
+                <div class="d-flex flex-row justify-content-between">
+                    <div style="min-width: 50%">
+                        <form id="html_form" action="petOwner-submitReview" role="form" method="post">
+                            <input
+								type="hidden"
+								class="form-control"
+								id="ctusername"
+								name="ctusername"
+								value="<%= ctusername %>"
+							/>
+							<input
+								type="hidden"
+								class="form-control"
+								id="petname"
+								name="petname"
+								value="<%= petname %>"
+							/>
+							<input
+								type="hidden"
+								class="form-control"
+								id="startdate"
+								name="startdate"
+								value="<%= startdate %>"
+							/>							
+                            <div class="form-group w-75 mb-2">
+                                <label for="username">Username</label>
+                                <input type="text" class="form-control" id="username" name="username"
+                                    value="<%= pousername %>" readonly="readonly" />
+                            </div>
+                            <div class="form-group w-75 mb-3">
+                                <label for="rating">Rating</label>
+                                <select id="rating" name="rating" class="form-control" onfocus='this.size=5;'
+                                    onblur='this.size=1;' onchange='this.size=1; this.blur();'>
+                                    <option value=<%= null %>>-</option>
+                                    <% for (var i = 0.0; i <= 5.0; i += 0.5) { %>
+                                    <option value=<%= i %>><%= i %></option>
+                                    <% } %>
+                                </select>
+                            </div>
+                            <div class="form-group w-75 mb-2">
+                                <label for="review">Review</label>
+                                <input type="text" class="form-control" id="review" name="review"
+                                    placeholder="Enter Review" />
+                            </div>
+                            <button type="submit" class="btn btn-primary">Confirm</button>
+                        </form>
+                    </div>
+                    <div class="d-flex align-items-center">
+                        <img style="width: 100%" src="../images/review1.png" alt="pets1">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</body>
+
+</html>
