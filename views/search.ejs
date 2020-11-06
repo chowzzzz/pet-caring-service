@@ -23,29 +23,27 @@
 							<input type="date" class="form-control" id="end" name="end" required></input>
 						</div>
 						<br>
-						<div class="w-50">
-							<button type="button" id="toggler" class="btn btn-outline-info btn-sm w-50"
-								onclick="toggleOptional()">Add Filters</button>
+						<div class="form-group d-flex flex-row w-50">
+							<label class="m-2" for="category">Category: </label>
+							<select id="category" name="category" class="form-control" onfocus='this.size=5;'
+								onblur='this.size=1;' onchange='this.size=1; this.blur();'>
+								<% for (var i = 0; i < petcategories.length; i++) { %>
+								<option value=<%= petcategories[i].category %>>
+									<%= petcategories[i].category %>
+								</option>
+								<% } %>
+							</select>
 						</div>
 					</div>
 					<br>
-					<div id="optional" style="display: none">
-						<div class="d-flex flex-row justify-content-between">
-							<span class="m-2">Username:</span>
-							<input type="text" class="form-control" id="username" name="username"
-								placeholder="Enter username">
-							<span class="m-2">Name:</span>
-							<input type="text" class="form-control" id="name" name="name" placeholder="Enter name">
-						</div>
-						<br>
-					</div>
 					<div>
 						<button type="submit" class="btn btn-primary btn-lg">Search</button>
 					</div>
 				</form>
 			</div>
 			<br>
-			<span> Found <%= data.length%> results </span>
+			<span> Found <%= numresults%> results for dates <b><%= start%></b> to <b><%= end%></b> and category
+				<b><%= category%></b></span>
 			<% for(var i=0; i<data.length; i++) { %>
 			<div class="row rounded border p-3 mb-2">
 				<div class="col-sm">
@@ -56,8 +54,8 @@
 					<span> Rating: <%= data[i].avgrating%></span> <br>
 				</div>
 				<div class="col-sm" align="right">
-					<% let url = "caretaker-details?username="+data[i].username%>
-					<form id="form2" action="<%= url %>" role="form" method="post" onsubmit="getDates()">
+					<% let url = "caretaker-details?username="+data[i].username+"&category="+category%>
+					<form class="form2" action="<%= url %>" role="form" method="post" onsubmit="getDates()">
 						<button class="btn btn-primary btn-lg">Check details</button>
 					</form>
 				</div>
@@ -68,6 +66,14 @@
 	<script>
 		(function () {
 			window.addEventListener('load', setDefaultDates(), false);
+		})();
+		(function () {
+			window.addEventListener('load', function () {
+				var forms = [document.getElementById('form1')];
+				var validation = Array.prototype.filter.call(forms, function (form) {
+					form.addEventListener('submit', check, false);
+				});
+			}, false);
 		})();
 	</script>
 </body>

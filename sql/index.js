@@ -16,13 +16,12 @@ sql.query = {
 
 	// Pet
 	all_pets: "SELECT * FROM pet WHERE username = $1",
+	all_petsInCategory: "SELECT * FROM pet WHERE username = $1 AND category = $2",
 
 	// Pet category
 	all_pet_categories: "SELECT * FROM petcategory",
 
 	// Petowner profile Queries
-	petowner_job: "SELECT * FROM job WHERE pousername = $1",
-	petowner_creditCard: "SELECT * FROM petownerregisterscreditcard WHERE username = $1 ORDER BY expirydate ASC",
 	petowner_job: "SELECT * FROM job WHERE pousername = $1 ORDER BY status ASC",
 	petowner_creditCard: "SELECT * FROM petownerregisterscreditcard WHERE username = $1 ORDER BY expirydate ASC",
 	register_credit_card: "INSERT INTO petownerregisterscreditcard VALUES ($1,$2,$3,$4,$5)",
@@ -31,7 +30,7 @@ sql.query = {
 	edit_profile: "UPDATE appuser SET name = $1, email = $2, password = $3, address = $4 WHERE username = $5",
 	delete_profile: "UPDATE appuser SET isactive = $1 WHERE username = $2",
 	update_review: "UPDATE job SET rating = $1, review = $2, status = 'DONE' WHERE pousername = $3 AND ctusername = $4 AND petname = $5 AND startdate = $6",
-	
+
 	// Caretaker profile Queries
 
 	caretaker_petType: "SELECT c.category, pc.baseprice FROM caretakercaterspetcategory c JOIN petcategory pc WHERE c.username = $1",
@@ -125,9 +124,13 @@ sql.query = {
 	// Register pet
 	register_pet: "INSERT INTO pet VALUES ($1,$2,$3,$4,$5,$6,$7,$8)",
 
+	// Register job
+	register_job: "INSERT INTO job (ctusername, pousername, petname, startdate, enddate, paymenttype, deliverytype) VALUES ($1,$2,$3,$4,$5,$6,$7)",
+
 	search_caretaker: `SELECT *
 		FROM fulltime f JOIN appuser u ON f.username = u.username AND f.username <> $3
 		JOIN caretaker c ON f.username = c.username
+		JOIN caretakercaterspetcategory cat ON f.username = cat.username AND cat.category = $4
 		WHERE NOT EXISTS (
 			SELECT leavedate
 			FROM fulltimeappliesleaves
