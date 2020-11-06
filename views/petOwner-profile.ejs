@@ -10,8 +10,11 @@
 	<main>
 		<div class="jumbotron">
 			<h1 class="display-1">Pet Owner Summary</h1>
-			<h1 class="display-4"><%= details[0].name %></h1>
+			<h1 class="display-4"><%= details[0].username %></h1>
 			<table class="table">
+				<tr>
+					<td scope="row"><b>Name:</b> <%= details[0].name %></td>
+				</tr>
 				<tr>
 					<td scope="row"><b>Email:</b> <%= details[0].email %></td>
 				</tr>
@@ -90,6 +93,7 @@
 						<th class="th-sm">Description</th>
 						<th class="th-sm">Special Requirements</th>
 						<th class="th-sm">Personality</th>
+						<th class="th-sm">Category</th>
 					</tr>
 				</thead>
 				<tbody>
@@ -114,6 +118,9 @@
 						</td>
 						<td data-title="Personality">
 							<%= pets[i].personality %>
+						</td>
+						<td data-title="Category">
+							<%= pets[i].category %>
 						</td>
 					</tr>
 					<% } %>
@@ -151,27 +158,12 @@
 					<% for (var i = 0; i < reservations.length; i++) { %>
 					<form id="html_form" action="petOwner-review" role="form" method="post">
 						<tr>
-							<input
-								type="hidden"
-								class="form-control"
-								id="ctusername"
-								name="ctusername"
-								value="<%= reservations[i].ctusername %>"
-							/>
-							<input
-								type="hidden"
-								class="form-control"
-								id="petname"
-								name="petname"
-								value="<%= reservations[i].petname %>"
-							/>
-							<input
-								type="hidden"
-								class="form-control"
-								id="startdate"
-								name="startdate"
-								value="<%= reservations[i].startdate %>"
-							/>							
+							<input type="hidden" class="form-control" id="ctusername" name="ctusername"
+								value="<%= reservations[i].ctusername %>" />
+							<input type="hidden" class="form-control" id="petname" name="petname"
+								value="<%= reservations[i].petname %>" />
+							<input type="hidden" class="form-control" id="startdate" name="startdate"
+								value="<%= reservations[i].startdate %>" />
 							<td scope="col" data-title="Care Taker">
 								<%= reservations[i].ctusername %>
 							</td>
@@ -213,7 +205,7 @@
 							</td>
 							<td>
 								<% if (reservations[i].status === "COMPLETED" && reservations[i].rating == null) { %>
-									<button>Review</button>
+								<button>Review</button>
 								<% } %>
 							</td>
 						</tr>
