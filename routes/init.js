@@ -636,13 +636,19 @@ function caretakerProfile(req, res, next) {
 				if (err) {
 					console.error(err);
 				}
-				res.render("caretaker-profile", {
-					title: "Care Taker Profile",
-					details: details.rows,
-					pets: pets.rows,
-					review: review.rows,
-					isSignedIn: req.isAuthenticated(),
-					isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false
+				pool.query(sql_query.query.caretaker_rating, [username], (err, rating => {
+					if (err) {
+						console.error(err);
+					}
+					res.render("caretaker-profile", {
+						title: "Care Taker Profile",
+						details: details.rows,
+						pets: pets.rows,
+						review: review.rows,
+						rating: rating.rows,
+						isSignedIn: req.isAuthenticated(),
+						isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false
+					});
 				});
 			});
 		});
