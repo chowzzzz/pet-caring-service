@@ -33,15 +33,15 @@ sql.query = {
 
 	// Caretaker profile Queries
 
-	caretaker_petType: "SELECT c.category, pc.baseprice FROM caretakercaterspetcategory c JOIN petcategory pc WHERE c.username = $1",
+	caretaker_petType: "SELECT c.category, pc.baseprice FROM caretakercaterspetcategory c NATURAL JOIN petcategory pc WHERE c.username = $1",
 
 	caretaker_checkstatus: "SELECT * FROM caretaker WHERE username = $1",
 	caretaker_asAppUser: "SELECT * FROM caretaker NATURAL JOIN appuser WHERE username = $1",
-	caretaker_petType: "SELECT * FROM caretakercaterspetcategory WHERE username = $1",
+	/*caretaker_petType: "SELECT * FROM caretakercaterspetcategory WHERE username = $1",*/
 
 	caretaker_petLimit: "",
 	caretaker_review: "SELECT review FROM job WHERE ctusername = $1",
-	caretake_rating: "SELECT AVG(rating) FROM job WHERE ctusername = $1",
+	caretaker_rating: "SELECT AVG(rating) FROM job WHERE ctusername = $1",
 	caretaker_jobview: "SELECT * FROM job WHERE ctusername = $1",
 	caretaker_category: "SELECT * FROM caretakercaterspetcategory WHERE username = $1",
 
