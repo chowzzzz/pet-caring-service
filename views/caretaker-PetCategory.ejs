@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<link rel="stylesheet" href="/stylesheets/profile.css" />
+	<%- include('./partials/head'); %>
+</head>
+
+<body>
+	<%- include('./partials/navbar'); %>
+	<main>
+		<div class="jumbotron">
+			<h1 class="display-1">Pet Owner Pet Category</h1>
+			<h1 class="display-4"><%= details[0].name %></h1>
+			<br />
+			<table class="table">
+				<thead class="thead-dark">
+					<tr>
+						<th scope="col">Pet Type</th>
+						<th scope="col">Base Price</th>
+					</tr>
+				</thead>
+				<% for (var i = 0; i < category.length; i++) { %>
+				<tr>
+					<td scope="row" data-title="Pet Type"><%= creditcard[i].category %></td>
+					<td scope="row" data-title="Base Price><%= category[i].baseprice %></td>
+					<td>
+						<!-- <a class="btn"
+							style="background-color: rgb(29, 28, 28); border-color: rgb(29, 28, 28); color: white;" role="button">
+							X
+						</a> -->
+					</td>
+				</tr>
+				<% } %>
+			</table>
+	</main>
+</body>
+
+</html>

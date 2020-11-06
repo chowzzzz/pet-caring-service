@@ -66,6 +66,7 @@ function initRouter(app) {
 
 	app.get("/caretaker-profile",passport.authMiddleware(),caretakerProfile);
 	app.get("/caretaker-Jobs",passport.authMiddleware(),caretakerJobs);
+	app.get("/caretaker-PetCategory",passport.authMiddleware(),caretakerPetCategory);
 
 	/* POST */
 	app.post("/search", passport.antiMiddleware(), searchCaretaker);
@@ -516,7 +517,29 @@ function caretakerJobs(req, res,next) {
 			}
 			res.render("caretaker-Jobs", {
 				title: "Care Taker Jobs",
+				details: details.rows,
 				job: job.rows,
+				isSignedIn: req.isAuthenticated(),
+				isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false
+			});
+		});
+	});
+}
+
+function caretakerPetCategory(req, res,next) {
+	const username = req.user.username;
+	pool.query(sql_query.query.get_user, [username], (err, details) => {
+		if (err) {
+			console.error(err);
+		}
+		pool.query(sql_query.query.caretaker_category, [username], (err, category) => {
+			if (err) {
+				console.error(err);
+			}
+			res.render("caretaker-PetCategory", {
+				title: "Care Taker Category",
+				details: details.rows,
+				category: category.rows,
 				isSignedIn: req.isAuthenticated(),
 				isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false
 			});

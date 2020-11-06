@@ -52,8 +52,8 @@
 				</thead>
 				<% for (var i = 0; i < category.length; i++) { %>
 				<tr>
-					<td scope="row" data-title="Category"><%= CareTakerCatersPetCategory[i].category %></td>
-						<%= CareTakerCatersPetCategory[i].getCategory()-<%= CareTakerCatersPetCategory[i].getCategory().getBasePrice %> %>
+					<td scope="row" data-title="Category"><%= pets[i].category %></td>
+						<%= pets[i].getCategory()-<%= pets[i].getCategory().getBasePrice %> %>
 					</td>
 				</tr>
 				<% } %>
@@ -81,41 +81,41 @@
 						<th scope="col">Review</th>
 					</tr>
 				</thead>
-				<% for (var i = 0; i < reviews.length; i++) { %>
+				<% for (var i = 0; i < review.length; i++) { %>
 				<tr>
 					<td scope="col" data-title="Care Taker">
-						<%= reviews[i].pousername %>
+						<%= review[i].pousername %>
 					</td>
 					<td scope="col" data-title="Pet Name">
-						<%= reviews[i].petname %>
+						<%= review[i].petname %>
 					</td>
 					<td scope="col" data-title="Request Date">
-						<%= reviews[i].requestdate.getDate() %>-<%=
-						reviews[i].requestdate.getMonth() %>-<%=
-								reviews[i].requestdate.getFullYear() %>
+						<%= review[i].requestdate.getDate() %>-<%=
+						review[i].requestdate.getMonth() %>-<%=
+								review[i].requestdate.getFullYear() %>
 					</td>
 					<td scope="col" data-title="Start Date">
-						<%= reviews[i].startdate.getDate() %>-<%=
-						reviews[i].startdate.getMonth() %>-<%=
-						reviews[i].startdate.getFullYear() %>
+						<%= review[i].startdate.getDate() %>-<%=
+						review[i].startdate.getMonth() %>-<%=
+						review[i].startdate.getFullYear() %>
 					</td>
 					<td scope="col" data-title="End Date">
 						<%= reviews[i].enddate.getDate() %>-<%=
 						reviews[i].enddate.getMonth() %>-<%=
 						reviews[i].enddate.getFullYear() %>
 					</td>
-					<td scope="col" data-title="Status"><%= reviews[i].status %></td>
-					<td scope="col" data-title="Status"><%= reviews[i].rating %></td>
+					<td scope="col" data-title="Status"><%= review[i].status %></td>
+					<td scope="col" data-title="Status"><%= review[i].rating %></td>
 					<td scope="col" data-title="Status">
-						<%= reviews[i].paymenttype %>
+						<%= review[i].paymenttype %>
 					</td>
 					<td scope="col" data-title="Status">
-						<%= reviews[i].deliverytype %>
+						<%= review[i].deliverytype %>
 					</td>
 					<td scope="col" data-title="Status">
-						<%= reviews[i].amountpaid %>
+						<%= review[i].amountpaid %>
 					</td>
-					<td scope="col" data-title="Status"><%= reviews[i].review %></td>
+					<td scope="col" data-title="Status"><%= review[i].review %></td>
 				</tr>
 				<% } %>
 			</table>
