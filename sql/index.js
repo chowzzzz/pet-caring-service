@@ -15,14 +15,20 @@ sql.query = {
 	get_caretaker: "SELECT username FROM caretaker WHERE username = $1",
 
 	// Pet
-	all_pets: "SELECT * FROM pet WHERE username = $1",
+	all_pets: "SELECT * FROM pet WHERE username = $1 ORDER BY name ASC",
 
 	// Pet category
 	all_pet_categories: "SELECT * FROM petcategory",
 
 	// Petowner profile Queries
-	petowner_job: "SELECT * FROM job WHERE pousername = $1",
+	petowner_job: "SELECT * FROM job WHERE pousername = $1 ORDER BY status ASC",
 	petowner_creditCard: "SELECT * FROM petownerregisterscreditcard WHERE username = $1 ORDER BY expirydate ASC",
+	register_credit_card: "INSERT INTO petownerregisterscreditcard VALUES ($1,$2,$3,$4,$5)",
+	register_pet: "INSERT INTO pet VALUES ($1,$2,$3,$4,$5,$6,$7,$8)",
+	remove_pet: "DELETE FROM pet WHERE username = $1 AND name = $2",
+	edit_profile: "UPDATE appuser SET name = $1, email = $2, password = $3, address = $4 WHERE username = $5",
+	delete_profile: "UPDATE appuser SET isactive = $1 WHERE username = $2",
+	update_review: "UPDATE job SET rating = $1, review = $2, status = 'DONE' WHERE pousername = $3 AND ctusername = $4 AND petname = $5 AND startdate = $6",
 
 	// Caretaker profile Queries
 	caretaker_checkstatus: "SELECT * FROM caretaker WHERE username = $1",
@@ -96,15 +102,6 @@ sql.query = {
 
 	// Register admin
 	register_admin: "INSERT INTO administrator VALUES ($1,$2,$3,$4,CURRENT_DATE,TRUE)",
-
-	// Register credit card
-	register_credit_card: "INSERT INTO petownerregisterscreditcard VALUES ($1,$2,$3,$4,$5)",
-
-	// Register pet
-	register_pet: "INSERT INTO pet VALUES ($1,$2,$3,$4,$5,$6,$7,$8)",
-
-	// Remove pet
-	remove_pet: "DELETE FROM pet WHERE username = $1 AND name = $2",
 
 	search_caretaker: `SELECT *
 		FROM fulltime f JOIN appuser u ON f.username = u.username AND f.username <> $3
