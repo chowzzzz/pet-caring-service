@@ -40,11 +40,14 @@ function initRouter(app) {
 	app.get("/admin-profile", passport.authMiddleware(), passport.verifyAdmin(), adminProfile);
 	app.get("/admin-dashboard", passport.authMiddleware(), passport.verifyAdmin(), adminDashboard);
 
+	app.get("/admin-profiles", passport.authMiddleware(), passport.verifyAdmin(), adminProfiles);
 	app.get("/admin-user-profiles", passport.authMiddleware(), passport.verifyAdmin(), adminUserProfiles);
 	app.get("/admin-user-profile", passport.authMiddleware(), passport.verifyAdmin(), adminUserProfile);
+	app.get("/admin-caretaker-reviews", passport.authMiddleware(), passport.verifyAdmin(), adminCaretakerReviews);
+	app.get("/admin-caretaker-salary", passport.authMiddleware(), passport.verifyAdmin(), adminCaretakerSalary);
+	app.get("/admin-caretaker-salaries", passport.authMiddleware(), passport.verifyAdmin(), adminCaretakerSalaries);
 	app.get("/admin-jobs", passport.authMiddleware(), passport.verifyAdmin(), adminJobs);
 	app.get("/admin-job", passport.authMiddleware(), passport.verifyAdmin(), adminJob);
-	app.get("/admin-profiles", passport.authMiddleware(), passport.verifyAdmin(), adminProfiles);
 
 	app.get("/petOwner-addCreditCard", passport.authMiddleware(), passport.verifyNotAdmin(), function (req, res, next) {
 		res.render("petOwner-addCreditCard", {
@@ -70,6 +73,13 @@ function initRouter(app) {
 		});
 	});
 
+
+	app.get("/caretaker-profile",passport.authMiddleware(),caretakerProfile);
+	app.get("/caretaker-Jobs",passport.authMiddleware(),caretakerJobs);
+	app.get("/caretaker-PetCategory",passport.authMiddleware(),caretakerPetCategory);
+	app.get("/caretaker-ft-leaves",passport.authMiddleware(),caretakerFTLeaves);
+	app.get("/caretaker-pt-availability",passport.authMiddleware(),caretakerPTAvailable);
+  
 	app.get("/petOwner-deletePet", passport.authMiddleware(), passport.verifyNotAdmin(), function (req, res, next) {
 		res.render("petOwner-deletePet", {
 			title: "Delete Pet",
@@ -109,6 +119,7 @@ function initRouter(app) {
 	app.post("/petOwner-submitReview", passport.authMiddleware(), passport.verifyNotAdmin(), submitReview);
 
 	app.post("/editAdmin", passport.authMiddleware(), passport.verifyAdmin(), editAdmin);
+	app.post("/admin-jobs", passport.authMiddleware(), passport.verifyAdmin(), filterJobs);
 
 	app.post("/caretaker-bidding", passport.authMiddleware(), passport.verifyNotAdmin(), caretakerBidding);
 
@@ -268,7 +279,6 @@ function adminDashboard(req, res, next) {
 
 						let month = jobPerformance.rows.map((a) => a.month);
 						let amountpaid = jobPerformance.rows.map((a) => a.amountpaid);
-						console.log(amountpaid);
 						res.render("adminDashboard", {
 							title: "Admin Dashboard",
 							monthly_job: monthlyJob.rows,
@@ -329,10 +339,10 @@ function adminUserProfile(req, res, next) {
 													? monthly_stats.rows[0].amountearned
 													: 0;
 											caretaker_salary = caretaker_salary.rows[0] && !caretaker_salary.rows.length == 0 ? caretaker_salary.rows[0].totalamount : 0;
-											let isCaretaker = caretaker ? true : false;
-											let isPetowner = pets ? true : false;
-											let isFulltime = fulltime ? true : false;
-											let isParttime = parttime ? true : false;
+											let iscaretaker = caretaker && caretaker.rows.length > 0 ? true : false;
+											let isPetowner = pets && pets !== undefined && pets.length > 0 ? true : false;
+											let isFulltime = fulltime && fulltime.rows.length > 0 ? true : false;
+											let isParttime = parttime && parttime.rows.length > 0 ? true : false;
 											res.render("adminUserProfile", {
 												title: "User Profile",
 												data: user,
@@ -343,7 +353,7 @@ function adminUserProfile(req, res, next) {
 												monthly_petdays: monthly_petdays,
 												monthly_amount: monthly_amount,
 												caretaker_salary: caretaker_salary,
-												isCaretaker: isCaretaker,
+												iscaretaker: iscaretaker,
 												isPetowner: isPetowner,
 												isFulltime: isFulltime,
 												isParttime: isParttime,
@@ -363,21 +373,118 @@ function adminUserProfile(req, res, next) {
 	});
 }
 
-function adminJobs(req, res, next) {
-	res.render("adminJobs", {
-		title: "Jobs",
-		isSignedIn: req.isAuthenticated(),
-		isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false,
-		isCaretaker: req.isAuthenticated() ? req.user.isCaretaker : false
+function adminCaretakerReviews(req, res, next) {
+	const username = req.query.username ? req.query.username : req.user.username;
+	pool.query(sql_query.query.get_reviews, [username], (err, data) => {
+		pool.query(sql_query.query.get_caretaker, [username], (err, caretaker) => {
+			data = data && data.rows.length > 0 ? data.rows : null;
+			caretaker = caretaker && caretaker.rows.length > 0 ? caretaker.rows : null;
+			res.render("adminCaretakerReviews", {
+				title: "Caretaker Reviews",
+				data: data,
+				caretaker: caretaker,
+				username: username,
+				isSignedIn: req.isAuthenticated(),
+				isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false,
+				isCaretaker: req.isAuthenticated() ? req.user.isCaretaker : false
+			});
+		});
 	});
 }
 
+function adminCaretakerSalary(req, res, next) {
+	const username = req.query.username ? req.query.username : req.user.username;
+	pool.query(sql_query.query.get_salary, [username], (err, data) => {
+		data = data && data.rows.length > 0 ? data.rows : null;
+		res.render("adminCaretakerSalary", {
+			title: "Caretaker Salary Details",
+			data: data,
+			username: username,
+			isSignedIn: req.isAuthenticated(),
+			isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false,
+			isCaretaker: req.isAuthenticated() ? req.user.isCaretaker : false
+		});
+	});
+}
+
+function adminCaretakerSalaries(req, res, next) {
+	pool.query(sql_query.query.get_salaries, (err, data) => {
+		data = data && data.rows.length > 0 ? data.rows : null;
+		res.render("adminCaretakerSalaries", {
+			title: "All Caretaker Salary",
+			data: data,
+			isSignedIn: req.isAuthenticated(),
+			isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false,
+			isCaretaker: req.isAuthenticated() ? req.user.isCaretaker : false
+		});
+	});
+}
+
+function adminJobs(req, res, next) {
+	pool.query(sql_query.query.get_jobs, (err, data) => {
+		data = data && data.rows.length > 0 ? data.rows : null;
+		res.render("adminJobs", {
+			title: "Jobs",
+			data: data,
+			selectedValue: "ALL",
+			isSignedIn: req.isAuthenticated(),
+			isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false,
+			isCaretaker: req.isAuthenticated() ? req.user.isCaretaker : false
+		});
+	});
+}
+
+function filterJobs(req, res, next) {
+	const filter = req.body.filter.toUpperCase();
+	console.log(filter);
+	if (filter == "ALL") {
+		pool.query(sql_query.query.get_jobs, (err, data) => {
+			data = data && data.rows.length > 0 ? data.rows : null;
+			res.render("adminJobs", {
+				title: "Jobs",
+				data: data,
+				selectedValue: "ALL",
+				isSignedIn: req.isAuthenticated(),
+				isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false,
+				isCaretaker: req.isAuthenticated() ? req.user.isCaretaker : false
+			});
+		});
+	} else {
+		pool.query(sql_query.query.get_filtered_jobs, [filter], (err, data) => {
+			data = data && data.rows.length > 0 ? data.rows : null;
+			res.render("adminJobs", {
+				title: "Jobs",
+				data: data,
+				selectedValue: filter,
+				isSignedIn: req.isAuthenticated(),
+				isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false,
+				isCaretaker: req.isAuthenticated() ? req.user.isCaretaker : false
+			});
+		});
+	}
+}
+
 function adminJob(req, res, next) {
-	res.render("adminJob", {
-		title: "Job",
-		isSignedIn: req.isAuthenticated(),
-		isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false,
-		isCaretaker: req.isAuthenticated() ? req.user.isCaretaker : false
+	const ctusername = req.query.ctusername;
+	const pousername = req.query.pousername;
+	const petname = req.query.petname;
+
+	let startdate = new Date(req.query.startdate);
+	const offset = startdate.getTimezoneOffset();
+	startdate = new Date(startdate.getTime() - offset * 60 * 1000);
+	startdate = startdate.toISOString().split("T")[0];
+	pool.query(sql_query.query.get_job, [ctusername, pousername, petname, startdate], (err, data) => {
+		if (err) {
+			console.error(err);
+		}
+		data = data && data.rows.length > 0 ? data.rows : null;
+		res.render("adminJob", {
+			title: "Jobs",
+			data: data,
+			isSignedIn: req.isAuthenticated(),
+			isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false,
+			isCaretaker: req.isAuthenticated() ? req.user.isCaretaker : false
+		});
 	});
 }
 
@@ -688,6 +795,123 @@ function caretakerBidding(req, res, next) {
 					isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false,
 					isCaretaker: req.isAuthenticated() ? req.user.isCaretaker : false
 				});
+			});
+		});
+	});
+}
+
+function caretakerProfile(req, res, next) {
+	const username = req.user.username;
+	pool.query(sql_query.query.get_user, [username], (err, details) => {
+		if (err) {
+			console.error(err);
+		}
+		pool.query(sql_query.query.caretaker_petType, [username], (err, pets) => {
+			if (err) {
+				console.error(err);
+			}
+			pool.query(sql_query.query.caretaker_review, [username], (err, review) => {
+				if (err) {
+					console.error(err);
+				}
+				pool.query(sql_query.query.caretaker_rating, [username], (err, rating => {
+					if (err) {
+						console.error(err);
+					}
+					res.render("caretaker-profile", {
+						title: "Care Taker Profile",
+						details: details.rows,
+						pets: pets.rows,
+						review: review.rows,
+						rating: rating.rows,
+						isSignedIn: req.isAuthenticated(),
+						isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false
+					});
+				});
+			});
+		});
+	});
+}
+
+function caretakerJobs(req, res,next) {
+	const username = req.user.username;
+	pool.query(sql_query.query.get_user, [username], (err, details) => {
+		if (err) {
+			console.error(err);
+		}
+		pool.query(sql_query.query.caretaker_jobview, [username], (err, job) => {
+			if (err) {
+				console.error(err);
+			}
+			res.render("caretaker-Jobs", {
+				title: "Care Taker Jobs",
+				details: details.rows,
+				job: job.rows,
+				isSignedIn: req.isAuthenticated(),
+				isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false
+			});
+		});
+	});
+}
+
+function caretakerPetCategory(req, res,next) {
+	const username = req.user.username;
+	pool.query(sql_query.query.get_user, [username], (err, details) => {
+		if (err) {
+			console.error(err);
+		}
+		pool.query(sql_query.query.caretaker_category, [username], (err, category) => {
+			if (err) {
+				console.error(err);
+			}
+			res.render("caretaker-PetCategory", {
+				title: "Care Taker Category",
+				details: details.rows,
+				category: category.rows,
+				isSignedIn: req.isAuthenticated(),
+				isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false
+			});
+		});
+	});
+}
+
+function caretakerFTLeaves(req, res,next) {
+	const username = req.user.username;
+	pool.query(sql_query.query.get_user, [username], (err, details) => {
+		if (err) {
+			console.error(err);
+		}
+		pool.query(sql_query.query.fulltime_leavedays, [username], (err, leaves) => {
+			if (err) {
+				console.error(err);
+			}
+			res.render("caretaker-leaves", {
+				title: "FT Care Taker leaves",
+				details: details.rows,
+				leaves: leaves.rows,
+				isSignedIn: req.isAuthenticated(),
+				isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false
+			});
+		});
+	});
+}
+
+function caretakerPTAvailable(req, res,next) {
+	const username = req.user.username;
+	pool.query(sql_query.query.get_user, [username], (err, details) => {
+		if (err) {
+			console.error(err);
+		}
+		pool.query(sql_query.query.parttime_availdays, [username], (err, available) => {
+			if (err) {
+				console.error(err);
+			}
+			res.render("caretaker-leaves", {
+				title: "FT Care Taker leaves",
+				details: details.rows,
+				available: available.rows,
+				isSignedIn: req.isAuthenticated(),
+				isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false
 			});
 		});
 	});

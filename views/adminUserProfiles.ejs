@@ -7,7 +7,12 @@
 	<body id="page-top">
 		<%- include('./partials/navbar'); %>
 		<div class="jumbotron bg-white">
-			<h1 class="mb-4">Users</h1>
+			<div class="d-flex justify-content-between row mx-2">
+				<h1 class="mb-4">Users</h1>
+				<div class="d-flex align-items-center">
+					<button onclick="window.location='/admin-caretaker-salaries';" class="btn btn-primary py-2 mr-2">View Salaries</button>
+				</div>
+			</div>
 			<table class="table table-bordered table-hover table-striped">
 				<thead>
 					<tr>

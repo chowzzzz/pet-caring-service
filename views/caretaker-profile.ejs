@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<link rel="stylesheet" href="/stylesheets/profile.css" />
+	<%- include('./partials/head'); %>
+</head>
+
+<body>
+	<%- include('./partials/navbar'); %>
+	<main>
+		<div class="jumbotron">
+			<h1 class="display-1">Caretaker Summary</h1>
+			<h1 class="display-4"><%= details[0].name %></h1>
+			<table class="table">
+				<tr>
+					<td scope="row"><b>Email:</b> <%= details[0].email %></td>
+				</tr>
+				<tr>
+					<td scope="row"><b>DOB:</b>
+						<%= details[0].dateofbirth.getDate() %>-
+						<%=	details[0].dateofbirth.getMonth() %>-
+						<%=	details[0].dateofbirth.getFullYear() %>
+					</td>
+				</tr>
+				<tr>
+					<td scope="row"><b>Gender:</b> <%= details[0].gender %></td>
+				</tr>
+				<tr>
+					<td scope="row"><b>Address:</b> <%= details[0].address %></td>
+				</tr>
+				<tr>
+					<td scope="row"><b>Join Date:</b>
+						<%= details[0].joindate.getDate() %>-
+						<%= details[0].joindate.getMonth() %>-
+						<%= details[0].joindate.getFullYear() %>
+					</td>
+				</tr>
+				<tr>
+					<td scope="row"><b>Rating:</b>
+						<%= rating[0].rating %>-
+					</td>
+				</tr>
+			</table>
+			<a class="btn btn-primary btn-lg" style="background-color: rgb(29, 28, 28); border-color: rgb(29, 28, 28);"
+				href="/caretaker-Jobs" role="button">
+				View All Jobs
+			</a>
+
+			<br />
+			<table class="table">
+				<thead class="thead-dark">
+					<tr>
+						<th scope="col">Caretaker's Pet Category</th>
+						<th scope="col">Category</th>
+					</tr>
+				</thead>
+				<% for (var i = 0; i < category.length; i++) { %>
+				<tr>
+					<td scope="row" data-title="Category"><%= pets[i].category %></td>
+						<%= pets[i].getCategory()-<%= pets[i].getCategory().getBasePrice %> %>
+					</td>
+				</tr>
+				<% } %>
+			</table>
+			<a class="btn btn-primary btn-lg" style="background-color: rgb(29, 28, 28); border-color: rgb(29, 28, 28);"
+				href="/caretaker-PetCategory" role="button">
+				Edit Pet Category
+			</a>
+
+			<br /><br /><br />
+			<h1 class="display-5">Reviews</h1>
+			<table class="table">
+				<thead class="thead-dark">
+					<tr>
+						<th scope="col">Pet Owner</th>
+						<th scope="col">Pet Name</th>
+						<th scope="col">Request Date</th>
+						<th scope="col">Start Date</th>
+						<th scope="col">End Date</th>
+						<th scope="col">Status</th>
+						<th scope="col">Rating</th>
+						<th scope="col">Payment Type</th>
+						<th scope="col">Delivery Type</th>
+						<th scope="col">Amount Paid</th>
+						<th scope="col">Review</th>
+					</tr>
+				</thead>
+				<% for (var i = 0; i < review.length; i++) { %>
+				<tr>
+					<td scope="col" data-title="Care Taker">
+						<%= review[i].pousername %>
+					</td>
+					<td scope="col" data-title="Pet Name">
+						<%= review[i].petname %>
+					</td>
+					<td scope="col" data-title="Request Date">
+						<%= review[i].requestdate.getDate() %>-<%=
+						review[i].requestdate.getMonth() %>-<%=
+								review[i].requestdate.getFullYear() %>
+					</td>
+					<td scope="col" data-title="Start Date">
+						<%= review[i].startdate.getDate() %>-<%=
+						review[i].startdate.getMonth() %>-<%=
+						review[i].startdate.getFullYear() %>
+					</td>
+					<td scope="col" data-title="End Date">
+						<%= reviews[i].enddate.getDate() %>-<%=
+						reviews[i].enddate.getMonth() %>-<%=
+						reviews[i].enddate.getFullYear() %>
+					</td>
+					<td scope="col" data-title="Status"><%= review[i].status %></td>
+					<td scope="col" data-title="Status"><%= review[i].rating %></td>
+					<td scope="col" data-title="Status">
+						<%= review[i].paymenttype %>
+					</td>
+					<td scope="col" data-title="Status">
+						<%= review[i].deliverytype %>
+					</td>
+					<td scope="col" data-title="Status">
+						<%= review[i].amountpaid %>
+					</td>
+					<td scope="col" data-title="Status"><%= review[i].review %></td>
+				</tr>
+				<% } %>
+			</table>
+	</main>
+</body>
+
+</html>
