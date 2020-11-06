@@ -37,7 +37,7 @@ sql.query = {
 
 	caretaker_checkstatus: "SELECT * FROM caretaker WHERE username = $1",
 	caretaker_asAppUser: "SELECT * FROM caretaker NATURAL JOIN appuser WHERE username = $1",
-	caretaker_petType: "SELECT * FROM caretaker_petcategory WHERE username = $1",
+	caretaker_petType: "SELECT * FROM caretakercaterspetcategory WHERE username = $1",
 
 	caretaker_petLimit: "",
 	caretaker_review: "SELECT review FROM job WHERE ctusername = $1",
