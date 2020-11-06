@@ -109,7 +109,7 @@ CREATE TABLE CareTakerCatersPetCategory (
 
 CREATE TABLE Pet (
 	username VARCHAR(20),
-	name VARCHAR(50) UNIQUE,
+	name VARCHAR(50),
 	dateofbirth DATE NOT NULL,
 	gender VARCHAR(1) NOT NULL,
 	description VARCHAR(100) NOT NULL,
