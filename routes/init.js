@@ -74,11 +74,11 @@ function initRouter(app) {
 	});
 
 
-	app.get("/caretaker-profile", passport.authMiddleware(), caretakerProfile);
-	app.get("/caretaker-Jobs", passport.authMiddleware(), caretakerJobs);
-	app.get("/caretaker-PetCategory", passport.authMiddleware(), caretakerPetCategory);
-	app.get("/caretaker-ft-leaves", passport.authMiddleware(), caretakerFTLeaves);
-	app.get("/caretaker-pt-availability", passport.authMiddleware(), caretakerPTAvailable);
+	app.get("/caretaker-profile", passport.authMiddleware(), passport.verifyCaretaker(), caretakerProfile);
+	app.get("/caretaker-Jobs", passport.authMiddleware(), passport.verifyCaretaker(), caretakerJobs);
+	app.get("/caretaker-PetCategory", passport.authMiddleware(), passport.verifyCaretaker(), caretakerPetCategory);
+	app.get("/caretaker-ft-leaves", passport.authMiddleware(), passport.verifyCaretaker(), caretakerFTLeaves);
+	app.get("/caretaker-pt-availability", passport.authMiddleware(), passport.verifyCaretaker(), caretakerPTAvailable);
 
 	app.get("/petOwner-deletePet", passport.authMiddleware(), passport.verifyNotAdmin(), function (req, res, next) {
 		res.render("petOwner-deletePet", {
@@ -874,7 +874,8 @@ function caretakerProfile(req, res, next) {
 						review: review.rows,
 						rating: rating.rows,
 						isSignedIn: req.isAuthenticated(),
-						isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false
+            isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false,
+            isCaretaker: req.isAuthenticated() ? req.user.isCaretaker : false
 					});
 				});
 			});
@@ -897,7 +898,8 @@ function caretakerJobs(req, res, next) {
 				details: details.rows,
 				job: job.rows,
 				isSignedIn: req.isAuthenticated(),
-				isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false
+        isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false,
+        isCaretaker: req.isAuthenticated() ? req.user.isCaretaker : false
 			});
 		});
 	});
@@ -918,7 +920,8 @@ function caretakerPetCategory(req, res, next) {
 				details: details.rows,
 				category: category.rows,
 				isSignedIn: req.isAuthenticated(),
-				isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false
+        isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false,
+        isCaretaker: req.isAuthenticated() ? req.user.isCaretaker : false
 			});
 		});
 	});
@@ -939,7 +942,8 @@ function caretakerFTLeaves(req, res, next) {
 				details: details.rows,
 				leaves: leaves.rows,
 				isSignedIn: req.isAuthenticated(),
-				isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false
+        isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false,
+        isCaretaker: req.isAuthenticated() ? req.user.isCaretaker : false
 			});
 		});
 	});
@@ -960,7 +964,8 @@ function caretakerPTAvailable(req, res, next) {
 				details: details.rows,
 				available: available.rows,
 				isSignedIn: req.isAuthenticated(),
-				isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false
+        isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false,
+        isCaretaker: req.isAuthenticated() ? req.user.isCaretaker : false
 			});
 		});
 	});
