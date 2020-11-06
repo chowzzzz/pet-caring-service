@@ -16,6 +16,7 @@ sql.query = {
 
 	// Pet
 	all_pets: "SELECT * FROM pet WHERE username = $1",
+	all_petsInCategory: "SELECT * FROM pet WHERE username = $1 AND category = $2",
 
 	// Pet category
 	all_pet_categories: "SELECT * FROM petcategory",
@@ -116,9 +117,13 @@ sql.query = {
 	// Register pet
 	register_pet: "INSERT INTO pet VALUES ($1,$2,$3,$4,$5,$6,$7,$8)",
 
+	// Register job
+	register_job: "INSERT INTO job (ctusername, pousername, petname, startdate, enddate, paymenttype, deliverytype) VALUES ($1,$2,$3,$4,$5,$6,$7)",
+
 	search_caretaker: `SELECT *
 		FROM fulltime f JOIN appuser u ON f.username = u.username AND f.username <> $3
 		JOIN caretaker c ON f.username = c.username
+		JOIN caretakercaterspetcategory cat ON f.username = cat.username AND cat.category = $4
 		WHERE NOT EXISTS (
 			SELECT leavedate
 			FROM fulltimeappliesleaves
