@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<link rel="stylesheet" href="/stylesheets/profile.css" />
+	<%- include('./partials/head'); %>
+</head>
+
+<body>
+	<%- include('./partials/navbar'); %>
+	<main>
+		<div class="jumbotron">
+			<h1 class="display-1">Care Taker Available Dates</h1>
+			<h1 class="display-4"><%= details[0].name %></h1>
+			<br />
+			<table class="table">
+				<thead class="thead-dark">
+					<tr>
+                        <th scope="col">Start Date</th>
+                        <th scope="col">End Date</th>
+					</tr>
+				</thead>
+				<% for (var i = 0; i < available.length; i++) { %>
+				<tr>
+					<td scope="row" data-title="Start Date"><%= available[i].startdate %></td>
+                    </td>
+                    <td scope="row" data-title="End Date"><%= available[i].enddate %></td>
+					</td>
+				</tr>
+				<% } %>
+            </table>
+        </div>
+	</main>
+</body>
+
+</html>
