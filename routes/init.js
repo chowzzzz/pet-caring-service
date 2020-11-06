@@ -791,7 +791,6 @@ function caretakerDetails(req, res, next) {
 function caretakerBidding(req, res, next) {
 	const username = req.user.username;
 	const category = req.query.category;
-	console.log(category);
 	pool.query(sql_query.query.caretaker_asAppUser, [username], (err, details) => {
 		if (err) {
 			console.log(err);
@@ -814,7 +813,7 @@ function caretakerBidding(req, res, next) {
 					}
 					res.render("caretaker-bidding", {
 						title: "Data",
-						username,
+						username: req.query.username,
 						start: req.query.start,
 						end: req.query.end,
 						category,
@@ -840,27 +839,12 @@ function registerJob(req, res, next) {
 	const enddate = req.query.end;
 	const paymenttype = req.body.payment;
 	const deliverytype = req.body.delivery;
-	const amountpaid = req.body.amountpaid;
 
-	pool.query(sql_query.query.register_job, [ctusername, pousername, petname, startdate, enddate, paymenttype, deliverytype, amountpaid], (err, data) => {
-		/* if (err) {
-		console.error("Error in adding user", err);
-		res.redirect("/signup?reg=fail");
-	  } else {
-		req.login(
-		  {
-			username: username,
-			password: password
-		  },
-		  function (err) {
-			if (err) {
-			  return res.redirect("/signup?reg=fail");
-			} else {
-			  return res.redirect("/users");
-			}
-		  }
-		);
-	  } */
+	pool.query(sql_query.query.register_job, [ctusername, pousername, petname, startdate, enddate, paymenttype, deliverytype], (err, data) => {
+		if (err) {
+			console.error(err);
+			return;
+		}
 		res.redirect("/petOwner-profile");
 	});
 }

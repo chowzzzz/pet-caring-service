@@ -13,15 +13,16 @@
 			<h1>Confirm bidding for <%= username %></h1>
 			<p><b>For dates <%= start %> to <%= end %> and category <%= category %></b></p>
 			<% let url = "register-job?username=" + username + "&start=" + start + "&end=" + end;%>
-			<form id="html_form" action="" role="form" method="post">
+			<% if (pets.length > 0) {%>
+			<form id="html_form" action="<%= url%>" role="form" method="post">
 				<div class="form-group w-75 mb-2">
 					<label for="petname">Pet to be cared for</label>
-					<select class="form-control">
+					<select class="form-control" name="petname">
 						<% for (var i = 0; i < pets.length; i++) { %>
 						<div>
-							<label class="form-control-label" for="POD">
-								<option class="form-check-input" type="radio" id="<%= pets[i].name%>"
-									value="<%= pets[i].name%>" name="petname" required><%= pets[i].name%></option>
+							<label class=" form-control-label" for="<%= pets[i].name%>">
+								<option class="form-check-input" id="<%= pets[i].name%>" value="<%= pets[i].name%>"
+									name="petname" required><%= pets[i].name%></option>
 							</label>
 						</div>
 						<% } %>
@@ -29,22 +30,22 @@
 				</div>
 				<div class="form-group w-75 mb-2">
 					<label for="delivery">Pet delivery method</label>
-					<select class="form-control">
+					<select class="form-control" name="delivery">
 						<div>
-							<label class="form-control-label" for="POD">
-								<option class="form-check-input" type="radio" id="POD" value="POD" name="delivery"
-									required>Pet owner delivery</option>
+							<label class=" form-control-label" for="POD">
+								<option class="form-check-input" id="POD" value="POD" name="delivery" required>Pet owner
+									delivery</option>
 							</label>
 						</div>
 						<div>
 							<label class="form-control-label" for="CTP">
-								<option class="form-check-input" type="radio" id="CTP" value="CTP" name="delivery">
+								<option class="form-check-input" id="CTP" value="CTP" name="delivery">
 									Caretaker pickup</option>
 							</label>
 						</div>
 						<div>
 							<label class="form-control-label" for="PTB">
-								<option class="form-check-input" type="radio" id="PTB" value="PTB" name="delivery">PCS
+								<option class="form-check-input" id="PTB" value="PTB" name="delivery">PCS
 									building transfer</option>
 							</label>
 						</div>
@@ -66,6 +67,10 @@
 				<div class="form-group w-75 mb-3">
 					<button type="submit" class="btn btn-primary">Bid!</button>
 			</form>
+			<% } else {%>
+			<h2>You have no pets for this category!</h2>
+			<a href="/search">Go back to search</a>
+			<% }%>
 		</div>
 	</main>
 </body>

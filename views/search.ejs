@@ -34,23 +34,8 @@
 								<% } %>
 							</select>
 						</div>
-						<br>
-						<div class="w-50">
-							<button type="button" id="toggler" class="btn btn-outline-info btn-sm w-50"
-								onclick="toggleOptional()">Add Filters</button>
-						</div>
 					</div>
 					<br>
-					<div id="optional" style="display: none">
-						<div class="d-flex flex-row justify-content-between">
-							<span class="m-2">Username:</span>
-							<input type="text" class="form-control" id="username" name="username"
-								placeholder="Enter username">
-							<span class="m-2">Name:</span>
-							<input type="text" class="form-control" id="name" name="name" placeholder="Enter name">
-						</div>
-						<br>
-					</div>
 					<div>
 						<button type="submit" class="btn btn-primary btn-lg">Search</button>
 					</div>
@@ -70,7 +55,7 @@
 				</div>
 				<div class="col-sm" align="right">
 					<% let url = "caretaker-details?username="+data[i].username+"&category="+category%>
-					<form id="form2" action="<%= url %>" role="form" method="post" onsubmit="getDates()">
+					<form class="form2" action="<%= url %>" role="form" method="post" onsubmit="getDates()">
 						<button class="btn btn-primary btn-lg">Check details</button>
 					</form>
 				</div>
@@ -81,6 +66,14 @@
 	<script>
 		(function () {
 			window.addEventListener('load', setDefaultDates(), false);
+		})();
+		(function () {
+			window.addEventListener('load', function () {
+				var forms = [document.getElementById('form1')];
+				var validation = Array.prototype.filter.call(forms, function (form) {
+					form.addEventListener('submit', check, false);
+				});
+			}, false);
 		})();
 	</script>
 </body>
