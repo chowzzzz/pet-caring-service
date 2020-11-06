@@ -54,8 +54,8 @@
 					<span> Rating: <%= data[i].avgrating%></span> <br>
 				</div>
 				<div class="col-sm" align="right">
-					<% let url = "caretaker-details?username="+data[i].username+"&category="+category%>
-					<form class="form2" action="<%= url %>" role="form" method="post" onsubmit="getDates()">
+					<% let url = "caretaker-details?username="+data[i].username+"&category="+category+"&start="+start+"&end="+end%>
+					<form class="form2" action="<%= url %>" role="form" method="post">
 						<button class="btn btn-primary btn-lg">Check details</button>
 					</form>
 				</div>
