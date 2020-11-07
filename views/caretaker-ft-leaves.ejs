@@ -7,12 +7,12 @@
 </head>
 
 <body>
-  <%- include('./partials/navbar'); %>
-  <%- include('./partials/caretaker-navbar'); %>
+	<%- include('./partials/navbar'); %>
+	<%- include('./partials/caretaker-navbar'); %>
 	<main>
 		<div class="jumbotron">
 			<h1 class="display-1">Care Taker Leave Dates</h1>
-			<h1 class="display-4"><%= details[0].name %></h1>
+			<h1 class="display-4"><%= details[0].username %></h1>
 			<br />
 			<table class="table">
 				<thead class="thead-dark">
@@ -26,8 +26,8 @@
 					</td>
 				</tr>
 				<% } %>
-            </table>
-        </div>
+			</table>
+		</div>
 	</main>
 </body>
 
