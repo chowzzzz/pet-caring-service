@@ -1015,6 +1015,7 @@ function caretakerFTLeaves(req, res, next) {
         title: "FT Care Taker leaves",
         details: details.rows,
         leaves: leaves.rows,
+        isFullTime: req.isAutenticated(),
         isSignedIn: req.isAuthenticated(),
         isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false
       });
