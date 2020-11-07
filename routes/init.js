@@ -118,6 +118,7 @@ function initRouter(app) {
   app.post("/petOwner-deletePet", passport.authMiddleware(), passport.verifyNotAdmin(), removePet); // REMOVE PET
   app.post("/petOwner-editProfile", passport.authMiddleware(), passport.verifyNotAdmin(), editProfile); // EDIT PET OWNER PROFILE
   app.post("/petOwner-review", passport.authMiddleware(), passport.verifyNotAdmin(), review);
+  app.post("/petOwner-setComplete", passport.authMiddleware(), passport.verifyNotAdmin(), setComplete);
   app.post("/petOwner-submitReview", passport.authMiddleware(), passport.verifyNotAdmin(), submitReview);
 
   app.post("/editAdmin", passport.authMiddleware(), passport.verifyAdmin(), editAdmin);
@@ -230,11 +231,14 @@ function petOwnerProfile(req, res, next) {
             console.error(err);
             return;
           }
+          console.log(reservations.rows);
           res.render("petOwner-profile", {
             title: "Pet Owner",
             details: details.rows,
             pets: pets.rows,
-            reservations: reservations.rows,
+            confirmed: reservations.rows.filter(x => x.status == "CONFIRMED"),
+            completed: reservations.rows.filter(x => x.status == "COMPLETED"),
+            reviewed: reservations.rows.filter(x => x.status == "REVIEWED"),
             creditcard: creditcard.rows,
             isSignedIn: req.isAuthenticated(),
             isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false,
@@ -258,7 +262,7 @@ function caretakerActivate(req, res, next) {
     });
   }
 
-  setTimeout(function() {
+  setTimeout(function () {
     res.redirect("petOwner-profile");
   }, 1000);
 }
@@ -720,6 +724,21 @@ function submitReview(req, res, next) {
     res.redirect("/petOwner-profile");
   });
 }
+
+function setComplete(req, res, next) {
+  const pousername = req.user.username;
+  const ctusername = req.body.ctusername;
+  const petname = req.body.petname;
+  var date = new Date(req.body.startdate);
+  const startdate = date.getFullYear() + '-' + (date.getMonth() + 1) + '-' + date.getDate();
+
+  pool.query(sql_query.query.set_completed, [pousername, ctusername, petname, startdate], (err, data) => {
+    if (err) {
+      console.error(err);
+    }
+    res.redirect("/petOwner-profile");
+  });
+};
 
 function search(req, res, next) {
   pool.query(sql_query.query.all_pet_categories, (err, petcategories) => {

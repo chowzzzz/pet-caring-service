@@ -14,7 +14,7 @@ sql.query = {
 					ORDER BY u.username`,
 	get_caretaker: "SELECT * FROM caretaker WHERE username = $1",
 
-  caretaker_activate: "INSERT INTO caretaker VALUES ($1, 0)",
+	caretaker_activate: "INSERT INTO caretaker VALUES ($1, 0)",
 
 	// Pet
 	all_pets: "SELECT * FROM pet WHERE username = $1",
@@ -31,7 +31,8 @@ sql.query = {
 	remove_pet: "DELETE FROM pet WHERE username = $1 AND name = $2",
 	edit_profile: "UPDATE appuser SET name = $1, email = $2, password = $3, address = $4 WHERE username = $5",
 	delete_profile: "UPDATE appuser SET isactive = $1 WHERE username = $2",
-	update_review: "UPDATE job SET rating = $1, review = $2, status = 'DONE' WHERE pousername = $3 AND ctusername = $4 AND petname = $5 AND startdate = $6",
+	update_review: "UPDATE job SET rating = $1, review = $2, status = 'REVIEWED' WHERE pousername = $3 AND ctusername = $4 AND petname = $5 AND startdate = $6",
+	set_completed: "UPDATE job SET status = 'COMPLETED' WHERE pousername = $1 AND ctusername = $2 AND petname = $3 AND startdate = $4",
 
 	// Caretaker profile Queries
 
