@@ -2,14 +2,14 @@ const sql = {};
 
 sql.query = {
 	// Users
-	all_users: "SELECT * FROM appuser ORDER BY username",
-	get_user: "SELECT * FROM appuser WHERE username = $1",
+	all_users: "SELECT * FROM petowner ORDER BY username",
+	get_user: "SELECT * FROM petowner WHERE username = $1",
 	get_petowners: `SELECT DISTINCT u.username, u.name, u.email, u.gender, u.address, u.dateofbirth 
-					FROM appuser u JOIN pet p ON u.username = p.username
+					FROM petowner u JOIN pet p ON u.username = p.username
 					WHERE u.isactive = 't'
 					ORDER BY u.username`,
 	get_caretakers: `SELECT u.username, u.name, u.email, u.gender, u.address, u.dateofbirth 
-					FROM appuser u JOIN caretaker ct ON u.username = ct.username
+					FROM petowner u JOIN caretaker ct ON u.username = ct.username
 					WHERE u.isactive = 't'
 					ORDER BY u.username`,
 	get_caretaker: "SELECT * FROM caretaker WHERE username = $1",
@@ -18,12 +18,13 @@ sql.query = {
 
 	// Pet
 	all_pets: "SELECT * FROM pet WHERE username = $1",
-	all_petsInCategory: "SELECT * FROM pet WHERE username = $1 AND category = $2",
 
 	// Pet category
 	all_pet_categories: "SELECT * FROM petcategory",
 
 	// Petowner profile Queries
+	petowner_job: "SELECT * FROM job WHERE pousername = $1",
+	petowner_creditCard: "SELECT * FROM petownerregisterscreditcard WHERE username = $1 ORDER BY expirydate ASC",
 	petowner_job: "SELECT * FROM job WHERE pousername = $1 ORDER BY status ASC",
 	petowner_creditCard: "SELECT * FROM petownerregisterscreditcard WHERE username = $1 ORDER BY expirydate ASC",
 	register_credit_card: "INSERT INTO petownerregisterscreditcard VALUES ($1,$2,$3,$4,$5)",
@@ -36,16 +37,15 @@ sql.query = {
 
 	// Caretaker profile Queries
 
-	caretaker_petType: "SELECT c.category, pc.baseprice FROM caretakercaterspetcategory c NATURAL JOIN petcategory pc WHERE c.username = $1",
+	caretaker_petType: "SELECT c.category, pc.baseprice FROM caretakercaterspetcategory c JOIN petcategory pc WHERE c.username = $1",
 
 	caretaker_checkstatus: "SELECT * FROM caretaker WHERE username = $1",
-	caretaker_asAppUser: "SELECT * FROM caretaker NATURAL JOIN appuser WHERE username = $1",
-	/*caretaker_petType: "SELECT * FROM caretakercaterspetcategory WHERE username = $1",*/
+	caretaker_aspetowner: "SELECT * FROM caretaker NATURAL JOIN petowner WHERE username = $1",
+	caretaker_petType: "SELECT * FROM caretaker_petcategory WHERE username = $1",
 
 	caretaker_petLimit: "",
-
 	caretaker_review: "SELECT review FROM job WHERE ctusername = $1",
-	caretaker_rating: "SELECT AVG(rating) FROM job WHERE ctusername = $1",
+	caretaker_rating: "SELECT avgrating FROM caretaker WHERE ctusername = $1",
 	caretaker_jobview: "SELECT * FROM job WHERE ctusername = $1",
 	caretaker_category: "SELECT * FROM caretakercaterspetcategory WHERE username = $1",
 
@@ -113,11 +113,11 @@ sql.query = {
 	get_job: "SELECT * FROM job WHERE ctusername = $1 AND pousername = $2 AND petname = $3 AND startdate = $4::date;",
 
 	// Sign In
-	signin_query: "SELECT * FROM appuser WHERE username = $1",
+	signin_query: "SELECT * FROM petowner WHERE username = $1",
 	adminsignin_query: "SELECT * FROM administrator WHERE username = $1",
 
-	// Register appuser
-	register_user: "INSERT INTO appuser (username, name, email, password, gender, address, dateofbirth) VALUES ($1,$2,$3,$4,$5,$6,$7)",
+	// Register petowner
+	register_user: "INSERT INTO petowner (username, name, email, password, gender, address, dateofbirth) VALUES ($1,$2,$3,$4,$5,$6,$7)",
 
 	// Register admin
 	register_admin: "INSERT INTO administrator VALUES ($1,$2,$3,$4,CURRENT_DATE,TRUE)",
@@ -128,13 +128,9 @@ sql.query = {
 	// Register pet
 	register_pet: "INSERT INTO pet VALUES ($1,$2,$3,$4,$5,$6,$7,$8)",
 
-	// Register job
-	register_job: "INSERT INTO job (ctusername, pousername, petname, startdate, enddate, paymenttype, deliverytype) VALUES ($1,$2,$3,$4,$5,$6,$7)",
-
 	search_caretaker: `SELECT *
-		FROM fulltime f JOIN appuser u ON f.username = u.username AND f.username <> $3
+		FROM fulltime f JOIN petowner u ON f.username = u.username AND f.username <> $3
 		JOIN caretaker c ON f.username = c.username
-		JOIN caretakercaterspetcategory cat ON f.username = cat.username AND cat.category = $4
 		WHERE NOT EXISTS (
 			SELECT leavedate
 			FROM fulltimeappliesleaves

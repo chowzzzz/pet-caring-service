@@ -967,6 +967,40 @@ function caretakerPetCategory(req, res, next) {
   });
 }
 
+function caretakerDetails(req, res, next) {
+  const username = req.query.username;
+  pool.query(sql_query.query.caretaker_aspetowner, [username], (err, details) => {
+    if (err) {
+      console.log(err);
+      return;
+    }
+    pool.query(sql_query.query.caretaker_category, [username], (err, petCategories) => {
+      if (err) {
+        console.error(err);
+        return;
+      }
+      pool.query(sql_query.query.caretaker_jobview, [username], (err, reservations) => {
+        if (err) {
+          console.error(err);
+          return;
+        }
+        res.render("caretaker-details", {
+          title: "Data",
+          username,
+          start: req.query.start,
+          end: req.query.end,
+          details: details.rows,
+          petCategories: petCategories.rows,
+          reservations: reservations.rows,
+          isSignedIn: req.isAuthenticated(),
+          isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false,
+          isCaretaker: req.isAuthenticated() ? req.user.isCaretaker : false
+        });
+      });
+    });
+  });
+}
+
 function caretakerFTLeaves(req, res, next) {
   const username = req.user.username;
   pool.query(sql_query.query.get_user, [username], (err, details) => {
@@ -983,6 +1017,40 @@ function caretakerFTLeaves(req, res, next) {
         leaves: leaves.rows,
         isSignedIn: req.isAuthenticated(),
         isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false
+      });
+    });
+  });
+}
+
+function caretakerBidding(req, res, next) {
+  const username = req.query.username;
+  pool.query(sql_query.query.caretaker_aspetowner, [username], (err, details) => {
+    if (err) {
+      console.log(err);
+      return;
+    }
+    pool.query(sql_query.query.petowner_creditCard, [username], (err, cards) => {
+      if (err) {
+        console.error(err);
+        return;
+      }
+      pool.query(sql_query.query.caretaker_jobview, [username], (err, reservations) => {
+        if (err) {
+          console.error(err);
+          return;
+        }
+        res.render("caretaker-bidding", {
+          title: "Data",
+          username,
+          start: req.query.start,
+          end: req.query.end,
+          details: details.rows,
+          cards: cards.rows,
+          reservations: reservations.rows,
+          isSignedIn: req.isAuthenticated(),
+          isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false,
+          isCaretaker: req.isAuthenticated() ? req.user.isCaretaker : false
+        });
       });
     });
   });
