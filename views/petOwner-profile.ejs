@@ -42,7 +42,13 @@
 			<a class="btn btn-primary btn-lg" style="background-color: rgb(29, 28, 28); border-color: rgb(29, 28, 28);"
 				href="/petOwner-editProfile" role="button">
 				Edit Profile
-			</a>
+      </a>
+      <% if (!isCaretaker) { %>
+      <a class="btn btn-primary btn-lg" style="background-color: rgb(29, 28, 28); border-color: rgb(29, 28, 28);"
+				href="/caretaker-activate" role="button">
+				Activate CT
+      </a>
+      <% } %>
 			<br />
 			<br />
 			<table class="table">
