@@ -12,7 +12,7 @@
     <main>
         <div class="jumbotron">
             <h1 class="display-1">Caretaker Upcoming Jobs</h1>
-            <h1 class="display-4"><%= details[0].name %></h1>
+            <h1 class="display-4"><%= details[0].username %></h1>
             <table class="table">
                 <tr>
                     <th scope="col">Pet Owner</th>
@@ -21,7 +21,6 @@
                     <th scope="col">Start Date</th>
                     <th scope="col">End Date</th>
                     <th scope="col">Status</th>
-                    <th scope="col">Rating</th>
                     <th scope="col">Payment Type</th>
                     <th scope="col">Delivery Type</th>
                     <th scope="col">Amount Paid</th>
@@ -49,14 +48,16 @@
                         job[i].enddate.getMonth() %>-<%=
                         job[i].enddate.getFullYear() %>
                     </td>
-                    <td scope="col" data-title="Status"><%= job[i].status %></td>
-                    < scope="col" data-title="Status">
-                        <%= job[i].paymenttype %>
-                    </>
                     <td scope="col" data-title="Status">
+                        <%= job[i].status %>
+                    </td>
+                    <td scope="col" data-title="Payment Type">
+                        <%= job[i].paymenttype %>
+                    </td>
+                    <td scope="col" data-title="Delivery Type">
                         <%= job[i].deliverytype %>
                     </td>
-                    <td scope="col" data-title="Status">
+                    <td scope="col" data-title="Amount Paid">
                         <%= job[i].amountpaid %>
                     </td>
                 </tr>

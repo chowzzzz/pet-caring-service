@@ -42,13 +42,13 @@
 			<a class="btn btn-primary btn-lg" style="background-color: rgb(29, 28, 28); border-color: rgb(29, 28, 28);"
 				href="/petOwner-editProfile" role="button">
 				Edit Profile
-      </a>
-      <% if (!isCaretaker) { %>
-      <a class="btn btn-primary btn-lg" style="background-color: rgb(29, 28, 28); border-color: rgb(29, 28, 28);"
+			</a>
+			<% if (!isCaretaker) { %>
+			<a class="btn btn-primary btn-lg" style="background-color: rgb(29, 28, 28); border-color: rgb(29, 28, 28);"
 				href="/caretaker-activate" role="button">
 				Activate CT
-      </a>
-      <% } %>
+			</a>
+			<% } %>
 			<br />
 			<br />
 			<table class="table">
@@ -142,7 +142,8 @@
 			</a>
 
 			<br /><br /><br />
-			<h1 class="display-5">Reservations</h1>
+
+			<h1 class="display-5">Confirmed Services </h1>
 			<table class="table">
 				<thead class="thead-dark">
 					<tr>
@@ -152,67 +153,201 @@
 						<th class="th-sm">Start Date</th>
 						<th class="th-sm">End Date</th>
 						<th class="th-sm">Status</th>
-						<th class="th-sm">Rating</th>
 						<th class="th-sm">Payment Type</th>
 						<th class="th-sm">Delivery Type</th>
 						<th class="th-sm">Amount Paid</th>
+						<th class="th-sm">Action</th>
+					</tr>
+				</thead>
+				<tbody>
+					<% for (var i = 0; i < confirmed.length; i++) { %>
+					<form id="html_form" action="petOwner-setComplete" role="form" method="post">
+						<tr>
+							<input type="hidden" class="form-control" id="ctusername" name="ctusername"
+								value="<%= confirmed[i].ctusername %>" />
+							<input type="hidden" class="form-control" id="petname" name="petname"
+								value="<%= confirmed[i].petname %>" />
+							<input type="hidden" class="form-control" id="startdate" name="startdate"
+								value="<%= confirmed[i].startdate %>" />
+							<td scope="col" data-title="Care Taker">
+								<%= confirmed[i].ctusername %>
+							</td>
+							<td scope="col" data-title="Pet Name">
+								<%= confirmed[i].petname %>
+							</td>
+							<td scope="col" data-title="Request Date">
+								<%= confirmed[i].requestdate.getDate() %>-<%=
+									("0" + (confirmed[i].requestdate.getMonth() + 1)).slice(-2) %>-<%=
+									confirmed[i].requestdate.getFullYear() %>
+							</td>
+							<td scope="col" data-title="Start Date">
+								<%= confirmed[i].startdate.getDate() %>-<%=
+									("0" + (confirmed[i].startdate.getMonth() + 1)).slice(-2) %>-<%=
+									confirmed[i].startdate.getFullYear() %>
+							</td>
+							<td scope="col" data-title="End Date">
+								<%= confirmed[i].enddate.getDate() %>-<%=
+									("0" + (confirmed[i].enddate.getMonth() + 1)).slice(-2) %>-<%=
+									confirmed[i].enddate.getFullYear() %>
+							</td>
+							<td scope="col" data-title="Status">
+								<%= confirmed[i].status %>
+							</td>
+							<td scope="col" data-title="Payment Type">
+								<%= confirmed[i].paymenttype %>
+							</td>
+							<td scope="col" data-title="Delivery Type">
+								<%= confirmed[i].deliverytype %>
+							</td>
+							<td scope="col" data-title="Amount Paid">
+								<%= confirmed[i].amountpaid %>
+							</td>
+							<td>
+								<button class="btn-m btn-success">Completed</button>
+							</td>
+						</tr>
+					</form>
+					<% } %>
+				</tbody>
+			</table>
+
+			<br />
+
+			<h1 class="display-5">Completed Services </h1>
+			<table class="table">
+				<thead class="thead-dark">
+					<tr>
+						<th class="th-sm">Care Taker</th>
+						<th class="th-sm">Pet Name</th>
+						<th class="th-sm">Request Date</th>
+						<th class="th-sm">Start Date</th>
+						<th class="th-sm">End Date</th>
+						<th class="th-sm">Status</th>
+						<th class="th-sm">Payment Type</th>
+						<th class="th-sm">Delivery Type</th>
+						<th class="th-sm">Amount Paid</th>
+						<th class="th-sm">Action</th>
+					</tr>
+				</thead>
+				<tbody>
+					<% for (var i = 0; i < completed.length; i++) { %>
+					<form id="html_form" action="petOwner-review" role="form" method="post">
+						<tr>
+							<input type="hidden" class="form-control" id="ctusername" name="ctusername"
+								value="<%= completed[i].ctusername %>" />
+							<input type="hidden" class="form-control" id="petname" name="petname"
+								value="<%= completed[i].petname %>" />
+							<input type="hidden" class="form-control" id="startdate" name="startdate"
+								value="<%= completed[i].startdate %>" />
+							<td scope="col" data-title="Care Taker">
+								<%= completed[i].ctusername %>
+							</td>
+							<td scope="col" data-title="Pet Name">
+								<%= completed[i].petname %>
+							</td>
+							<td scope="col" data-title="Request Date">
+								<%= completed[i].requestdate.getDate() %>-<%=
+									("0" + (completed[i].requestdate.getMonth() + 1)).slice(-2) %>-<%=
+									completed[i].requestdate.getFullYear() %>
+							</td>
+							<td scope="col" data-title="Start Date">
+								<%= completed[i].startdate.getDate() %>-<%=
+									("0" + (completed[i].startdate.getMonth() + 1)).slice(-2) %>-<%=
+									completed[i].startdate.getFullYear() %>
+							</td>
+							<td scope="col" data-title="End Date">
+								<%= completed[i].enddate.getDate() %>-<%=
+									("0" + (completed[i].enddate.getMonth() + 1)).slice(-2) %>-<%=
+									completed[i].enddate.getFullYear() %>
+							</td>
+							<td scope="col" data-title="Status">
+								<%= completed[i].status %>
+							</td>
+							<td scope="col" data-title="Payment Type">
+								<%= completed[i].paymenttype %>
+							</td>
+							<td scope="col" data-title="Delivery Type">
+								<%= completed[i].deliverytype %>
+							</td>
+							<td scope="col" data-title="Amount Paid">
+								<%= completed[i].amountpaid %>
+							</td>
+							<td>
+								<button class="btn-m btn-primary">Review</button>
+							</td>
+						</tr>
+					</form>
+					<% } %>
+				</tbody>
+			</table>
+
+			<br />
+			<h1 class="display-5">Reviewed Services </h1>
+			<table class="table">
+				<thead class="thead-dark">
+					<tr>
+						<th class="th-sm">Care Taker</th>
+						<th class="th-sm">Pet Name</th>
+						<th class="th-sm">Request Date</th>
+						<th class="th-sm">Start Date</th>
+						<th class="th-sm">End Date</th>
+						<th class="th-sm">Status</th>
+						<th class="th-sm">Payment Type</th>
+						<th class="th-sm">Delivery Type</th>
+						<th class="th-sm">Amount Paid</th>
+						<th class="th-sm">Rating</th>
 						<th class="th-sm">Review</th>
 						<th></th>
 					</tr>
 				</thead>
 				<tbody>
-					<% for (var i = 0; i < reservations.length; i++) { %>
+					<% for (var i = 0; i < reviewed.length; i++) { %>
 					<form id="html_form" action="petOwner-review" role="form" method="post">
 						<tr>
 							<input type="hidden" class="form-control" id="ctusername" name="ctusername"
-								value="<%= reservations[i].ctusername %>" />
+								value="<%= completed[i].ctusername %>" />
 							<input type="hidden" class="form-control" id="petname" name="petname"
-								value="<%= reservations[i].petname %>" />
+								value="<%= completed[i].petname %>" />
 							<input type="hidden" class="form-control" id="startdate" name="startdate"
-								value="<%= reservations[i].startdate %>" />
+								value="<%= completed[i].startdate %>" />
 							<td scope="col" data-title="Care Taker">
-								<%= reservations[i].ctusername %>
+								<%= reviewed[i].ctusername %>
 							</td>
 							<td scope="col" data-title="Pet Name">
-								<%= reservations[i].petname %>
+								<%= reviewed[i].petname %>
 							</td>
 							<td scope="col" data-title="Request Date">
-								<%= reservations[i].requestdate.getDate() %>-<%=
-									("0" + (reservations[i].requestdate.getMonth() + 1)).slice(-2) %>-<%=
-									reservations[i].requestdate.getFullYear() %>
+								<%= reviewed[i].requestdate.getDate() %>-<%=
+									("0" + (reviewed[i].requestdate.getMonth() + 1)).slice(-2) %>-<%=
+									reviewed[i].requestdate.getFullYear() %>
 							</td>
 							<td scope="col" data-title="Start Date">
-								<%= reservations[i].startdate.getDate() %>-<%=
-									("0" + (reservations[i].startdate.getMonth() + 1)).slice(-2) %>-<%=
-									reservations[i].startdate.getFullYear() %>
+								<%= reviewed[i].startdate.getDate() %>-<%=
+									("0" + (reviewed[i].startdate.getMonth() + 1)).slice(-2) %>-<%=
+									reviewed[i].startdate.getFullYear() %>
 							</td>
 							<td scope="col" data-title="End Date">
-								<%= reservations[i].enddate.getDate() %>-<%=
-									("0" + (reservations[i].enddate.getMonth() + 1)).slice(-2) %>-<%=
-									reservations[i].enddate.getFullYear() %>
+								<%= reviewed[i].enddate.getDate() %>-<%=
+									("0" + (reviewed[i].enddate.getMonth() + 1)).slice(-2) %>-<%=
+									reviewed[i].enddate.getFullYear() %>
 							</td>
 							<td scope="col" data-title="Status">
-								<%= reservations[i].status %>
-							</td>
-							<td scope="col" data-title="Rating">
-								<%= reservations[i].rating == null ? '-' : reservations[i].rating %>
+								<%= reviewed[i].status %>
 							</td>
 							<td scope="col" data-title="Payment Type">
-								<%= reservations[i].paymenttype %>
+								<%= reviewed[i].paymenttype %>
 							</td>
 							<td scope="col" data-title="Delivery Type">
-								<%= reservations[i].deliverytype %>
+								<%= reviewed[i].deliverytype %>
 							</td>
 							<td scope="col" data-title="Amount Paid">
-								<%= reservations[i].amountpaid %>
+								<%= reviewed[i].amountpaid %>
+							</td>
+							<td scope="col" data-title="Rating">
+								<%= reviewed[i].rating == null ? '-' : reviewed[i].rating %>
 							</td>
 							<td scope="col" data-title="Review">
-								<%= reservations[i].review %>
-							</td>
-							<td>
-								<% if (reservations[i].status === "COMPLETED" && reservations[i].rating == null) { %>
-								<button>Review</button>
-								<% } %>
+								<%= reviewed[i].review %>
 							</td>
 						</tr>
 					</form>
