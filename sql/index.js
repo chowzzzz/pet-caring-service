@@ -140,6 +140,16 @@ sql.query = {
 			FROM fulltimeappliesleaves
 			WHERE username = f.username AND leavedate >= $1::date AND leavedate <= $2::date
 		)
+		UNION
+		SELECT *
+		FROM parttime p JOIN petowner u ON p.username = u.username AND p.username <> $3
+		JOIN caretaker c ON p.username = c.username
+		JOIN caretakercaterspetcategory cat ON p.username = cat.username AND cat.category = $4
+		WHERE EXISTS (
+			SELECT *
+			FROM parttimeindicatesavailability
+			WHERE username = p.username AND startdate <= $1::date AND enddate >= $2::date
+		)
 	`
 };
 
