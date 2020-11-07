@@ -2,8 +2,13 @@ const express = require("express");
 const path = require("path");
 const PORT = process.env.PORT || 5000;
 
+app = express();
+
+if (process.env.NODE_ENV === "production") {
+	app.use(express.static(path.join(__dirname, "public")))
+}
+
 express()
-	.use(express.static(path.join(__dirname, "public")))
 	.set("views", path.join(__dirname, "views"))
 	.set("view engine", "ejs")
 	.get("/", (req, res) => res.render("pages/index"))
