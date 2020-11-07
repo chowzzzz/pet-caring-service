@@ -7,8 +7,16 @@
 	<body id="page-top">
 		<%- include('./partials/navbar'); %>
 		<div class="container rounded bg-white pl-5 pr-5 pt-5 pb-5">
-			<h1 class="mb-4">User Profile: <%= data[0].username %></h1>
-			<div class="mb-2">
+			<div class="d-flex justify-content-between row">
+				<h1 class="mb-4">User Profile: <%= data[0].username %></h1>
+				<% if (iscaretaker) { %>
+				<div class="d-flex align-items-center">
+					<button onclick="window.location='/admin-caretaker-reviews?username=<%= data[0].username%>';" class="btn btn-primary py-2 mr-2">View Reviews</button>
+					<button onclick="window.location='/admin-caretaker-salary?username=<%= data[0].username%>';" class="btn btn-primary py-2">Salary details</button>
+				</div>
+				<% } %>
+			</div>
+			<div class="mb-4">
 				<h5 style="font-weight: bold">Personal Information</h5>
 				<table class="table table-bordered table-hover table-striped">
 					<thead>
@@ -43,7 +51,7 @@
 			</div>
 
 			<% if (isPetowner) { %>
-			<div class="mb-2">
+			<div class="mb-4">
 				<h5 style="font-weight: bold">Pets</h5>
 				<table class="table table-bordered table-hover table-striped">
 					<thead>
@@ -72,8 +80,8 @@
 					</tbody>
 				</table>
 			</div>
-			<% } %> <% if (isCaretaker) { %>
-			<div class="mb-2">
+			<% } %> <% if (iscaretaker) { %>
+			<div class="mb-4">
 				<h5 style="font-weight: bold">Caretaker Information</h5>
 				<table class="table table-bordered table-hover table-striped">
 					<thead>
@@ -102,7 +110,7 @@
 					</tbody>
 				</table>
 			</div>
-			<!-- <div class="mb-2">
+			<div class="mb-4">
 				<h5 style="font-weight: bold">Caretaker Pet Categories</h5>
 				<table class="table table-bordered table-hover table-striped">
 					<thead>
@@ -113,16 +121,16 @@
 						</tr>
 					</thead>
 					<tbody>
-						<% //for(var i=0; i < caretaker_category.length; i++) { %>
+						<% for(var i=0; i < caretaker_category.length; i++) { %>
 						<tr>
-							<td><%= //i+1%></td>
-							<td><%= //caretaker_category[i].category%></td>
-							<td>$<%= //caretaker_category[i].price%></td>
+							<td><%= i+1%></td>
+							<td><%= caretaker_category[i].category%></td>
+							<td>$<%= caretaker_category[i].price%></td>
 						</tr>
-						<% //} %>
+						<% } %>
 					</tbody>
 				</table>
-			</div> -->
+			</div>
 			<% } %>
 		</div>
 	</body>

@@ -7,14 +7,15 @@
 </head>
 
 <body>
-	<%- include('./partials/navbar'); %>
+  <%- include('./partials/navbar'); %>
+  <%- include('./partials/caretaker-navbar'); %>
 	<main>
 		<div class="container rounded bg-white pl-5 pr-5 pt-3 pb-3">
 			<div class="d-flex flex-row justify-content-between">
 				<h1 class="display-4"><%= username %></h1>
 				<div>
 					<p align="right"><b>Available from <%= start %> to <%= end %>!</b></p>
-					<% let url = "caretaker-bidding?username=" + username + "&start=" + start + "&end=" + end;%>
+					<% let url = "caretaker-bidding?username=" + username + "&category=" + category + "&start=" + start + "&end=" + end;%>
 					<form align="right" id="html_form" action="<%= url%>" role="form" method="post">
 						<button type="submit" class="btn btn-primary btn-lg lm-auto">Bid for service!</button>
 					</form>

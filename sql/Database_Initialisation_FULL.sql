@@ -14,8 +14,8 @@ CREATE TABLE Administrator (
 	name VARCHAR(100) NOT NULL,
 	email VARCHAR(100) NOT NULL UNIQUE,
 	password VARCHAR(20) NOT NULL,
-	joindate DATE NOT NULL,
-	isactive BOOLEAN NOT NULL,
+	joindate DATE NOT NULL DEFAULT CURRENT_DATE,
+	isactive BOOLEAN NOT NULL DEFAULT TRUE,
 	PRIMARY KEY(username)
 );
 
@@ -24,8 +24,8 @@ CREATE TABLE AppUser (
 	name VARCHAR(100) NOT NULL,
 	email VARCHAR(100) NOT NULL UNIQUE,
 	password VARCHAR(20) NOT NULL,
-	joindate DATE NOT NULL,
-	isactive BOOLEAN NOT NULL,
+	joindate DATE NOT NULL DEFAULT CURRENT_DATE,
+	isactive BOOLEAN NOT NULL DEFAULT TRUE,
 	gender VARCHAR(1) NOT NULL,
 	address VARCHAR(100) NOT NULL,
 	dateofbirth DATE NOT NULL,
@@ -109,7 +109,7 @@ CREATE TABLE CareTakerCatersPetCategory (
 
 CREATE TABLE Pet (
 	username VARCHAR(20),
-	name VARCHAR(50) UNIQUE,
+	name VARCHAR(50),
 	dateofbirth DATE NOT NULL,
 	gender VARCHAR(1) NOT NULL,
 	description VARCHAR(100) NOT NULL,
@@ -129,8 +129,8 @@ CREATE TABLE Job (
 	petname VARCHAR(20),
 	startdate DATE,
 	enddate DATE NOT NULL,
-	requestdate TIMESTAMP NOT NULL,
-	status VARCHAR(10),
+	requestdate TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	status VARCHAR(10) DEFAULT 'PENDING' NOT NULL,
 	rating NUMERIC(2,1),
 	paymenttype VARCHAR(20) NOT NULL,
 	deliverytype VARCHAR(20) NOT NULL,
@@ -206,10 +206,16 @@ CREATE OR REPLACE FUNCTION calc_job_price()
   RETURNS TRIGGER AS
 $$
 BEGIN
+  IF new.status = 'PENDING' THEN 
+  new.amountpaid := 0.0;
+  ELSEIF new.status = 'CANCELLED' THEN
+  new.amountpaid := 0.0;
+  ELSE 
   new.amountpaid := (date_part('day', new.enddate::timestamp - new.startdate::timestamp) 
   					* (SELECT price FROM caretakercaterspetcategory WHERE username = new.ctusername AND category 
 					= (SELECT category FROM pet WHERE username = new.pousername AND name = new.petname)));
-  RETURN NEW;
+  END IF;
+  RETURN NEW;  
 END
 $$
 LANGUAGE plpgsql;
@@ -3338,46 +3344,46 @@ INSERT INTO Pet VALUES ('Winny', 'Krissy', '2003-10-21', 'M', 'client-driven', '
 
 /*----------------------------------------------------*/
 /* Job 40*/
-INSERT INTO Job VALUES ('Conant', 'Belita', 'Maure', '2020-11-06', '2021-01-22', '2020-09-24', 'DONE', '3.3', 'CREDITCARD', 'PTB', '0.0', 'Postural Control Treatment of Integu Body using Orthosis');
-INSERT INTO Job VALUES ('Clementine', 'Belita', 'Catina', '2020-10-02', '2021-01-05', '2020-09-25', 'DONE', '3.2', 'CASH', 'PTB', '0.0', 'Fluoroscopy of Spinal Arteries using High Osmolar Contrast');
-INSERT INTO Job VALUES ('Ursola', 'Winny', 'Krissy', '2020-10-27', '2020-12-30', '2020-09-15', 'DONE', '0.4', 'CASH', 'POD', '0.0', 'CT Scan of L Rib using Oth Contrast');
-INSERT INTO Job VALUES ('Tallia', 'Quincey', 'Dulcie', '2020-10-16', '2021-01-19', '2020-09-07', 'DONE', '1.5', 'CREDITCARD', 'POD', '0.0', 'Plain Radiography of Right Fallopian Tube using Oth Contrast');
-INSERT INTO Job VALUES ('Idaline', 'Tremaine', 'Jenilee', '2020-10-28', '2020-12-03', '2020-08-31', 'DONE', '0.8', 'CREDITCARD', 'PTB', '0.0', 'CT Scan of Bi Verteb Art using Oth Contrast');
-INSERT INTO Job VALUES ('Bell', 'Romola', 'Karry', '2020-11-17', '2021-01-10', '2020-09-21', 'DONE', '4.2', 'CREDITCARD', 'PTB', '0.0', 'Computerized Tomography (CT Scan) of Bi Pelvic Vein');
-INSERT INTO Job VALUES ('Valencia', 'Hilarius', 'Rebeca', '2020-11-23', '2020-12-02', '2020-09-27', 'DONE', '3.9', 'CREDITCARD', 'CTP', '0.0', 'Compression of Left Lower Leg using Pressure Dressing');
-INSERT INTO Job VALUES ('Mae', 'Gianna', 'Cacilie', '2020-11-11', '2021-01-26', '2020-09-15', 'DONE', '0.2', 'CASH', 'PTB', '0.0', 'Planar Nucl Med Imag Up Extrem Lymph w Oth Radionuclide');
-INSERT INTO Job VALUES ('Edythe', 'Hildagard', 'Jania', '2020-11-06', '2020-11-30', '2020-09-18', 'DONE', '0.8', 'CREDITCARD', 'POD', '0.0', 'Orofacial Myofunctional Treatment using AV Equipment');
-INSERT INTO Job VALUES ('Maureene', 'Winny', 'Lopez', '2020-10-08', '2020-12-26', '2020-09-09', 'DONE', '0.7', 'CREDITCARD', 'PTB', '0.0', 'Fluoroscopy of L Int Mamm Graft using Oth Contrast');
+INSERT INTO Job VALUES ('Conant', 'Belita', 'Maure', '2020-11-06', '2021-01-22', '2020-09-24', 'DONE', '3.5', 'CREDITCARD', 'PTB', '0.0', 'Postural Control Treatment of Integu Body using Orthosis');
+INSERT INTO Job VALUES ('Clementine', 'Belita', 'Catina', '2020-10-02', '2021-01-05', '2020-09-25', 'COMPLETED', null, 'CASH', 'PTB', '0.0', null);
+INSERT INTO Job VALUES ('Ursola', 'Winny', 'Krissy', '2020-10-27', '2020-12-30', '2020-09-15', 'DONE', '0.5', 'CASH', 'POD', '0.0', 'CT Scan of L Rib using Oth Contrast');
+INSERT INTO Job VALUES ('Tallia', 'Quincey', 'Dulcie', '2020-10-16', '2021-01-19', '2020-09-07', 'COMPLETED', null, 'CREDITCARD', 'POD', '0.0', null);
+INSERT INTO Job VALUES ('Idaline', 'Tremaine', 'Jenilee', '2020-10-28', '2020-12-03', '2020-08-31', 'DONE', '1.0', 'CREDITCARD', 'PTB', '0.0', 'CT Scan of Bi Verteb Art using Oth Contrast');
+INSERT INTO Job VALUES ('Bell', 'Romola', 'Karry', '2020-11-17', '2021-01-10', '2020-09-21', 'COMPLETED', null, 'CREDITCARD', 'PTB', '0.0', null);
+INSERT INTO Job VALUES ('Valencia', 'Hilarius', 'Rebeca', '2020-11-23', '2020-12-02', '2020-09-27', 'DONE', '4.0', 'CREDITCARD', 'CTP', '0.0', 'Compression of Left Lower Leg using Pressure Dressing');
+INSERT INTO Job VALUES ('Mae', 'Gianna', 'Cacilie', '2020-11-11', '2021-01-26', '2020-09-15', 'COMPLETED', null, 'CASH', 'PTB', '0.0', null);
+INSERT INTO Job VALUES ('Edythe', 'Hildagard', 'Jania', '2020-11-06', '2020-11-30', '2020-09-18', 'DONE', '0.5', 'CREDITCARD', 'POD', '0.0', 'Orofacial Myofunctional Treatment using AV Equipment');
+INSERT INTO Job VALUES ('Maureene', 'Winny', 'Lopez', '2020-10-08', '2020-12-26', '2020-09-09', 'COMPLETED', null, 'CREDITCARD', 'PTB', '0.0', null);
 INSERT INTO Job VALUES ('Korey', 'Holly', 'Arden', '2020-10-11', '2021-01-13', '2020-09-14', 'DONE', '0.5', 'CREDITCARD', 'CTP', '0.0', 'Planar Nucl Med Imag of Bi Low Extrem using Technetium 99m');
-INSERT INTO Job VALUES ('Mignon', 'Gianna', 'Theodosia', '2020-11-26', '2020-12-07', '2020-09-05', 'DONE', '3.5', 'CREDITCARD', 'PTB', '0.0', 'Tomo Nucl Med Imag of Low Extrem using Oth Radionuclide');
+INSERT INTO Job VALUES ('Mignon', 'Gianna', 'Theodosia', '2020-11-26', '2020-12-07', '2020-09-05', 'COMPLETED', null, 'CREDITCARD', 'PTB', '0.0', null);
 INSERT INTO Job VALUES ('Freddy', 'Allin', 'Brewer', '2020-11-28', '2021-01-24', '2020-09-26', 'DONE', '3.5', 'CREDITCARD', 'PTB', '0.0', 'Plain Radiography of Left Lacrimal Duct using H Osm Contrast');
-INSERT INTO Job VALUES ('Odo', 'Quincey', 'Hendrika', '2020-10-09', '2021-01-16', '2020-09-12', 'DONE', '3.9', 'CASH', 'CTP', '0.0', 'Motor Functn Trmt Neuro Low Back/LE w Assist Equip');
-INSERT INTO Job VALUES ('Ansley', 'Akim', 'Charmion', '2020-11-24', '2021-01-21', '2020-09-16', 'DONE', '0.1', 'CREDITCARD', 'PTB', '0.0', 'Removal of Cast on Right Finger');
-INSERT INTO Job VALUES ('Freddy', 'Morissa', 'Imelda', '2020-11-28', '2021-01-03', '2020-09-26', 'DONE', '2.3', 'CREDITCARD', 'POD', '0.0', 'HDR Brachytherapy of Inguinal Lymph using Oth Isotope');
-INSERT INTO Job VALUES ('Jami', 'Morissa', 'Imelda', '2020-10-23', '2021-01-25', '2020-09-05', 'DONE', '3.3', 'CREDITCARD', 'POD', '0.0', 'CT Scan of Kidney Transplant using Oth Contrast');
-INSERT INTO Job VALUES ('Rabbi', 'Hilarius', 'Marissa', '2020-10-16', '2020-12-24', '2020-09-04', 'DONE', '3.2', 'CASH', 'PTB', '0.0', 'Sensorineural Acuity Assessment using Sound Field/Booth');
+INSERT INTO Job VALUES ('Odo', 'Quincey', 'Hendrika', '2020-10-09', '2021-01-16', '2020-09-12', 'COMPLETED', null, 'CASH', 'CTP', '0.0', null);
+INSERT INTO Job VALUES ('Ansley', 'Akim', 'Charmion', '2020-11-24', '2021-01-21', '2020-09-16', 'DONE', '0.0', 'CREDITCARD', 'PTB', '0.0', 'Removal of Cast on Right Finger');
+INSERT INTO Job VALUES ('Freddy', 'Morissa', 'Imelda', '2020-11-28', '2021-01-03', '2020-09-26', 'COMPLETED', null, 'CREDITCARD', 'POD', '0.0', null);
+INSERT INTO Job VALUES ('Jami', 'Morissa', 'Imelda', '2020-10-23', '2021-01-25', '2020-09-05', 'DONE', '3.0', 'CREDITCARD', 'POD', '0.0', 'CT Scan of Kidney Transplant using Oth Contrast');
+INSERT INTO Job VALUES ('Rabbi', 'Hilarius', 'Marissa', '2020-10-16', '2020-12-24', '2020-09-04', 'COMPLETED', null, 'CASH', 'PTB', '0.0', null);
 INSERT INTO Job VALUES ('Edythe', 'Morissa', 'Imelda', '2020-10-12', '2020-12-19', '2020-09-12', 'DONE', '0.5', 'CASH', 'PTB', '0.0', 'Sensory/Processing Assess Integu Low Back/LE w Oth Equip');
-INSERT INTO Job VALUES ('Ike', 'Allin', 'Ernesta', '2020-10-29', '2020-12-10', '2020-09-25', 'DONE', '1.5', 'CASH', 'PTB', '0.0', 'Hyperthermia of Back Skin');
-INSERT INTO Job VALUES ('Ansley', 'Akim', 'Charmion', '2020-10-20', '2021-01-14', '2020-09-10', 'DONE', '1.6', 'CASH', 'POD', '0.0', 'Coord/Dexterity Trmt Integu Up Back/UE w Orthosis');
-INSERT INTO Job VALUES ('Inessa', 'Holly', 'Arden', '2020-11-11', '2020-12-09', '2020-09-14', 'DONE', '3.9', 'CREDITCARD', 'POD', '0.0', 'Fluoroscopy of Lumbar Facet Joint(s) using Other Contrast');
-INSERT INTO Job VALUES ('Peg', 'Akim', 'Charmion', '2020-10-19', '2021-01-26', '2020-09-28', 'DONE', '4.7', 'CASH', 'POD', '0.0', 'Fluoroscopy of Left Foot/Toe Joint using Other Contrast');
-INSERT INTO Job VALUES ('Dorthy', 'Romola', 'Sabine', '2020-10-18', '2021-01-23', '2020-09-23', 'DONE', '0.6', 'CREDITCARD', 'POD', '0.0', 'Wound Management Treatment of Musculosk Whole');
-INSERT INTO Job VALUES ('Hulda', 'Akim', 'Charmion', '2020-11-26', '2020-12-04', '2020-09-28', 'DONE', '2.2', 'CREDITCARD', 'POD', '0.0', 'CT Scan of L Tibia/Fibula using L Osm Contrast');
-INSERT INTO Job VALUES ('Felicio', 'Winny', 'Ashlan', '2020-10-26', '2020-12-30', '2020-09-24', 'DONE', '4.8', 'CREDITCARD', 'CTP', '0.0', 'Low Dose Rate (LDR) Brachytherapy of Testis using Iodine 125');
-INSERT INTO Job VALUES ('Sol', 'Romola', 'Sabine', '2020-10-03', '2020-12-07', '2020-08-31', 'DONE', '2.1', 'CREDITCARD', 'CTP', '0.0', 'MRI of Bi Low Extrem Vein using Oth Contrast');
-INSERT INTO Job VALUES ('Jocelyn', 'Gianna', 'Renata', '2020-10-21', '2020-12-05', '2020-09-17', 'DONE', '3.7', 'CASH', 'POD', '0.0', 'LDR Brachytherapy of Pancreas using Palladium 103');
+INSERT INTO Job VALUES ('Ike', 'Allin', 'Ernesta', '2020-10-29', '2020-12-10', '2020-09-25', 'COMPLETED', null, 'CASH', 'PTB', '0.0', null);
+INSERT INTO Job VALUES ('Ansley', 'Akim', 'Charmion', '2020-10-20', '2021-01-14', '2020-09-10', 'DONE', '1.0', 'CASH', 'POD', '0.0', 'Coord/Dexterity Trmt Integu Up Back/UE w Orthosis');
+INSERT INTO Job VALUES ('Inessa', 'Holly', 'Arden', '2020-11-11', '2020-12-09', '2020-09-14', 'COMPLETED', null, 'CREDITCARD', 'POD', '0.0', null);
+INSERT INTO Job VALUES ('Peg', 'Akim', 'Charmion', '2020-10-19', '2021-01-26', '2020-09-28', 'DONE', '4.5', 'CASH', 'POD', '0.0', 'Fluoroscopy of Left Foot/Toe Joint using Other Contrast');
+INSERT INTO Job VALUES ('Dorthy', 'Romola', 'Sabine', '2020-10-18', '2021-01-23', '2020-09-23', 'COMPLETED', null, 'CREDITCARD', 'POD', '0.0', null);
+INSERT INTO Job VALUES ('Hulda', 'Akim', 'Charmion', '2020-11-26', '2020-12-04', '2020-09-28', 'DONE', '2.0', 'CREDITCARD', 'POD', '0.0', 'CT Scan of L Tibia/Fibula using L Osm Contrast');
+INSERT INTO Job VALUES ('Felicio', 'Winny', 'Ashlan', '2020-10-26', '2020-12-30', '2020-09-24', 'COMPLETED', null, 'CREDITCARD', 'CTP', '0.0', null);
+INSERT INTO Job VALUES ('Sol', 'Romola', 'Sabine', '2020-10-03', '2020-12-07', '2020-08-31', 'DONE', '2.0', 'CREDITCARD', 'CTP', '0.0', 'MRI of Bi Low Extrem Vein using Oth Contrast');
+INSERT INTO Job VALUES ('Jocelyn', 'Gianna', 'Renata', '2020-10-21', '2020-12-05', '2020-09-17', 'COMPLETED', null, 'CASH', 'POD', '0.0', null);
 INSERT INTO Job VALUES ('Jeannie', 'Allin', 'Ernesta', '2020-10-30', '2020-12-08', '2020-08-31', 'DONE', '1.0', 'CASH', 'POD', '0.0', 'Beam Radiation of Soft Palate using Photons <1 MeV');
-INSERT INTO Job VALUES ('Hiram', 'Akim', 'Charmion', '2020-11-03', '2020-12-14', '2020-09-27', 'DONE', '4.7', 'CREDITCARD', 'POD', '0.0', 'Removal of Packing Material on Right Upper Arm');
-INSERT INTO Job VALUES ('Manuel', 'Hilarius', 'Marissa', '2020-11-06', '2021-01-12', '2020-09-23', 'DONE', '0.9', 'CREDITCARD', 'POD', '0.0', 'Computerized Tomography (CT Scan) of Bi Pelvic Vein');
-INSERT INTO Job VALUES ('Melisa', 'Holly', 'Arden', '2020-10-02', '2020-12-13', '2020-09-10', 'DONE', '2.7', 'CASH', 'CTP', '0.0', 'Beam Radiation of Leg Skin using Neutrons');
-INSERT INTO Job VALUES ('Vaughan', 'Holly', 'Arden', '2020-11-22', '2021-01-04', '2020-09-17', 'DONE', '4.6', 'CASH', 'CTP', '0.0', 'Wound Mgmt Trmt Musculosk Up Back/UE w Electrotherap Equip');
-INSERT INTO Job VALUES ('Osmond', 'Morissa', 'Imelda', '2020-11-23', '2020-11-30', '2020-09-05', 'DONE', '4.2', 'CREDITCARD', 'POD', '0.0', 'Removal of Bandage on Right Lower Leg');
-INSERT INTO Job VALUES ('Mendel', 'Quincey', 'Hendrika', '2020-11-17', '2020-12-23', '2020-09-03', 'DONE', '1.7', 'CREDITCARD', 'POD', '0.0', 'Removal of Splint on Left Lower Arm');
-INSERT INTO Job VALUES ('Brendon', 'Winny', 'Ashlan', '2020-11-11', '2021-01-17', '2020-09-21', 'DONE', '0.0', 'CASH', 'POD', '0.0', 'Planar Nucl Med Imag of R Breast using Oth Radionuclide');
+INSERT INTO Job VALUES ('Hiram', 'Akim', 'Charmion', '2020-11-03', '2020-12-14', '2020-09-27', 'COMPLETED', null, 'CREDITCARD', 'POD', '0.0', null);
+INSERT INTO Job VALUES ('Manuel', 'Hilarius', 'Marissa', '2020-11-06', '2021-01-12', '2020-09-23', 'DONE', '1.0', 'CREDITCARD', 'POD', '0.0', 'Computerized Tomography (CT Scan) of Bi Pelvic Vein');
+INSERT INTO Job VALUES ('Melisa', 'Holly', 'Arden', '2020-10-02', '2020-12-13', '2020-09-10', 'COMPLETED', null, 'CASH', 'CTP', '0.0', null);
+INSERT INTO Job VALUES ('Vaughan', 'Holly', 'Arden', '2020-11-22', '2021-01-04', '2020-09-17', 'DONE', '5.0', 'CASH', 'CTP', '0.0', 'Wound Mgmt Trmt Musculosk Up Back/UE w Electrotherap Equip');
+INSERT INTO Job VALUES ('Osmond', 'Morissa', 'Imelda', '2020-11-23', '2020-11-30', '2020-09-05', 'COMPLETED', null, 'CREDITCARD', 'POD', '0.0', null);
+INSERT INTO Job VALUES ('Mendel', 'Quincey', 'Hendrika', '2020-11-17', '2020-12-23', '2020-09-03', 'DONE', '1.5', 'CREDITCARD', 'POD', '0.0', 'Removal of Splint on Left Lower Arm');
+INSERT INTO Job VALUES ('Brendon', 'Winny', 'Ashlan', '2020-11-11', '2021-01-17', '2020-09-21', 'COMPLETED', null, 'CASH', 'POD', '0.0', null);
 INSERT INTO Job VALUES ('Debbi', 'Hildagard', 'Jania', '2020-11-25', '2020-12-28', '2020-09-13', 'DONE', '1.5', 'CREDITCARD', 'CTP', '0.0', 'LDR Brachytherapy of Nose using Californium 252');
-INSERT INTO Job VALUES ('Norby', 'Hildagard', 'Jania', '2020-10-17', '2021-01-13', '2020-09-12', 'DONE', '3.9', 'CASH', 'PTB', '0.0', 'Fluoroscopy of Pancreatic Ducts using High Osmolar Contrast');
-INSERT INTO Job VALUES ('Flem', 'Tremaine', 'Jenilee', '2020-10-12', '2020-12-26', '2020-09-21', 'DONE', '2.4', 'CREDITCARD', 'POD', '0.0', 'Ultrasonography of Right Renal Artery');
-INSERT INTO Job VALUES ('Dalt', 'Quincey', 'Hendrika', '2020-11-28', '2020-12-30', '2020-09-14', 'DONE', '1.5', 'CREDITCARD', 'POD', '0.0', 'Beam Radiation of Duodenum using Electrons');
+INSERT INTO Job VALUES ('Norby', 'Hildagard', 'Jania', '2020-10-17', '2021-01-13', '2020-09-12', 'COMPLETED', null, 'CASH', 'PTB', '0.0', null);
+INSERT INTO Job VALUES ('Flem', 'Tremaine', 'Jenilee', '2020-10-12', '2020-12-26', '2020-09-21', 'DONE', '2.5', 'CREDITCARD', 'POD', '0.0', 'Ultrasonography of Right Renal Artery');
+INSERT INTO Job VALUES ('Dalt', 'Quincey', 'Hendrika', '2020-11-28', '2020-12-30', '2020-09-14', 'COMPLETED', null, 'CREDITCARD', 'POD', '0.0', null);
 
 UPDATE Job SET pousername = pousername;
 /* END OF DATA INITIALISATION */

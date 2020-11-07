@@ -2,18 +2,19 @@
 <html lang="en">
 
 <head>
-	<link rel="stylesheet" href="/stylesheets/profile.css" />
-	<%- include('./partials/head'); %>
+    <link rel="stylesheet" href="/stylesheets/profile.css" />
+    <%- include('./partials/head'); %>
 </head>
 
 <body>
-	<%- include('./partials/navbar'); %>
-	<main>
-		<div class="jumbotron">
-			<h1 class="display-1">Caretaker Up Coming Jobs</h1>
-			<h1 class="display-4"><%= details[0].name %></h1>
-			<table class="table">
-				<tr>
+    <%- include('./partials/navbar'); %>
+    <%- include('./partials/caretaker-navbar'); %>
+    <main>
+        <div class="jumbotron">
+            <h1 class="display-1">Caretaker Upcoming Jobs</h1>
+            <h1 class="display-4"><%= details[0].name %></h1>
+            <table class="table">
+                <tr>
                     <th scope="col">Pet Owner</th>
                     <th scope="col">Pet Name</th>
                     <th scope="col">Request Date</th>
@@ -60,8 +61,8 @@
                     </td>
                 </tr>
                 <% } %>
-		</table>
-	</main>
+            </table>
+    </main>
 </body>
 
 </html>
