@@ -129,6 +129,7 @@ function initRouter(app) {
   app.post("/admin-jobs", passport.authMiddleware(), passport.verifyAdmin(), filterJobs);
 
   app.post("/caretaker-bidding", passport.authMiddleware(), passport.verifyNotAdmin(), caretakerBidding);
+  app.post("/apply-leave", passport.authMiddleware(), passport.verifyNotAdmin(), applyLeave);
 
   /* SIGNUP */
   app.get("/signup", passport.antiMiddleware(), function (req, res, next) {
@@ -872,6 +873,19 @@ function caretakerBidding(req, res, next) {
   });
 }
 
+function applyLeave(req, res, next) {
+  const username = req.user.username;
+  const leavedate = req.body.leave;
+
+  pool.query(sql_query.query.apply_leave, [username, leavedate], (err, data) => {
+    if (err) {
+      console.error(err);
+      return;
+    }
+    res.redirect("/caretaker-ft-leaves");
+  });
+}
+
 function registerJob(req, res, next) {
   const ctusername = req.query.username;
   const pousername = req.user.username;
@@ -909,7 +923,7 @@ function caretakerProfile(req, res, next) {
             console.error(err);
           }
           res.render("caretaker-profile", {
-            title: "Care Taker Profile",
+            title: "Caretaker Profile",
             details: details.rows,
             pets: pets.rows,
             review: review.rows,
@@ -935,7 +949,7 @@ function caretakerJobs(req, res, next) {
         console.error(err);
       }
       res.render("caretaker-Jobs", {
-        title: "Care Taker Jobs",
+        title: "Caretaker Jobs",
         details: details.rows,
         job: job.rows,
         isSignedIn: req.isAuthenticated(),
@@ -957,7 +971,7 @@ function caretakerPetCategory(req, res, next) {
         console.error(err);
       }
       res.render("caretaker-PetCategory", {
-        title: "Care Taker Category",
+        title: "Caretaker Category",
         details: details.rows,
         category: category.rows,
         isSignedIn: req.isAuthenticated(),
@@ -978,13 +992,19 @@ function caretakerFTLeaves(req, res, next) {
       if (err) {
         console.error(err);
       }
-      res.render("caretaker-ft-leaves", {
-        title: "FT Care Taker leaves",
-        details: details.rows,
-        leaves: leaves.rows,
-        isSignedIn: req.isAuthenticated(),
-        isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false,
-        isCaretaker: req.isAuthenticated() ? req.user.isCaretaker : false
+      pool.query(sql_query.query.get_fulltime, [username], (err, fulltime) => {
+        if (err) {
+          console.error(err);
+        }
+        res.render("caretaker-ft-leaves", {
+          title: "FT Caretaker Leaves",
+          details: details.rows,
+          leaves: leaves.rows,
+          isSignedIn: req.isAuthenticated(),
+          isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false,
+          isCaretaker: req.isAuthenticated() ? req.user.isCaretaker : false,
+          isFulltime: fulltime.rows.length == 0 ? false : true,
+        });
       });
     });
   });
@@ -1000,13 +1020,19 @@ function caretakerPTAvailable(req, res, next) {
       if (err) {
         console.error(err);
       }
-      res.render("caretaker-pt-availability", {
-        title: "FT Care Taker leaves",
-        details: details.rows,
-        available: available.rows,
-        isSignedIn: req.isAuthenticated(),
-        isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false,
-        isCaretaker: req.isAuthenticated() ? req.user.isCaretaker : false
+      pool.query(sql_query.query.get_fulltime, [username], (err, fulltime) => {
+        if (err) {
+          console.error(err);
+        }
+        res.render("caretaker-pt-availability", {
+          title: "PT Caretaker Availability",
+          details: details.rows,
+          available: available.rows,
+          isSignedIn: req.isAuthenticated(),
+          isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false,
+          isCaretaker: req.isAuthenticated() ? req.user.isCaretaker : false,
+          isFulltime: fulltime.rows.length == 0 ? false : true,
+        });
       });
     });
   });
