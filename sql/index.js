@@ -117,7 +117,7 @@ sql.query = {
 	adminsignin_query: "SELECT * FROM administrator WHERE username = $1",
 
 	// Register petowner
-	register_user: "INSERT INTO petowner (username, name, email, password, gender, address, dateofbirth) VALUES ($1,$2,$3,$4,$5,$6,$7)",
+	register_user: "INSERT INTO petowner VALUES ($1,$2,$3,$4,CURRENT_DATE,TRUE,$5,$6,$7)",
 
 	// Register admin
 	register_admin: "INSERT INTO administrator VALUES ($1,$2,$3,$4,CURRENT_DATE,TRUE)",
