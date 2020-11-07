@@ -7,30 +7,30 @@
 </head>
 
 <body>
-  <%- include('./partials/navbar'); %>
-  <%- include('./partials/caretaker-navbar'); %>
+	<%- include('./partials/navbar'); %>
+	<%- include('./partials/caretaker-navbar'); %>
 	<main>
 		<div class="jumbotron">
 			<h1 class="display-1">Care Taker Available Dates</h1>
-			<h1 class="display-4"><%= details[0].name %></h1>
+			<h1 class="display-4"><%= details[0].username %></h1>
 			<br />
 			<table class="table">
 				<thead class="thead-dark">
 					<tr>
-                        <th scope="col">Start Date</th>
-                        <th scope="col">End Date</th>
+						<th scope="col">Start Date</th>
+						<th scope="col">End Date</th>
 					</tr>
 				</thead>
 				<% for (var i = 0; i < available.length; i++) { %>
 				<tr>
 					<td scope="row" data-title="Start Date"><%= available[i].startdate %></td>
-                    </td>
-                    <td scope="row" data-title="End Date"><%= available[i].enddate %></td>
+					</td>
+					<td scope="row" data-title="End Date"><%= available[i].enddate %></td>
 					</td>
 				</tr>
 				<% } %>
-            </table>
-        </div>
+			</table>
+		</div>
 	</main>
 </body>
 

@@ -904,15 +904,20 @@ function caretakerProfile(req, res, next) {
           if (err) {
             console.error(err);
           }
-          res.render("caretaker-profile", {
-            title: "Care Taker Profile",
-            details: details.rows,
-            pets: pets.rows,
-            review: review.rows,
-            rating: rating.rows,
-            isSignedIn: req.isAuthenticated(),
-            isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false,
-            isCaretaker: req.isAuthenticated() ? req.user.isCaretaker : false
+          pool.query(sql_query.query.caretaker_salary, [username], (err, salary) => {
+            if (err) {
+              console.error(err);
+            }
+            res.render("caretaker-profile", {
+              title: "Care Taker Profile",
+              details: details.rows,
+              pets: pets.rows,
+              review: review.rows,
+              rating: rating.rows,
+              salary: salary.rows,
+              isSignedIn: req.isAuthenticated(),
+              isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false
+            });
           });
         });
       });
@@ -935,8 +940,7 @@ function caretakerJobs(req, res, next) {
         details: details.rows,
         job: job.rows,
         isSignedIn: req.isAuthenticated(),
-        isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false,
-        isCaretaker: req.isAuthenticated() ? req.user.isCaretaker : false
+        isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false
       });
     });
   });
@@ -957,8 +961,41 @@ function caretakerPetCategory(req, res, next) {
         details: details.rows,
         category: category.rows,
         isSignedIn: req.isAuthenticated(),
-        isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false,
-        isCaretaker: req.isAuthenticated() ? req.user.isCaretaker : false
+        isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false
+      });
+    });
+  });
+}
+
+function caretakerDetails(req, res, next) {
+  const username = req.query.username;
+  pool.query(sql_query.query.caretaker_aspetowner, [username], (err, details) => {
+    if (err) {
+      console.log(err);
+      return;
+    }
+    pool.query(sql_query.query.caretaker_category, [username], (err, petCategories) => {
+      if (err) {
+        console.error(err);
+        return;
+      }
+      pool.query(sql_query.query.caretaker_jobview, [username], (err, reservations) => {
+        if (err) {
+          console.error(err);
+          return;
+        }
+        res.render("caretaker-details", {
+          title: "Data",
+          username,
+          start: req.query.start,
+          end: req.query.end,
+          details: details.rows,
+          petCategories: petCategories.rows,
+          reservations: reservations.rows,
+          isSignedIn: req.isAuthenticated(),
+          isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false,
+          isCaretaker: req.isAuthenticated() ? req.user.isCaretaker : false
+        });
       });
     });
   });
@@ -974,13 +1011,47 @@ function caretakerFTLeaves(req, res, next) {
       if (err) {
         console.error(err);
       }
-      res.render("caretaker-ft-leaves", {
+      res.render("caretaker-leaves", {
         title: "FT Care Taker leaves",
         details: details.rows,
         leaves: leaves.rows,
+        isFullTime: req.isAutenticated(),
         isSignedIn: req.isAuthenticated(),
-        isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false,
-        isCaretaker: req.isAuthenticated() ? req.user.isCaretaker : false
+        isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false
+      });
+    });
+  });
+}
+
+function caretakerBidding(req, res, next) {
+  const username = req.query.username;
+  pool.query(sql_query.query.caretaker_aspetowner, [username], (err, details) => {
+    if (err) {
+      console.log(err);
+      return;
+    }
+    pool.query(sql_query.query.petowner_creditCard, [username], (err, cards) => {
+      if (err) {
+        console.error(err);
+        return;
+      }
+      pool.query(sql_query.query.caretaker_jobview, [username], (err, reservations) => {
+        if (err) {
+          console.error(err);
+          return;
+        }
+        res.render("caretaker-bidding", {
+          title: "Data",
+          username,
+          start: req.query.start,
+          end: req.query.end,
+          details: details.rows,
+          cards: cards.rows,
+          reservations: reservations.rows,
+          isSignedIn: req.isAuthenticated(),
+          isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false,
+          isCaretaker: req.isAuthenticated() ? req.user.isCaretaker : false
+        });
       });
     });
   });
@@ -996,13 +1067,12 @@ function caretakerPTAvailable(req, res, next) {
       if (err) {
         console.error(err);
       }
-      res.render("caretaker-pt-availability", {
+      res.render("caretaker-leaves", {
         title: "FT Care Taker leaves",
         details: details.rows,
         available: available.rows,
         isSignedIn: req.isAuthenticated(),
-        isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false,
-        isCaretaker: req.isAuthenticated() ? req.user.isCaretaker : false
+        isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false
       });
     });
   });
