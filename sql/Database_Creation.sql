@@ -19,7 +19,7 @@ CREATE TABLE Administrator (
 	PRIMARY KEY(username)
 );
 
-CREATE TABLE AppUser (
+CREATE TABLE PetOwner (
 	username VARCHAR(20),
 	name VARCHAR(100) NOT NULL,
 	email VARCHAR(100) NOT NULL UNIQUE,
@@ -38,7 +38,7 @@ CREATE TABLE CareTaker (
 	username VARCHAR(20),
 	avgrating NUMERIC(2,1) NOT NULL,
 	PRIMARY KEY(username),
-	FOREIGN KEY(username) REFERENCES AppUser(username)
+	FOREIGN KEY(username) REFERENCES PetOwner(username) 
 );
 
 CREATE TABLE CareTakerEarnsSalary (
@@ -46,7 +46,7 @@ CREATE TABLE CareTakerEarnsSalary (
 	salarydate DATE NOT NULL,
 	totalamount NUMERIC(31, 2) NOT NULL,
 	PRIMARY KEY(username, salarydate),
-	FOREIGN KEY(username) REFERENCES CareTaker(username)
+	FOREIGN KEY(username) REFERENCES CareTaker(username) ON DELETE CASCADE
 );
 
 /*----------------------------------------------------*/
@@ -61,7 +61,7 @@ CREATE TABLE FullTimeAppliesLeaves (
 	username VARCHAR(20),
 	leavedate DATE,
 	PRIMARY KEY(username, leavedate),
-	FOREIGN KEY(username) REFERENCES FullTime(username)		
+	FOREIGN KEY(username) REFERENCES FullTime(username)	ON DELETE CASCADE	
 );
 
 CREATE TABLE PartTime (
@@ -75,7 +75,7 @@ CREATE TABLE PartTimeIndicatesAvailability (
 	startdate DATE NOT NULL,
 	enddate DATE NOT NULL,
 	PRIMARY KEY(username, startDate, endDate),
-	FOREIGN KEY(username) REFERENCES PartTime(username)
+	FOREIGN KEY(username) REFERENCES PartTime(username) ON DELETE CASCADE
 );
 
 /*----------------------------------------------------*/
@@ -87,7 +87,7 @@ CREATE TABLE PetOwnerRegistersCreditCard (
 	cvv VARCHAR(20) NOT NULL,
 	expirydate DATE NOT NULL,
 	PRIMARY KEY(username, cardnumber),
-	FOREIGN KEY(username) REFERENCES AppUser(username)	
+	FOREIGN KEY(username) REFERENCES PetOwner(username)	ON DELETE CASCADE
 );
 
 /*----------------------------------------------------*/
@@ -117,7 +117,7 @@ CREATE TABLE Pet (
 	personality VARCHAR(100) NOT NULL,
 	category VARCHAR(20) NOT NULL,
 	PRIMARY KEY(username, name),
-	FOREIGN KEY(username) REFERENCES AppUser(username),	
+	FOREIGN KEY(username) REFERENCES PetOwner(username),	
 	FOREIGN KEY(category) REFERENCES PetCategory(category)	
 );
 
@@ -129,8 +129,8 @@ CREATE TABLE Job (
 	petname VARCHAR(20),
 	startdate DATE,
 	enddate DATE NOT NULL,
-	requestdate TIMESTAMP NOT NULL,
-	status VARCHAR(10),
+	requestdate TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	status VARCHAR(10) DEFAULT 'CONFIRMED' NOT NULL,
 	rating NUMERIC(2,1),
 	paymenttype VARCHAR(20) NOT NULL,
 	deliverytype VARCHAR(20) NOT NULL,
@@ -318,6 +318,7 @@ ON caretaker
 FOR EACH ROW
 EXECUTE PROCEDURE update_baseprice();
 
+/* Limit leaves application if condition not met */
 /*----------------------------------------------------*/
 
 CREATE OR REPLACE FUNCTION limit_leaves()
@@ -329,32 +330,51 @@ DECLARE
     lastdate DATE;
     consecdays integer := 0;
 BEGIN
+
+    IF new.leavedate < CURRENT_DATE THEN
+      RAISE EXCEPTION 'Please select a future date';
+    END IF;
+
     FOR prevdate IN SELECT * FROM fulltimeappliesleaves 
         WHERE username = new.username 
           AND date_part('year', leavedate) = date_part('year', CURRENT_DATE) 
           ORDER BY leavedate DESC LOOP
 
-    prevprevdate = (SELECT * FROM fulltimeappliesleaves 
-      WHERE username = new.username 
-        AND leavedate < prevdate.leavedate 
-        ORDER BY leavedate DESC
-        LIMIT 1)
-    IF new.leavedate < CURRENT_DATE THEN
-      RAISE EXCEPTION 'Please select a future date';
-    ELSE
-      IF prevdate.leavedate - prevprevdate >= 150 THEN
-        consecdays := consecdays + 1;
+      prevprevdate = (SELECT leavedate FROM fulltimeappliesleaves 
+        WHERE username = new.username 
+          AND leavedate < prevdate.leavedate 
+          AND date_part('year', leavedate) = date_part('year', CURRENT_DATE) 
+          ORDER BY leavedate DESC
+          LIMIT 1);
+
+      IF prevprevdate != null THEN
+        IF date_part('day', prevdate.leavedate - prevprevdate) >= 300 THEN
+          consecdays := consecdays + 2;
+        ELSEIF date_part('day', prevdate.leavedate - prevprevdate) >= 150 THEN
+          consecdays := consecdays + 1;
+        END IF;
       END IF;
-    END IF;
 
     END LOOP;
 
-  lastdate = (SELECT * FROM fulltimeappliesleaves 
+  lastdate := (SELECT leavedate FROM fulltimeappliesleaves 
       WHERE username = new.username 
         AND leavedate < CURRENT_DATE 
+        AND date_part('year', leavedate) = date_part('year', CURRENT_DATE) 
         ORDER BY leavedate DESC LIMIT 1);
-  IF CURRENT_DATE - lastdate >= 150 THEN
-    consecdays := consecdays + 1;
+        
+  IF lastdate != null THEN
+    IF date_part('day', CURRENT_DATE - lastdate) >= 300 THEN
+      consecdays := consecdays + 2;
+    ELSEIF date_part('day', CURRENT_DATE - lastdate) >= 150 THEN
+      consecdays := consecdays + 1;
+    END IF;
+  ELSE 
+    IF date_part('day', new.leavedate - date_trunc('year', new.leavedate))  <= 65 THEN
+      consecdays := consecdays + 2;
+    ELSEIF date_part('day', date_trunc('year', new.leavedate) + interval '1 year - 1 day' - new.leavedate) <= 65 THEN
+      consecdays := consecdays + 2;
+    END IF;
   END IF;
 
   IF consecdays < 2 THEN
