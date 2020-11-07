@@ -14,8 +14,8 @@ CREATE TABLE Administrator (
 	name VARCHAR(100) NOT NULL,
 	email VARCHAR(100) NOT NULL UNIQUE,
 	password VARCHAR(20) NOT NULL,
-	joindate DATE NOT NULL DEFAULT CURRENT_DATE,
-	isactive BOOLEAN NOT NULL DEFAULT TRUE,
+	joindate DATE NOT NULL,
+	isactive BOOLEAN NOT NULL,
 	PRIMARY KEY(username)
 );
 
@@ -24,8 +24,8 @@ CREATE TABLE PetOwner (
 	name VARCHAR(100) NOT NULL,
 	email VARCHAR(100) NOT NULL UNIQUE,
 	password VARCHAR(20) NOT NULL,
-	joindate DATE NOT NULL DEFAULT CURRENT_DATE,
-	isactive BOOLEAN NOT NULL DEFAULT TRUE,
+	joindate DATE NOT NULL,
+	isactive BOOLEAN NOT NULL,
 	gender VARCHAR(1) NOT NULL,
 	address VARCHAR(100) NOT NULL,
 	dateofbirth DATE NOT NULL,
@@ -330,6 +330,11 @@ DECLARE
     lastdate DATE;
     consecdays integer := 0;
 BEGIN
+
+    IF new.leavedate < CURRENT_DATE THEN
+      RAISE EXCEPTION 'Please select a future date';
+    END IF;
+
     FOR prevdate IN SELECT * FROM fulltimeappliesleaves 
         WHERE username = new.username 
           AND date_part('year', leavedate) = date_part('year', CURRENT_DATE) 
@@ -341,21 +346,25 @@ BEGIN
         ORDER BY leavedate DESC
         LIMIT 1);
 
-    IF new.leavedate < CURRENT_DATE THEN
-      RAISE EXCEPTION 'Please select a future date';
-    ELSE
-      IF prevdate.leavedate - prevprevdate >= 150 THEN
+    IF prevdate != null THEN
+      IF prevdate.leavedate - prevprevdate >= 300 THEN
+        consecdays := consecdays + 2;
+      ELSEIF prevdate.leavedate - prevprevdate >= 150 THEN
         consecdays := consecdays + 1;
       END IF;
     END IF;
 
     END LOOP;
 
-  lastdate = (SELECT * FROM fulltimeappliesleaves 
+  lastdate: = (SELECT * FROM fulltimeappliesleaves 
       WHERE username = new.username 
         AND leavedate < CURRENT_DATE 
+        AND date_part('year', leavedate) = date_part('year', CURRENT_DATE) 
         ORDER BY leavedate DESC LIMIT 1);
-  IF CURRENT_DATE - lastdate >= 150 THEN
+        
+  IF CURRENT_DATE - lastdate >= 300 THEN
+    consecdays := consecdays + 2;
+  ELSEIF CURRENT_DATE - lastdate >= 150 THEN
     consecdays := consecdays + 1;
   END IF;
 
@@ -2277,59 +2286,6 @@ INSERT INTO FullTime VALUES ('Louella');
 INSERT INTO FullTime VALUES ('Amata');
 
 /*----------------------------------------------------*/
-/* FullTimeAppliesLeaves 50*/
-INSERT INTO FullTimeAppliesLeaves VALUES ('Clemens', '2020-10-22');
-INSERT INTO FullTimeAppliesLeaves VALUES ('Georgetta', '2020-09-17');
-INSERT INTO FullTimeAppliesLeaves VALUES ('Tabor', '2020-06-02');
-INSERT INTO FullTimeAppliesLeaves VALUES ('Fern', '2020-06-19');
-INSERT INTO FullTimeAppliesLeaves VALUES ('Abby', '2020-10-10');
-INSERT INTO FullTimeAppliesLeaves VALUES ('Aron', '2019-12-13');
-INSERT INTO FullTimeAppliesLeaves VALUES ('Clementius', '2020-09-06');
-INSERT INTO FullTimeAppliesLeaves VALUES ('Gare', '2019-11-16');
-INSERT INTO FullTimeAppliesLeaves VALUES ('Cybil', '2019-12-08');
-INSERT INTO FullTimeAppliesLeaves VALUES ('Brendon', '2019-12-04');
-INSERT INTO FullTimeAppliesLeaves VALUES ('Petr', '2020-10-06');
-INSERT INTO FullTimeAppliesLeaves VALUES ('Frederica', '2020-02-04');
-INSERT INTO FullTimeAppliesLeaves VALUES ('Gwenni', '2020-06-17');
-INSERT INTO FullTimeAppliesLeaves VALUES ('Wood', '2020-03-20');
-INSERT INTO FullTimeAppliesLeaves VALUES ('Von', '2019-11-16');
-INSERT INTO FullTimeAppliesLeaves VALUES ('Eba', '2020-05-26');
-INSERT INTO FullTimeAppliesLeaves VALUES ('Avram', '2020-08-12');
-INSERT INTO FullTimeAppliesLeaves VALUES ('Nilson', '2020-08-22');
-INSERT INTO FullTimeAppliesLeaves VALUES ('Gran', '2020-05-31');
-INSERT INTO FullTimeAppliesLeaves VALUES ('Erin', '2019-10-27');
-INSERT INTO FullTimeAppliesLeaves VALUES ('Cordelia', '2020-04-09');
-INSERT INTO FullTimeAppliesLeaves VALUES ('Herbert', '2020-03-10');
-INSERT INTO FullTimeAppliesLeaves VALUES ('Hedy', '2020-03-29');
-INSERT INTO FullTimeAppliesLeaves VALUES ('Raven', '2020-08-15');
-INSERT INTO FullTimeAppliesLeaves VALUES ('Berenice', '2020-05-08');
-INSERT INTO FullTimeAppliesLeaves VALUES ('Giorgia', '2020-06-27');
-INSERT INTO FullTimeAppliesLeaves VALUES ('Courtenay', '2019-11-13');
-INSERT INTO FullTimeAppliesLeaves VALUES ('Lulita', '2019-12-01');
-INSERT INTO FullTimeAppliesLeaves VALUES ('Nataniel', '2020-09-15');
-INSERT INTO FullTimeAppliesLeaves VALUES ('Hayley', '2019-11-08');
-INSERT INTO FullTimeAppliesLeaves VALUES ('Maisey', '2019-11-06');
-INSERT INTO FullTimeAppliesLeaves VALUES ('Ruthanne', '2020-10-08');
-INSERT INTO FullTimeAppliesLeaves VALUES ('Giuditta', '2020-02-15');
-INSERT INTO FullTimeAppliesLeaves VALUES ('Garth', '2019-11-22');
-INSERT INTO FullTimeAppliesLeaves VALUES ('Janos', '2020-05-31');
-INSERT INTO FullTimeAppliesLeaves VALUES ('Dion', '2020-06-27');
-INSERT INTO FullTimeAppliesLeaves VALUES ('Dalton', '2020-06-28');
-INSERT INTO FullTimeAppliesLeaves VALUES ('Eilis', '2020-02-14');
-INSERT INTO FullTimeAppliesLeaves VALUES ('Earle', '2020-07-29');
-INSERT INTO FullTimeAppliesLeaves VALUES ('Irma', '2020-09-06');
-INSERT INTO FullTimeAppliesLeaves VALUES ('Joseito', '2020-02-22');
-INSERT INTO FullTimeAppliesLeaves VALUES ('Frannie', '2020-10-24');
-INSERT INTO FullTimeAppliesLeaves VALUES ('Steven', '2020-08-10');
-INSERT INTO FullTimeAppliesLeaves VALUES ('Donia', '2020-03-02');
-INSERT INTO FullTimeAppliesLeaves VALUES ('Grant', '2020-03-03');
-INSERT INTO FullTimeAppliesLeaves VALUES ('Pepe', '2020-08-14');
-INSERT INTO FullTimeAppliesLeaves VALUES ('Elsa', '2020-10-03');
-INSERT INTO FullTimeAppliesLeaves VALUES ('Shelagh', '2019-11-11');
-INSERT INTO FullTimeAppliesLeaves VALUES ('Mahmoud', '2020-04-01');
-INSERT INTO FullTimeAppliesLeaves VALUES ('Bastian', '2019-12-20');
-
-/*----------------------------------------------------*/
 /* PartTime 250*/
 INSERT INTO PartTime VALUES ('Chiarra');
 INSERT INTO PartTime VALUES ('Richmond');
@@ -3387,21 +3343,33 @@ INSERT INTO Job VALUES ('Norby', 'Hildagard', 'Jania', '2020-10-17', '2021-01-13
 INSERT INTO Job VALUES ('Flem', 'Tremaine', 'Jenilee', '2020-10-12', '2020-12-26', '2020-09-21', 'REVIEWED', '2.5', 'CREDITCARD', 'POD', '0.0', 'Ultrasonography of Right Renal Artery');
 INSERT INTO Job VALUES ('Dalt', 'Quincey', 'Hendrika', '2020-11-28', '2020-12-30', '2020-09-14', 'COMPLETED', null, 'CREDITCARD', 'POD', '0.0', null);
 
--- INSERT INTO Job VALUES ('Amata', 'Quincey', 'Stollwerck', '2020-01-02', '2020-11-01', '2020-01-01', 'REVIEWED', '5.0', 'CREDITCARD', 'POD', '0.0', 'Ultrasonography of Right Renal Artery');
+INSERT INTO Job VALUES ('Amata', 'Quincey', 'Stollwerck', '2020-01-02', '2020-11-01', '2020-01-01', 'REVIEWED', '5.0', 'CREDITCARD', 'POD', '0.0', 'Ultrasonography of Right Renal Artery');
+INSERT INTO Job VALUES ('Nikolas', 'Allin', 'Evyn', '2020-01-02', '2020-11-01', '2020-01-01', 'REVIEWED', '5.0', 'CREDITCARD', 'POD', '0.0', 'Ultrasonography of Right Renal Artery');
+INSERT INTO Job VALUES ('Iseabal', 'Tades', 'Devin', '2020-01-02', '2020-11-01', '2020-01-01', 'REVIEWED', '5.0', 'CREDITCARD', 'POD', '0.0', 'Ultrasonography of Right Renal Artery');
+INSERT INTO Job VALUES ('Erinn', 'Quincey', 'Judd', '2020-01-02', '2020-11-01', '2020-01-01', 'REVIEWED', '5.0', 'CREDITCARD', 'POD', '0.0', 'Ultrasonography of Right Renal Artery');
+INSERT INTO Job VALUES ('Allin', 'Akim', 'Alys', '2020-01-02', '2020-11-01', '2020-01-01', 'REVIEWED', '5.0', 'CREDITCARD', 'POD', '0.0', 'Ultrasonography of Right Renal Artery');
+INSERT INTO Job VALUES ('Margi', 'Allin', 'Honatsch', '2020-01-02', '2020-11-01', '2020-01-01', 'REVIEWED', '5.0', 'CREDITCARD', 'POD', '0.0', 'Ultrasonography of Right Renal Artery');
 
--- INSERT INTO FullTime VALUES ('Nikolas');
--- INSERT INTO FullTime VALUES ('Iseabal');
--- INSERT INTO FullTime VALUES ('Erinn');
--- INSERT INTO FullTime VALUES ('Allin');
--- INSERT INTO FullTime VALUES ('Margi');
-
--- INSERT INTO FullTime VALUES ('Tonya');
--- INSERT INTO FullTime VALUES ('Cher');
--- INSERT INTO FullTime VALUES ('Catharine');
--- INSERT INTO FullTime VALUES ('Louella');
--- INSERT INTO FullTime VALUES ('Amata');
+INSERT INTO Job VALUES ('Tabor', 'Belita', 'Rollin', '2020-01-02', '2020-11-01', '2020-01-01', 'REVIEWED', '5.0', 'CREDITCARD', 'POD', '0.0', 'Ultrasonography of Right Renal Artery');
+INSERT INTO Job VALUES ('Frederica', 'Hildagard', 'Germaine', '2020-01-02', '2020-11-01', '2020-01-01', 'REVIEWED', '5.0', 'CREDITCARD', 'POD', '0.0', 'Ultrasonography of Right Renal Artery');
+INSERT INTO Job VALUES ('Nataniel', 'Winny', 'Lissi', '2020-01-02', '2020-11-01', '2020-01-01', 'REVIEWED', '5.0', 'CREDITCARD', 'POD', '0.0', 'Ultrasonography of Right Renal Artery');
+INSERT INTO Job VALUES ('Maisey', 'Gianna', 'Modesty', '2020-01-02', '2020-11-01', '2020-01-01', 'REVIEWED', '5.0', 'CREDITCARD', 'POD', '0.0', 'Ultrasonography of Right Renal Artery');
 
 UPDATE Job SET pousername = pousername;
+
+/*----------------------------------------------------*/
+/* FullTimeAppliesLeaves 50*/
+INSERT INTO FullTimeAppliesLeaves VALUES ('Amata', '2020-12-30');
+INSERT INTO FullTimeAppliesLeaves VALUES ('Nikolas', '2020-12-30');
+INSERT INTO FullTimeAppliesLeaves VALUES ('Iseabal', '2020-12-30');
+INSERT INTO FullTimeAppliesLeaves VALUES ('Erinn', '2020-12-30');
+INSERT INTO FullTimeAppliesLeaves VALUES ('Allin', '2020-12-30');
+INSERT INTO FullTimeAppliesLeaves VALUES ('Margi', '2020-12-30');
+INSERT INTO FullTimeAppliesLeaves VALUES ('Tabor', '2020-12-30');
+INSERT INTO FullTimeAppliesLeaves VALUES ('Frederica', '2020-12-30');
+INSERT INTO FullTimeAppliesLeaves VALUES ('Nataniel', '2020-12-30');
+INSERT INTO FullTimeAppliesLeaves VALUES ('Maisey', '2020-12-30');
+
 /* END OF DATA INITIALISATION */
 
 /* START OF DATA CHECK */
@@ -3419,4 +3387,4 @@ SELECT COUNT(*) FROM pet;
 SELECT COUNT(*) FROM petcategory;
 SELECT COUNT(*) FROM PetOwnerRegistersCreditCard;
 /* END OF DATA CHECK */;
-
+					   
