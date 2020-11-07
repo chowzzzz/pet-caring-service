@@ -46,20 +46,29 @@
 				href="/caretaker-Jobs" role="button">
 				View All Jobs
 			</a>
-
-			<br />
 			<table class="table">
 				<thead class="thead-dark">
 					<tr>
-						<th scope="col">Caretaker's Pet Category</th>
-						<th scope="col">Category</th>
+						<th scope="col">Caretaker's Salary</th>
+					</tr>
+				</thead>
+				<tr>
+					<td scope="row" data-title="Salary"><%= salary[i].totalamount %></td>
+				</tr>
+			</table>
+			<br /><br /><br />
+			<table class="table">
+				<thead class="thead-dark">
+					<tr>
+						<th scope="col">Pet Category</th>
+						<th scope="col">Base Price</th>
 					</tr>
 				</thead>
 				<% for (var i = 0; i < category.length; i++) { %>
 				<tr>
-					<td scope="row" data-title="Category"><%= pets[i].category %></td>
-						<%= pets[i].getCategory()-<%= pets[i].getCategory().getBasePrice %> %>
+					<td scope="row" data-title="Pet Category"><%= pets[i].category %></td>
 					</td>
+					<td scope="row" data-title="Base Price"><%= pets[i].category().getBasePrice %></td>
 				</tr>
 				<% } %>
 			</table>
@@ -88,7 +97,7 @@
 				</thead>
 				<% for (var i = 0; i < review.length; i++) { %>
 				<tr>
-					<td scope="col" data-title="Care Taker">
+					<td scope="col" data-title="Pet Owner">
 						<%= review[i].pousername %>
 					</td>
 					<td scope="col" data-title="Pet Name">
