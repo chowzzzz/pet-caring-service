@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<link rel="stylesheet" href="/stylesheets/profile.css" />
+	<%- include('./partials/head'); %>
+</head>
+
+<body>
+  <%- include('./partials/navbar'); %>
+  <%- include('./partials/caretaker-navbar'); %>
+	<main>
+		<div class="jumbotron">
+			<h1 class="display-1">Care Taker Leave Dates</h1>
+			<h1 class="display-4"><%= details[0].name %></h1>
+			<br />
+			<table class="table">
+				<thead class="thead-dark">
+					<tr>
+						<th scope="col">Date</th>
+					</tr>
+				</thead>
+				<% for (var i = 0; i < leaves.length; i++) { %>
+				<tr>
+					<td scope="row" data-title="Date"><%= leaves[i].leavedate %></td>
+					</td>
+				</tr>
+				<% } %>
+            </table>
+        </div>
+	</main>
+</body>
+
+</html>

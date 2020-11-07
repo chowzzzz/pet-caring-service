@@ -11,13 +11,37 @@ function toggleOptional(event) {
 }
 
 function getDates() {
-  document.getElementById("form2").action += "&start="
-    + document.getElementById('start').value + "&end="
-    + document.getElementById('end').value;
+  let list = document.getElementsByClassName("form2");
+  for (let form of list) {
+    form.action += "&start="
+      + document.getElementById('start').value + "&end="
+      + document.getElementById('end').value;
+  }
   return true;
 }
 
 function setDefaultDates() {
-  document.getElementById('start').defaultValue = new Date().toISOString().slice(0, 10);
-  document.getElementById('end').defaultValue = new Date().toISOString().slice(0, 10);
-} s
+  let date = new Date();
+  date.setDate(date.getDate() + 1);
+  document.getElementById('start').defaultValue = date.toISOString().slice(0, 10);
+  date.setDate(date.getDate() + 1);
+  document.getElementById('end').defaultValue = date.toISOString().slice(0, 10);
+}
+
+function check(event) {
+  var start = document.getElementById('start').value;
+  var end = document.getElementById('end').value;
+
+  if (start >= end) {
+    alert("Start date must be earlier than end date");
+    event.preventDefault();
+    event.stopPropagation();
+    return false;
+  }
+  if (start <= new Date().toISOString().slice(0, 10)) {
+    alert("Start date must be later than today's date");
+    event.preventDefault();
+    event.stopPropagation();
+    return false;
+  }
+}

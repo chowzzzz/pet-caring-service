@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<%- include('./partials/head'); %>
+	</head>
+
+	<body id="page-top">
+		<%- include('./partials/navbar'); %>
+		<div class="jumbotron bg-white">
+			<div class="d-flex justify-content-between row mx-2">
+				<h1 class="mb-4">User Profile: <%= username %></h1>
+				<div class="d-flex align-items-center">
+					<h2>Average ratings: <%= caretaker[0].avgrating %></h2>
+				</div>
+			</div>
+			<% if (data) { %>
+			<table class="table table-bordered table-hover table-striped">
+				<thead>
+					<tr>
+						<th scope="col">#</th>
+						<th scope="col">Pet owner username</th>
+						<th scope="col">Pet name</th>
+						<th scope="col">Date</th>
+						<th scope="col">Rating</th>
+						<th scope="col">Review</th>
+					</tr>
+				</thead>
+				<tbody>
+					<% for(var i=0; i < data.length; i++) { %>
+					<tr>
+						<td><%= i+1%></td>
+						<td><%= data[i].pousername%></td>
+						<td><%= data[i].petname%></td>
+						<td><%= data[i].enddate%></td>
+						<td><%= data[i].rating%></td>
+						<td><%= data[i].review%></td>
+					</tr>
+					<% } %>
+				</tbody>
+			</table>
+
+			<% } else { %>
+			<p class="ml-2 text-danger">This caretaker has no reviews currently.</p>
+			<% } %>
+		</div>
+	</body>
+</html>

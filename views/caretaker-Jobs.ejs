@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <link rel="stylesheet" href="/stylesheets/profile.css" />
+    <%- include('./partials/head'); %>
+</head>
+
+<body>
+    <%- include('./partials/navbar'); %>
+    <%- include('./partials/caretaker-navbar'); %>
+    <main>
+        <div class="jumbotron">
+            <h1 class="display-1">Caretaker Upcoming Jobs</h1>
+            <h1 class="display-4"><%= details[0].name %></h1>
+            <table class="table">
+                <tr>
+                    <th scope="col">Pet Owner</th>
+                    <th scope="col">Pet Name</th>
+                    <th scope="col">Request Date</th>
+                    <th scope="col">Start Date</th>
+                    <th scope="col">End Date</th>
+                    <th scope="col">Status</th>
+                    <th scope="col">Rating</th>
+                    <th scope="col">Payment Type</th>
+                    <th scope="col">Delivery Type</th>
+                    <th scope="col">Amount Paid</th>
+                </tr>
+                <% for (var i = 0; i < job.length; i++) { %>
+                <tr>
+                    <td scope="col" data-title="Care Taker">
+                        <%= job[i].pousername %>
+                    </td>
+                    <td scope="col" data-title="Pet Name">
+                        <%= job[i].petname %>
+                    </td>
+                    <td scope="col" data-title="Request Date">
+                        <%= job[i].requestdate.getDate() %>-<%=
+                                job[i].requestdate.getMonth() %>-<%=
+                                job[i].requestdate.getFullYear() %>
+                    </td>
+                    <td scope="col" data-title="Start Date">
+                        <%= job[i].startdate.getDate() %>-<%=
+                        job[i].startdate.getMonth() %>-<%=
+                        job[i].startdate.getFullYear() %>
+                    </td>
+                    <td scope="col" data-title="End Date">
+                        <%= job[i].enddate.getDate() %>-<%=
+                        job[i].enddate.getMonth() %>-<%=
+                        job[i].enddate.getFullYear() %>
+                    </td>
+                    <td scope="col" data-title="Status"><%= job[i].status %></td>
+                    < scope="col" data-title="Status">
+                        <%= job[i].paymenttype %>
+                    </>
+                    <td scope="col" data-title="Status">
+                        <%= job[i].deliverytype %>
+                    </td>
+                    <td scope="col" data-title="Status">
+                        <%= job[i].amountpaid %>
+                    </td>
+                </tr>
+                <% } %>
+            </table>
+    </main>
+</body>
+
+</html>
