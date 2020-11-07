@@ -7,7 +7,8 @@
 </head>
 
 <body>
-	<%- include('./partials/navbar'); %>
+  <%- include('./partials/navbar'); %>
+  <%- include('./partials/caretaker-navbar'); %>
 	<main>
 		<div class="jumbotron">
 			<h1 class="display-1">Caretaker Summary</h1>
@@ -64,7 +65,7 @@
 						<th scope="col">Base Price</th>
 					</tr>
 				</thead>
-				<% for (var i = 0; i < category.length; i++) { %>
+				<% for (var i = 0; i < pets.length; i++) { %>
 				<tr>
 					<td scope="row" data-title="Pet Category"><%= pets[i].category %></td>
 					</td>
@@ -114,9 +115,9 @@
 						review[i].startdate.getFullYear() %>
 					</td>
 					<td scope="col" data-title="End Date">
-						<%= reviews[i].enddate.getDate() %>-<%=
-						reviews[i].enddate.getMonth() %>-<%=
-						reviews[i].enddate.getFullYear() %>
+						<%= review[i].enddate.getDate() %>-<%=
+						review[i].enddate.getMonth() %>-<%=
+						review[i].enddate.getFullYear() %>
 					</td>
 					<td scope="col" data-title="Status"><%= review[i].status %></td>
 					<td scope="col" data-title="Status"><%= review[i].rating %></td>

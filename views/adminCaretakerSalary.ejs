@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<%- include('./partials/head'); %>
+	</head>
+
+	<body id="page-top">
+		<%- include('./partials/navbar'); %>
+		<div class="jumbotron bg-white">
+			<div class="d-flex justify-content-between row mx-2">
+				<h1 class="mb-4">User Salary Details: <%= username %></h1>
+			</div>
+			<% if (data) { %>
+			<table class="table table-bordered table-hover table-striped">
+				<thead>
+					<tr>
+						<th scope="col">#</th>
+						<th scope="col">Month</th>
+						<th scope="col">Year</th>
+						<th scope="col">Salary Amount</th>
+					</tr>
+				</thead>
+				<tbody>
+					<% for(var i=0; i < data.length; i++) { %>
+					<tr>
+						<td><%= i+1%></td>
+						<td><%= data[i].salarydate.toLocaleString('default', { month: 'long' })%></td>
+						<td><%= data[i].salarydate.getFullYear()%></td>
+						<td><%= data[i].totalamount%></td>
+					</tr>
+					<% } %>
+				</tbody>
+			</table>
+
+			<% } else { %>
+			<p class="ml-2 text-danger">This caretaker has salary records.</p>
+			<% } %>
+		</div>
+	</body>
+</html>

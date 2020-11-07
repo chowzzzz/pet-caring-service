@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<%- include('./partials/head'); %>
+	</head>
+
+	<body id="page-top">
+		<%- include('./partials/navbar'); %>
+		<div class="jumbotron bg-white">
+			<h1 class="mb-4">Users</h1>
+			<table class="table table-bordered table-hover table-striped">
+				<thead>
+					<tr>
+						<th scope="col">#</th>
+						<th scope="col">Username</th>
+						<th scope="col">Salary Date</th>
+						<th scope="col">Total amount</th>
+					</tr>
+				</thead>
+				<tbody>
+					<% for(var i=0; i < data.length; i++) { %>
+					<tr onclick="window.location='/admin-caretaker-salary?username=<%= data[i].username%>';" class="pointer">
+						<td><%= i+1%></td>
+						<td><%= data[i].username%></td>
+						<td><%= data[i].salarydate.toLocaleDateString("en-US")%></td>
+						<td><%= data[i].totalamount%></td>
+					</tr>
+					<% } %>
+				</tbody>
+			</table>
+		</div>
+	</body>
+</html>
