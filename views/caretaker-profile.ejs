@@ -7,12 +7,12 @@
 </head>
 
 <body>
-  <%- include('./partials/navbar'); %>
-  <%- include('./partials/caretaker-navbar'); %>
+	<%- include('./partials/navbar'); %>
+	<%- include('./partials/caretaker-navbar'); %>
 	<main>
 		<div class="jumbotron">
 			<h1 class="display-1">Caretaker Summary</h1>
-			<h1 class="display-4"><%= details[0].name %></h1>
+			<h1 class="display-4"><%= details[0].username %></h1>
 			<table class="table">
 				<tr>
 					<td scope="row"><b>Email:</b> <%= details[0].email %></td>
@@ -59,7 +59,7 @@
 				<% for (var i = 0; i < pets.length; i++) { %>
 				<tr>
 					<td scope="row" data-title="Category"><%= pets[i].category %></td>
-						<td><%= pets[i].category %></td>
+					<td><%= pets[i].category %></td>
 				</tr>
 				<% } %>
 			</table>
@@ -89,7 +89,7 @@
 				<% for (var i = 0; i < review.length; i++) { %>
 				<tr>
 					<td scope="col" data-title="Care Taker">
-            <%= review[i].pousername %>
+						<%= review[i].pousername %>
 					</td>
 					<td scope="col" data-title="Pet Name">
 						<%= review[i].petname %>

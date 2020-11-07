@@ -131,6 +131,8 @@ sql.query = {
 	// Register job
 	register_job: "INSERT INTO job (ctusername, pousername, petname, startdate, enddate, paymenttype, deliverytype) VALUES ($1,$2,$3,$4,$5,$6,$7)",
 
+	apply_leave: "INSERT INTO fulltimeappliesleaves VALUES ($1,$2)",
+
 	search_caretaker: `SELECT *
 		FROM fulltime f JOIN petowner u ON f.username = u.username AND f.username <> $3
 		JOIN caretaker c ON f.username = c.username
