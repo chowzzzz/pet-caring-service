@@ -9,9 +9,14 @@
       </li>
       <% if (isCaretaker) { %>
       <li class="nav-item">
-        <a class="nav-link" href="/ct-home">CT</a>
+        <a class="nav-link" href="/caretakerHome">CT</a>
       </li>
       <% } %>
+      <% if (isFullTime) { %>
+        <li class="nav-item">
+          <a class="nav-link" href="/caretaker-ft-leaves">CT</a>
+        </li>
+        <% } %>
       <li class="nav-item">
         <a class="nav-link" href="/search">Search</a>
       </li>
