@@ -627,7 +627,7 @@ function searchCaretaker(req, res, next) {
 
 function caretakerDetails(req, res, next) {
 	const username = req.query.username;
-	pool.query(sql_query.query.caretaker_asAppUser, [username], (err, details) => {
+	pool.query(sql_query.query.caretaker_aspetowner, [username], (err, details) => {
 		if (err) {
 			console.log(err);
 			return;
@@ -661,7 +661,7 @@ function caretakerDetails(req, res, next) {
 
 function caretakerBidding(req, res, next) {
 	const username = req.query.username;
-	pool.query(sql_query.query.caretaker_asAppUser, [username], (err, details) => {
+	pool.query(sql_query.query.caretaker_aspetowner, [username], (err, details) => {
 		if (err) {
 			console.log(err);
 			return;
