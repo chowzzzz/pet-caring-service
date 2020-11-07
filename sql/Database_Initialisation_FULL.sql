@@ -356,7 +356,7 @@ BEGIN
 
     END LOOP;
 
-  lastdate: = (SELECT * FROM fulltimeappliesleaves 
+  lastdate := (SELECT * FROM fulltimeappliesleaves 
       WHERE username = new.username 
         AND leavedate < CURRENT_DATE 
         AND date_part('year', leavedate) = date_part('year', CURRENT_DATE) 

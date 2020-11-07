@@ -1,0 +1,21 @@
+/* Caculate CaretakerEarnsSalary based on job */
+/*----------------------------------------------------*/
+
+CREATE OR REPLACE FUNCTION calc_days_payments()
+  RETURNS TRIGGER AS
+$$
+BEGIN
+  IF new.status = 'CONFIRMED' THEN 
+  INSERT INTO caretakerearnssalary VALUES (new.username, new.startdate, date_part('day', new.enddate::timestamp - new.startdate::timestamp));
+
+  END IF;
+  RETURN NEW;  
+END
+$$
+LANGUAGE plpgsql;
+
+CREATE TRIGGER calc_days_payments
+BEFORE UPDATE
+ON job
+FOR EACH ROW
+EXECUTE PROCEDURE calc_days_payments);
