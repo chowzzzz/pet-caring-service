@@ -14,6 +14,8 @@ sql.query = {
 					ORDER BY u.username`,
 	get_caretaker: "SELECT * FROM caretaker WHERE username = $1",
 
+  caretaker_activate: "INSERT INTO caretaker VALUES ($1, 0)",
+
 	// Pet
 	all_pets: "SELECT * FROM pet WHERE username = $1",
 	all_petsInCategory: "SELECT * FROM pet WHERE username = $1 AND category = $2",
