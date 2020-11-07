@@ -340,32 +340,41 @@ BEGIN
           AND date_part('year', leavedate) = date_part('year', CURRENT_DATE) 
           ORDER BY leavedate DESC LOOP
 
-    prevprevdate = (SELECT * FROM fulltimeappliesleaves 
-      WHERE username = new.username 
-        AND leavedate < prevdate.leavedate 
-        ORDER BY leavedate DESC
-        LIMIT 1);
+      prevprevdate = (SELECT leavedate FROM fulltimeappliesleaves 
+        WHERE username = new.username 
+          AND leavedate < prevdate.leavedate 
+          AND date_part('year', leavedate) = date_part('year', CURRENT_DATE) 
+          ORDER BY leavedate DESC
+          LIMIT 1);
 
-    IF prevdate != null THEN
-      IF prevdate.leavedate - prevprevdate >= 300 THEN
-        consecdays := consecdays + 2;
-      ELSEIF prevdate.leavedate - prevprevdate >= 150 THEN
-        consecdays := consecdays + 1;
+      IF prevprevdate != null THEN
+        IF date_part('day', prevdate.leavedate - prevprevdate) >= 300 THEN
+          consecdays := consecdays + 2;
+        ELSEIF date_part('day', prevdate.leavedate - prevprevdate) >= 150 THEN
+          consecdays := consecdays + 1;
+        END IF;
       END IF;
-    END IF;
 
     END LOOP;
 
-  lastdate := (SELECT * FROM fulltimeappliesleaves 
+  lastdate := (SELECT leavedate FROM fulltimeappliesleaves 
       WHERE username = new.username 
         AND leavedate < CURRENT_DATE 
         AND date_part('year', leavedate) = date_part('year', CURRENT_DATE) 
         ORDER BY leavedate DESC LIMIT 1);
         
-  IF CURRENT_DATE - lastdate >= 300 THEN
-    consecdays := consecdays + 2;
-  ELSEIF CURRENT_DATE - lastdate >= 150 THEN
-    consecdays := consecdays + 1;
+  IF lastdate != null THEN
+    IF date_part('day', CURRENT_DATE - lastdate) >= 300 THEN
+      consecdays := consecdays + 2;
+    ELSEIF date_part('day', CURRENT_DATE - lastdate) >= 150 THEN
+      consecdays := consecdays + 1;
+    END IF;
+  ELSE 
+    IF date_part('day', new.leavedate - date_trunc('year', new.leavedate))  <= 65 THEN
+      consecdays := consecdays + 2;
+    ELSEIF date_part('day', date_trunc('year', new.leavedate) + interval '1 year - 1 day' - new.leavedate) <= 65 THEN
+      consecdays := consecdays + 2;
+    END IF;
   END IF;
 
   IF consecdays < 2 THEN
@@ -3304,7 +3313,7 @@ INSERT INTO Pet VALUES ('Winny', 'Krissy', '2003-10-21', 'M', 'client-driven', '
 /* Job 40*/
 INSERT INTO Job VALUES ('Conant', 'Belita', 'Maure', '2020-11-06', '2021-01-22', '2020-09-24', 'REVIEWED', '3.5', 'CREDITCARD', 'PTB', '0.0', 'Postural Control Treatment of Integu Body using Orthosis');
 INSERT INTO Job VALUES ('Clementine', 'Belita', 'Catina', '2020-10-02', '2021-01-05', '2020-09-25', 'COMPLETED', null, 'CASH', 'PTB', '0.0', null);
-INSERT INTO Job VALUES ('Ursola', 'Winny', 'Krissy', '2020-10-27', '2020-12-30', '2020-09-15', 'REVIEWED', '0.5', 'CASH', 'POD', '0.0', 'CT Scan of L Rib using Oth Contrast');
+INSERT INTO Job VALUES ('Ursola', 'Winny', 'Krissy', '2020-10-27', '2020-10-30', '2020-09-15', 'REVIEWED', '0.5', 'CASH', 'POD', '0.0', 'CT Scan of L Rib using Oth Contrast');
 INSERT INTO Job VALUES ('Tallia', 'Quincey', 'Dulcie', '2020-10-16', '2021-01-19', '2020-09-07', 'COMPLETED', null, 'CREDITCARD', 'POD', '0.0', null);
 INSERT INTO Job VALUES ('Idaline', 'Tremaine', 'Jenilee', '2020-10-28', '2020-12-03', '2020-08-31', 'REVIEWED', '1.0', 'CREDITCARD', 'PTB', '0.0', 'CT Scan of Bi Verteb Art using Oth Contrast');
 INSERT INTO Job VALUES ('Bell', 'Romola', 'Karry', '2020-11-17', '2021-01-10', '2020-09-21', 'COMPLETED', null, 'CREDITCARD', 'PTB', '0.0', null);
@@ -3320,7 +3329,7 @@ INSERT INTO Job VALUES ('Ansley', 'Akim', 'Charmion', '2020-11-24', '2021-01-21'
 INSERT INTO Job VALUES ('Freddy', 'Morissa', 'Imelda', '2020-11-28', '2021-01-03', '2020-09-26', 'COMPLETED', null, 'CREDITCARD', 'POD', '0.0', null);
 INSERT INTO Job VALUES ('Jami', 'Morissa', 'Imelda', '2020-10-23', '2021-01-25', '2020-09-05', 'REVIEWED', '3.0', 'CREDITCARD', 'POD', '0.0', 'CT Scan of Kidney Transplant using Oth Contrast');
 INSERT INTO Job VALUES ('Rabbi', 'Hilarius', 'Marissa', '2020-10-16', '2020-12-24', '2020-09-04', 'COMPLETED', null, 'CASH', 'PTB', '0.0', null);
-INSERT INTO Job VALUES ('Edythe', 'Morissa', 'Imelda', '2020-10-12', '2020-12-19', '2020-09-12', 'REVIEWED', '0.5', 'CASH', 'PTB', '0.0', 'Sensory/Processing Assess Integu Low Back/LE w Oth Equip');
+INSERT INTO Job VALUES ('Edythe', 'Morissa', 'Imelda', '2020-10-12', '2020-10-19', '2020-09-12', 'REVIEWED', '0.5', 'CASH', 'PTB', '0.0', 'Sensory/Processing Assess Integu Low Back/LE w Oth Equip');
 INSERT INTO Job VALUES ('Ike', 'Allin', 'Ernesta', '2020-10-29', '2020-12-10', '2020-09-25', 'COMPLETED', null, 'CASH', 'PTB', '0.0', null);
 INSERT INTO Job VALUES ('Ansley', 'Akim', 'Charmion', '2020-10-20', '2021-01-14', '2020-09-10', 'REVIEWED', '1.0', 'CASH', 'POD', '0.0', 'Coord/Dexterity Trmt Integu Up Back/UE w Orthosis');
 INSERT INTO Job VALUES ('Inessa', 'Holly', 'Arden', '2020-11-11', '2020-12-09', '2020-09-14', 'COMPLETED', null, 'CREDITCARD', 'POD', '0.0', null);
@@ -3342,14 +3351,12 @@ INSERT INTO Job VALUES ('Debbi', 'Hildagard', 'Jania', '2020-11-25', '2020-12-28
 INSERT INTO Job VALUES ('Norby', 'Hildagard', 'Jania', '2020-10-17', '2021-01-13', '2020-09-12', 'COMPLETED', null, 'CASH', 'PTB', '0.0', null);
 INSERT INTO Job VALUES ('Flem', 'Tremaine', 'Jenilee', '2020-10-12', '2020-12-26', '2020-09-21', 'REVIEWED', '2.5', 'CREDITCARD', 'POD', '0.0', 'Ultrasonography of Right Renal Artery');
 INSERT INTO Job VALUES ('Dalt', 'Quincey', 'Hendrika', '2020-11-28', '2020-12-30', '2020-09-14', 'COMPLETED', null, 'CREDITCARD', 'POD', '0.0', null);
-
 INSERT INTO Job VALUES ('Amata', 'Quincey', 'Stollwerck', '2020-01-02', '2020-11-01', '2020-01-01', 'REVIEWED', '5.0', 'CREDITCARD', 'POD', '0.0', 'Ultrasonography of Right Renal Artery');
 INSERT INTO Job VALUES ('Nikolas', 'Allin', 'Evyn', '2020-01-02', '2020-11-01', '2020-01-01', 'REVIEWED', '5.0', 'CREDITCARD', 'POD', '0.0', 'Ultrasonography of Right Renal Artery');
 INSERT INTO Job VALUES ('Iseabal', 'Tades', 'Devin', '2020-01-02', '2020-11-01', '2020-01-01', 'REVIEWED', '5.0', 'CREDITCARD', 'POD', '0.0', 'Ultrasonography of Right Renal Artery');
 INSERT INTO Job VALUES ('Erinn', 'Quincey', 'Judd', '2020-01-02', '2020-11-01', '2020-01-01', 'REVIEWED', '5.0', 'CREDITCARD', 'POD', '0.0', 'Ultrasonography of Right Renal Artery');
 INSERT INTO Job VALUES ('Allin', 'Akim', 'Alys', '2020-01-02', '2020-11-01', '2020-01-01', 'REVIEWED', '5.0', 'CREDITCARD', 'POD', '0.0', 'Ultrasonography of Right Renal Artery');
 INSERT INTO Job VALUES ('Margi', 'Allin', 'Honatsch', '2020-01-02', '2020-11-01', '2020-01-01', 'REVIEWED', '5.0', 'CREDITCARD', 'POD', '0.0', 'Ultrasonography of Right Renal Artery');
-
 INSERT INTO Job VALUES ('Tabor', 'Belita', 'Rollin', '2020-01-02', '2020-11-01', '2020-01-01', 'REVIEWED', '5.0', 'CREDITCARD', 'POD', '0.0', 'Ultrasonography of Right Renal Artery');
 INSERT INTO Job VALUES ('Frederica', 'Hildagard', 'Germaine', '2020-01-02', '2020-11-01', '2020-01-01', 'REVIEWED', '5.0', 'CREDITCARD', 'POD', '0.0', 'Ultrasonography of Right Renal Artery');
 INSERT INTO Job VALUES ('Nataniel', 'Winny', 'Lissi', '2020-01-02', '2020-11-01', '2020-01-01', 'REVIEWED', '5.0', 'CREDITCARD', 'POD', '0.0', 'Ultrasonography of Right Renal Artery');
@@ -3387,3 +3394,4 @@ SELECT COUNT(*) FROM pet;
 SELECT COUNT(*) FROM petcategory;
 SELECT COUNT(*) FROM PetOwnerRegistersCreditCard;
 /* END OF DATA CHECK */;
+					   
