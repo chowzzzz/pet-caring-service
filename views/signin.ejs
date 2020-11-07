@@ -1,15 +1,19 @@
 <!DOCTYPE html>
 <html>
+
 <head>
 	<%- include('./partials/head'); %>
 </head>
+
 <body>
-		<%- include('./partials/navbar'); %>
+	<%- include('./partials/navbar'); %>
 	<main>
 		<div class="container rounded bg-white pl-5 pr-5 pt-3 pb-3">
 			<h1 class="mb-2">Sign In</h1> <br />
 			<div class="d-flex flex-row justify-content-between">
 				<div style="min-width: 50%">
+					<span> Don't have an account? <a href="/signup">Sign Up!</a> </span>
+					<br><br>
 					<form id="html_form" action="signin" role="form" method="post">
 						<div class="form-group w-75 mb-2">
 							<label for="username">Username</label>
@@ -20,7 +24,7 @@
 							<label for="password">Password</label>
 							<input type="password" class="form-control" id="password" name="password"
 								placeholder="Enter your password" required>
-                        </div>
+						</div>
 						<button type="submit" class="btn btn-primary">Submit</button>
 					</form>
 				</div>

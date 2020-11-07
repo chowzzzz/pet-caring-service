@@ -19,7 +19,7 @@ CREATE TABLE Administrator (
 	PRIMARY KEY(username)
 );
 
-CREATE TABLE AppUser (
+CREATE TABLE PetOwner (
 	username VARCHAR(20),
 	name VARCHAR(100) NOT NULL,
 	email VARCHAR(100) NOT NULL UNIQUE,
@@ -38,7 +38,7 @@ CREATE TABLE CareTaker (
 	username VARCHAR(20),
 	avgrating NUMERIC(2,1) NOT NULL,
 	PRIMARY KEY(username),
-	FOREIGN KEY(username) REFERENCES AppUser(username)
+	FOREIGN KEY(username) REFERENCES PetOwner(username)
 );
 
 CREATE TABLE CareTakerEarnsSalary (
@@ -46,7 +46,7 @@ CREATE TABLE CareTakerEarnsSalary (
 	salarydate DATE NOT NULL,
 	totalamount NUMERIC(31, 2) NOT NULL,
 	PRIMARY KEY(username, salarydate),
-	FOREIGN KEY(username) REFERENCES CareTaker(username)
+	FOREIGN KEY(username) REFERENCES CareTaker(username) ON DELETE CASCADE
 );
 
 /*----------------------------------------------------*/
@@ -61,13 +61,13 @@ CREATE TABLE FullTimeAppliesLeaves (
 	username VARCHAR(20),
 	leavedate DATE,
 	PRIMARY KEY(username, leavedate),
-	FOREIGN KEY(username) REFERENCES FullTime(username)		
+	FOREIGN KEY(username) REFERENCES FullTime(username)	ON DELETE CASCADE	
 );
 
 CREATE TABLE PartTime (
 	username VARCHAR(20),
 	PRIMARY KEY(username),
-	FOREIGN KEY(username) REFERENCES CareTaker(username)		
+	FOREIGN KEY(username) REFERENCES CareTaker(username) 		
 );
 
 CREATE TABLE PartTimeIndicatesAvailability (
@@ -87,7 +87,7 @@ CREATE TABLE PetOwnerRegistersCreditCard (
 	cvv VARCHAR(20) NOT NULL,
 	expirydate DATE NOT NULL,
 	PRIMARY KEY(username, cardnumber),
-	FOREIGN KEY(username) REFERENCES AppUser(username)	
+	FOREIGN KEY(username) REFERENCES PetOwner(username)	
 );
 
 /*----------------------------------------------------*/
@@ -117,7 +117,7 @@ CREATE TABLE Pet (
 	personality VARCHAR(100) NOT NULL,
 	category VARCHAR(20) NOT NULL,
 	PRIMARY KEY(username, name),
-	FOREIGN KEY(username) REFERENCES AppUser(username),	
+	FOREIGN KEY(username) REFERENCES PetOwner(username),	
 	FOREIGN KEY(category) REFERENCES PetCategory(category)	
 );
 
@@ -318,6 +318,7 @@ ON caretaker
 FOR EACH ROW
 EXECUTE PROCEDURE update_baseprice();
 
+/* Limit leaves application if condition not met */
 /*----------------------------------------------------*/
 
 CREATE OR REPLACE FUNCTION limit_leaves()
@@ -338,7 +339,8 @@ BEGIN
       WHERE username = new.username 
         AND leavedate < prevdate.leavedate 
         ORDER BY leavedate DESC
-        LIMIT 1)
+        LIMIT 1);
+
     IF new.leavedate < CURRENT_DATE THEN
       RAISE EXCEPTION 'Please select a future date';
     ELSE
