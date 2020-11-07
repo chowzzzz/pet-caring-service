@@ -42,7 +42,8 @@ sql.query = {
 	/*caretaker_petType: "SELECT * FROM caretakercaterspetcategory WHERE username = $1",*/
 
 	caretaker_petLimit: "",
-	caretaker_review: "SELECT * FROM job WHERE ctusername = $1",
+
+	caretaker_review: "SELECT review FROM job WHERE ctusername = $1",
 	caretaker_rating: "SELECT AVG(rating) FROM job WHERE ctusername = $1",
 	caretaker_jobview: "SELECT * FROM job WHERE ctusername = $1",
 	caretaker_category: "SELECT * FROM caretakercaterspetcategory WHERE username = $1",

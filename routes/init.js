@@ -868,125 +868,126 @@ function registerJob(req, res, next) {
 }
 
 function caretakerProfile(req, res, next) {
-  const username = req.user.username;
-  pool.query(sql_query.query.get_user, [username], (err, details) => {
-    if (err) {
-      console.error(err);
-    }
-    pool.query(sql_query.query.caretaker_petType, [username], (err, pets) => {
-      if (err) {
-        console.error(err);
-      }
-      pool.query(sql_query.query.caretaker_review, [username], (err, review) => {
-        if (err) {
-          console.error(err);
-        }
-        pool.query(sql_query.query.caretaker_rating, [username], (err, rating) => {
-          if (err) {
-            console.error(err);
-          }
-          res.render("caretaker-profile", {
-            title: "Care Taker Profile",
-            details: details.rows,
-            pets: pets.rows,
-            review: review.rows,
-            rating: rating.rows,
-            isSignedIn: req.isAuthenticated(),
-            isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false,
-            isCaretaker: req.isAuthenticated() ? req.user.isCaretaker : false
-          });
-        });
-      });
-    });
-  });
+	const username = req.user.username;
+	pool.query(sql_query.query.get_user, [username], (err, details) => {
+		if (err) {
+			console.error(err);
+		}
+		pool.query(sql_query.query.caretaker_petType, [username], (err, pets) => {
+			if (err) {
+				console.error(err);
+			}
+			pool.query(sql_query.query.caretaker_review, [username], (err, review) => {
+				if (err) {
+					console.error(err);
+				}
+				pool.query(sql_query.query.caretaker_rating, [username], (err, rating) => {
+					if (err) {
+						console.error(err);
+					}
+					pool.query(sql_query.query.caretaker_salary, [username], (err, salary) => {
+						if (err) {
+							console.error(err);
+						}
+						res.render("caretaker-profile", {
+							title: "Care Taker Profile",
+							details: details.rows,
+							pets: pets.rows,
+							review: review.rows,
+							rating: rating.rows,
+							salary: salary.rows,
+							isSignedIn: req.isAuthenticated(),
+							isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false
+						});
+					});
+				});
+			});
+		});
+	});
 }
 
-function caretakerJobs(req, res, next) {
-  const username = req.user.username;
-  pool.query(sql_query.query.get_user, [username], (err, details) => {
-    if (err) {
-      console.error(err);
-    }
-    pool.query(sql_query.query.caretaker_jobview, [username], (err, job) => {
-      if (err) {
-        console.error(err);
-      }
-      res.render("caretaker-Jobs", {
-        title: "Care Taker Jobs",
-        details: details.rows,
-        job: job.rows,
-        isSignedIn: req.isAuthenticated(),
-        isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false,
-        isCaretaker: req.isAuthenticated() ? req.user.isCaretaker : false
-      });
-    });
-  });
+function caretakerJobs(req, res,next) {
+	const username = req.user.username;
+	pool.query(sql_query.query.get_user, [username], (err, details) => {
+		if (err) {
+			console.error(err);
+		}
+		pool.query(sql_query.query.caretaker_jobview, [username], (err, job) => {
+			if (err) {
+				console.error(err);
+			}
+			res.render("caretaker-Jobs", {
+				title: "Care Taker Jobs",
+				details: details.rows,
+				job: job.rows,
+				isSignedIn: req.isAuthenticated(),
+				isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false
+			});
+		});
+	});
 }
 
-function caretakerPetCategory(req, res, next) {
-  const username = req.user.username;
-  pool.query(sql_query.query.get_user, [username], (err, details) => {
-    if (err) {
-      console.error(err);
-    }
-    pool.query(sql_query.query.caretaker_category, [username], (err, category) => {
-      if (err) {
-        console.error(err);
-      }
-      res.render("caretaker-PetCategory", {
-        title: "Care Taker Category",
-        details: details.rows,
-        category: category.rows,
-        isSignedIn: req.isAuthenticated(),
-        isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false,
-        isCaretaker: req.isAuthenticated() ? req.user.isCaretaker : false
-      });
-    });
-  });
+function caretakerPetCategory(req, res,next) {
+	const username = req.user.username;
+	pool.query(sql_query.query.get_user, [username], (err, details) => {
+		if (err) {
+			console.error(err);
+		}
+		pool.query(sql_query.query.caretaker_category, [username], (err, category) => {
+			if (err) {
+				console.error(err);
+			}
+			res.render("caretaker-PetCategory", {
+				title: "Care Taker Category",
+				details: details.rows,
+				category: category.rows,
+				isSignedIn: req.isAuthenticated(),
+				isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false
+			});
+		});
+	});
 }
 
-function caretakerFTLeaves(req, res, next) {
-  const username = req.user.username;
-  pool.query(sql_query.query.get_user, [username], (err, details) => {
-    if (err) {
-      console.error(err);
-    }
-    pool.query(sql_query.query.fulltime_leavedays, [username], (err, leaves) => {
-      if (err) {
-        console.error(err);
-      }
-      res.render("caretaker-ft-leaves", {
-        title: "FT Care Taker leaves",
-        details: details.rows,
-        leaves: leaves.rows,
-        isSignedIn: req.isAuthenticated(),
-        isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false,
-        isCaretaker: req.isAuthenticated() ? req.user.isCaretaker : false
-      });
-    });
-  });
+function caretakerFTLeaves(req, res,next) {
+	const username = req.user.username;
+	pool.query(sql_query.query.get_user, [username], (err, details) => {
+		if (err) {
+			console.error(err);
+		}
+		pool.query(sql_query.query.fulltime_leavedays, [username], (err, leaves) => {
+			if (err) {
+				console.error(err);
+			}
+			res.render("caretaker-leaves", {
+				title: "FT Care Taker leaves",
+				details: details.rows,
+				leaves: leaves.rows,
+				isSignedIn: req.isAuthenticated(),
+				isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false
+			});
+		});
+	});
 }
 
-function caretakerPTAvailable(req, res, next) {
-  const username = req.user.username;
-  pool.query(sql_query.query.get_user, [username], (err, details) => {
-    if (err) {
-      console.error(err);
-    }
-    pool.query(sql_query.query.parttime_availdays, [username], (err, available) => {
-      if (err) {
-        console.error(err);
-      }
-      res.render("caretaker-pt-availability", {
-        title: "FT Care Taker leaves",
-        details: details.rows,
-        available: available.rows,
-        isSignedIn: req.isAuthenticated(),
-        isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false,
-        isCaretaker: req.isAuthenticated() ? req.user.isCaretaker : false
-      });
-    });
-  });
+function caretakerPTAvailable(req, res,next) {
+	const username = req.user.username;
+	pool.query(sql_query.query.get_user, [username], (err, details) => {
+		if (err) {
+			console.error(err);
+		}
+		pool.query(sql_query.query.parttime_availdays, [username], (err, available) => {
+			if (err) {
+				console.error(err);
+			}
+			res.render("caretaker-leaves", {
+				title: "FT Care Taker leaves",
+				details: details.rows,
+				available: available.rows,
+				isSignedIn: req.isAuthenticated(),
+				isAdmin: req.isAuthenticated() ? req.user.userType == "Admin" : false
+			});
+		});
+	});
 }
 
 // Render Function
