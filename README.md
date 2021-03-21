@@ -8,7 +8,7 @@ This application was written for NUS CS2102 Database Systems project.
 ## Table of Content :scroll:
 * [Tech-stack](#tech-stack-computer)
 * [Getting Started](#getting-started-book)
-* [Link](#link-link)
+* [Links](#links-link)
 * [Screenshots](#screenshots-camera)
 * [The Team](#the-team-man_technologist-woman_technologist)
 
@@ -38,8 +38,10 @@ npm start
  ```
 6. Open the application on your browser on [http://localhost:3000](http://localhost:3000)
 
-## Link :link:
+## Links :link:
 Test out our app here: https://cs2102-petcaringservice-24.herokuapp.com/
+
+View our demo video here: https://youtu.be/rYYav45HdEg
 
 ## Screenshots :camera:
 Search for caretakers
