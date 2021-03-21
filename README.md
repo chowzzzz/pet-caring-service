@@ -20,7 +20,23 @@ This application was written for NUS CS2102 Database Systems project.
 * PostgreSQL (node-pg)
 
 ## Getting Started :book:
-
+1. Clone repo to your local machine
+2. Set up your PostgreSQL DB
+    * Follow instructions [here](https://www.youtube.com/watch?v=fZQI7nBu32M&t=424s)
+4. Create an .env file in the root folder. Add the following code and modify it accordingly to your PostgreSQL settings
+```PG_USER = username
+PG_PASSWORD = password
+PG_HOST = localhost
+PG_PORT = 5432
+PG_DATABASE = database_name
+SECRET=team24
+```
+5. Run
+```
+npm install
+npm start 
+ ```
+6. Open the application on your browser on [http://localhost:3000](http://localhost:3000)
 
 ## Link :link:
 Test out our app here: https://cs2102-petcaringservice-24.herokuapp.com/
@@ -40,8 +56,8 @@ Admin dashboard page
 
 
 ## The Team :man_technologist: :woman_technologist:
-* Mok Xiao Fan
-* Goh Chang Wei, Levron
-* Kenny Hermawan
-* Justin Tzuriel Krisnahadi 
-* Theodoric Keith Lim
+* [Mok Xiao Fan](https://github.com/chowzzzz)
+* [Goh Chang Wei, Levron](https://github.com/Pomegrantooo)
+* [Kenny Hermawan](https://github.com/kennyhw)
+* [Justin Tzuriel Krisnahadi](https://github.com/justintzuriel)
+* [Theodoric Keith Lim](https://github.com/theodoriclim)
