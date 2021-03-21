@@ -1,5 +1,5 @@
 # Pet Caring Service :dog::cat:
-### _National University of Singapore CS2102 Database Systems Project AY20/21 Team 24_
+### _National University of Singapore - CS2102 Database Systems Project AY20/21 Team 24_
 
 The Pet Caring Service is a pet sitter booking platform that enables pet owners to search for avaiable pet sitters for their pets. This application allows pet owners to find responsible and reliable pet sitters nearby, and for pet caretakers to earn an extra income while spending their free time keeping these pets company.
 
